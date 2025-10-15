@@ -1,0 +1,39 @@
+services:
+  
+  backend:
+    extends:
+      file: docker-compose.yml
+      service: backend
+    build:
+      args:
+        MODE: dev
+    volumes:
+      - ./backend:/app
+    environment:
+      - ENV=development
+  
+  frontend:
+    extends:
+      file: docker-compose.yml
+      service: frontend
+    build:
+      args:
+        MODE: dev
+    volumes:
+      - ./frontend:/app
+    environment:
+      - ENV=development
+    ports:
+      - "3000:3000"
+  
+  plugins:
+    extends:
+      file: docker-compose.yml
+      service: plugins
+    build:
+      args:
+        MODE: dev
+    volumes:
+      - ./plugins:/app
+    environment:
+      - ENV=development

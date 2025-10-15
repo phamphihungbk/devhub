@@ -1,0 +1,47 @@
+services:
+ 
+  backend:
+    image: devhub-backend:latest
+    container_name: devhub-backend
+    extends:
+      file: docker-compose.yml
+      service: backend
+    build:
+      context: ./backend
+      dockerfile: infra/docker/backend.Dockerfile
+      args:
+        MODE: prod
+    environment:
+      - ENV=production
+    ports:
+      - "8080:8080"
+ 
+  frontend:
+    image: devhub-frontend:latest
+    container_name: devhub-frontend
+    extends:
+      file: docker-compose.yml
+      service: frontend
+    build:
+      context: ./frontend
+      dockerfile: infra/docker/frontend.Dockerfile
+      args:
+        MODE: prod
+    environment:
+      - ENV=production
+    ports:
+      - "80:80"
+ 
+  plugins:
+    image: devhub-plugins:latest
+    container_name: devhub-plugins
+    extends:
+      file: docker-compose.yml
+      service: plugins
+    build:
+      context: ./plugins
+      dockerfile: infra/docker/plugins.Dockerfile
+      args:
+        MODE: prod
+    environment:
+      - ENV=production
