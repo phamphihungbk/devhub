@@ -1,23 +1,38 @@
 package db
 
 import (
-	"database/sql"
 	"fmt"
+	"log"
+	"time"
 
-	_ "github.com/lib/pq"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+
+	"yourapp/internal/app/model"
+	"yourapp/internal/config"
 )
 
-var DB *sql.DB
+var DB *gorm.DB
 
-func ConnectDB(host, port, user, password, dbname string) error {
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-	db, err := sql.Open("postgres", psqlInfo)
+func Connect(cfg *config.Config) *gorm.DB {
+	dsn := fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=UTC",
+		cfg.DBHost, cfg.DBUser, cfg.DBPassword, cfg.DBName, cfg.DBPort,
+	)
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
 	if err != nil {
-		return err
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	if err = db.Ping(); err != nil {
-		return err
-	}
+
+	sqlDB, _ := db.DB()
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetMaxOpenConns(100)
+	sqlDB.SetConnMaxLifetime(time.Hour)
+
 	DB = db
-	return nil
+	return db
 }

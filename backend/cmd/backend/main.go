@@ -13,13 +13,10 @@ import (
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("failed to load config: %v", err)
+		log.Fatalf("Error loading config: %v", err)
 	}
 
-	err = db.ConnectDB(cfg.DBHost, "5432", cfg.DBUser, cfg.DBPass, "devhub")
-	if err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
-	}
+	db := db.Connect(cfg)
 
 	r := gin.Default()
 	router.RegisterRoutes(r)
