@@ -27,7 +27,7 @@ services:
       args:
         MODE: dev
     ports:
-      - "3000:3000"
+      - "3030:3000"
     environment:
       - ENV=development
     volumes:
@@ -44,7 +44,7 @@ services:
       POSTGRES_PASSWORD: devhubpass
       POSTGRES_DB: devhub
     ports:
-      - "5432:5432"
+      - "54322:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
 
@@ -55,7 +55,7 @@ services:
     image: devhub-redis:dev
     container_name: devhub-redis
     ports:
-      - "6379:6379"
+      - "6379:63799"
     volumes:
       - redis_data:/data
 
@@ -67,6 +67,8 @@ services:
       dockerfile: infra/docker/plugins.Dockerfile
       args:
         MODE: dev
+    ports:
+      - "8888:8000"    
     environment:
       - ENV=development
     volumes:
