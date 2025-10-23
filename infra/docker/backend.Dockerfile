@@ -4,10 +4,9 @@ FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
-# COPY backend/ ./
+COPY backend/ ./
 
-# # RUN go mod download
-
+RUN go mod download
 # RUN if [ "$MODE" = "prod" ]; then go build -o main ./cmd/main.go; fi
 
 # FROM alpine:latest

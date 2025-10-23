@@ -33,7 +33,7 @@ func main() {
 		log.Fatalf("Error creating postgres driver: %v", err)
 	}
 	m, err := migrate.NewWithDatabaseInstance(
-		"file:///app/migrations",
+		"file://migrations",
 		"postgres", driver)
 	if err != nil {
 		log.Fatalf("Error creating migration instance: %v", err)
