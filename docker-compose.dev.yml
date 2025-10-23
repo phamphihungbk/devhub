@@ -7,6 +7,9 @@ services:
       dockerfile: infra/docker/backend.Dockerfile
       args:
         MODE: dev
+    tty: true 
+    env_file:
+    - .env   
     ports:
       - "8080:8080"
     environment:
@@ -26,6 +29,8 @@ services:
       dockerfile: infra/docker/frontend.Dockerfile
       args:
         MODE: dev
+    env_file:
+      - .env    
     ports:
       - "3030:3000"
     environment:
@@ -43,6 +48,8 @@ services:
       POSTGRES_USER: devhub
       POSTGRES_PASSWORD: devhubpass
       POSTGRES_DB: devhub
+    env_file:
+      - .env  
     ports:
       - "54322:5432"
     volumes:
@@ -67,6 +74,8 @@ services:
       dockerfile: infra/docker/plugins.Dockerfile
       args:
         MODE: dev
+    env_file:
+      - .env    
     ports:
       - "8888:8000"    
     environment:

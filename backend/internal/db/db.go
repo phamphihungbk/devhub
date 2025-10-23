@@ -9,8 +9,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"yourapp/internal/app/model"
-	"yourapp/internal/config"
+	"github.com/phamphihungbk/devhub-backend/internal/config"
 )
 
 var DB *gorm.DB

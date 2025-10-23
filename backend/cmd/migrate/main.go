@@ -1,14 +1,16 @@
+
 package main
 
 import (
 	"flag"
 	"log"
-	"os"
 	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/golang-migrate/migrate/v4/source/file"
-	// import your config and db packages as needed
+	"github.com/phamphihungbk/devhub-backend/internal/db"
+	"github.com/phamphihungbk/devhub-backend/internal/config"
 )
+
 
 func main() {
 	direction := flag.String("direction", "up", "Migration direction: up or down")
@@ -20,13 +22,18 @@ func main() {
 		log.Fatalf("Error loading config: %v", err)
 	}
 
-	db := db.Connect(cfg)
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	dbConnection := db.Connect(cfg)
+	sqlDB, err := dbConnection.DB()
+	if err != nil {
+		log.Fatalf("Error getting sql.DB from gorm.DB: %v", err)
+	}
+
+	driver, err := postgres.WithInstance(sqlDB, &postgres.Config{})
 	if err != nil {
 		log.Fatalf("Error creating postgres driver: %v", err)
 	}
 	m, err := migrate.NewWithDatabaseInstance(
-		"file://backend/migrations",
+		"file:///app/migrations",
 		"postgres", driver)
 	if err != nil {
 		log.Fatalf("Error creating migration instance: %v", err)

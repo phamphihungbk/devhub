@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"github.com/spf13/viper"
 )
 
@@ -13,12 +14,19 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	viper.AutomaticEnv()
-	viper.SetDefault("DB_PORT", 5432)
+	v := viper.New()
+	v.AutomaticEnv() // read environment vars
 
-	var c Config
-	if err := viper.Unmarshal(&c); err != nil {
-		return nil, err
+	// Explicitly bind keys
+	keys := []string{"DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME"}
+	for _, key := range keys {
+		_ = v.BindEnv(key)
 	}
-	return &c, nil
+
+	var cfg Config
+	if err := v.Unmarshal(&cfg); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	return &cfg, nil
 }
