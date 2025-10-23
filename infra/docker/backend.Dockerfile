@@ -4,15 +4,15 @@ FROM golang:1.21-alpine AS builder
 
 WORKDIR /app
 
-COPY backend/ ./
+# COPY backend/ ./
 
-# RUN go mod download
+# # RUN go mod download
 
-RUN if [ "$MODE" = "prod" ]; then go build -o main ./cmd/main.go; fi
+# RUN if [ "$MODE" = "prod" ]; then go build -o main ./cmd/main.go; fi
 
-FROM alpine:latest
+# FROM alpine:latest
 
-WORKDIR /app
+# WORKDIR /app
 
 # COPY --from=builder /app/main ./main
 
@@ -20,4 +20,4 @@ WORKDIR /app
 
 EXPOSE 8080
 
-CMD sh -c "if [ '$MODE' = 'dev' ]; then go run ./src/cmd/main.go; else ./main; fi"
+# CMD sh -c "if [ '$MODE' = 'dev' ]; then go run ./src/cmd/main.go; else ./main; fi"
