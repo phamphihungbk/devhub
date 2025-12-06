@@ -1,4 +1,4 @@
-package models
+package entity
 
 import "time"
 
@@ -17,3 +17,5 @@ type Plugin struct {
 	Description string     `json:"description,omitempty"`
 	InstalledAt time.Time  `json:"installedAt"`
 }
+
+type Plugins []Plugin

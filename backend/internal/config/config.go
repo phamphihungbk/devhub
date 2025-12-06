@@ -1,32 +1,41 @@
 package config
 
 import (
-	"fmt"
-	"github.com/spf13/viper"
+	"log"
 )
 
 type Config struct {
-	DBHost     string `mapstructure:"DB_HOST"`
-	DBPort     int    `mapstructure:"DB_PORT"`
-	DBUser     string `mapstructure:"DB_USER"`
-	DBPassword string `mapstructure:"DB_PASSWORD"`
-	DBName     string `mapstructure:"DB_NAME"`
+	App     AppConfig      // Application-level settings such as API keys or feature flags
+	Service ServiceConfig  // Infrastructure-level service settings like name, port, and environment
+	DB      DatabaseConfig // Database connection and pooling configuration
 }
 
-func Load() (*Config, error) {
-	v := viper.New()
-	v.AutomaticEnv() // read environment vars
-
-	// Explicitly bind keys
-	keys := []string{"DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME"}
-	for _, key := range keys {
-		_ = v.BindEnv(key)
+func MustConfigure() *Config {
+	cfg, err := Configure()
+	if err != nil {
+		log.Fatalln(err)
 	}
+	return cfg
+}
 
-	var cfg Config
-	if err := v.Unmarshal(&cfg); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+func Configure() (*Config, error) {
+	cfg := MustConfig(
+		WithOptionalConfigPaths("env.yaml", "../env.yaml"),
+		WithDefaults(configDefaults),
+	)
+
+	return &Config{
+		App:     LoadAppConfig(cfg),
+		Service: LoadServiceConfig(cfg),
+		DB:      LoadDatabaseConfig(cfg),
+	}, nil
+}
+
+func MustConfig(opts ...ViperOption) *ViperConfig {
+	cfg, err := NewViperConfig(opts...)
+	if err != nil {
+		log.Fatalln(err)
+		return nil
 	}
-
-	return &cfg, nil
+	return cfg
 }

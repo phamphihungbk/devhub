@@ -23,6 +23,8 @@ func Execute() {
 
 func init() {
 	rootCmd.AddCommand(
+		generateSQLBuilderCmd,
+		newMigrationCmd,
 		migrateCmd,
 		serveCmd,
 	)

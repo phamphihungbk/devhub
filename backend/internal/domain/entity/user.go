@@ -1,4 +1,4 @@
-package models
+package entity
 
 import (
 	"time"
@@ -22,3 +22,5 @@ type User struct {
 	LastLogin time.Time      `json:"lastLogin"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
+
+type Users []User

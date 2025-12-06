@@ -1,4 +1,4 @@
-package models
+package entity
 
 import "time"
 
@@ -21,3 +21,5 @@ type Deployment struct {
 	TriggeredBy string           `json:"triggeredBy"`
 	CreatedAt   time.Time        `json:"createdAt"`
 }
+
+type Deployments []Deployment

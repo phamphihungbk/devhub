@@ -1,4 +1,4 @@
-package models
+package entity
 
 import "gorm.io/gorm"
 
@@ -17,3 +17,5 @@ type Project struct {
 	CreatedBy    string               `json:"createdBy"`
 	DeletedAt    gorm.DeletedAt       `gorm:"index" json:"-"`
 }
+
+type Projects []Project

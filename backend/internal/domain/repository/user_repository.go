@@ -2,14 +2,25 @@ package repository
 
 import (
 	"context"
+	"time"
 
-	models "github.com/phamphihungbk/devhub-backend/internal/domain/entity"
+	"github.com/google/uuid"
+	entity "github.com/phamphihungbk/devhub-backend/internal/domain/entity"
 )
 
 type UserRepository interface {
-	Create(ctx context.Context, user *models.User) error
-	GetByID(ctx context.Context, id string) (*models.User, error)
-	List(ctx context.Context) ([]models.User, error)
-	Update(ctx context.Context, user *models.User) error
-	Delete(ctx context.Context, id string) error
+	CreateOne(ctx context.Context, user *entity.User) (*entity.User, error)
+	FindOne(ctx context.Context, id uuid.UUID) (*entity.User, error)
+	FindAll(ctx context.Context, filter FindAllUsersFilter) (*entity.Users, int64, error)
+	// Update(ctx context.Context, user *entity.User) error
+	// Delete(ctx context.Context, id uuid.UUID) error
+}
+
+type FindAllUsersFilter struct {
+	StartDate *time.Time
+	EndDate   *time.Time
+	Limit     *int64
+	Offset    *int64
+	SortBy    *string
+	SortOrder *entity.SortOrder
 }
