@@ -11,6 +11,8 @@ type UserHandler interface {
 	CreateUser(c *gin.Context)
 	FindUserByID(c *gin.Context)
 	FindAllUsers(c *gin.Context)
+	UpdateUser(c *gin.Context)
+	DeleteUser(c *gin.Context)
 }
 
 type userHandler struct {

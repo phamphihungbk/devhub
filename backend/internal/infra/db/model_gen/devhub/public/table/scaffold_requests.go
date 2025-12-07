@@ -17,7 +17,7 @@ type scaffoldRequestsTable struct {
 	postgres.Table
 
 	// Columns
-	ID          postgres.ColumnInteger
+	ID          postgres.ColumnString
 	Template    postgres.ColumnString
 	ProjectID   postgres.ColumnString
 	Environment postgres.ColumnString
@@ -63,7 +63,7 @@ func newScaffoldRequestsTable(schemaName, tableName, alias string) *ScaffoldRequ
 
 func newScaffoldRequestsTableImpl(schemaName, tableName, alias string) scaffoldRequestsTable {
 	var (
-		IDColumn          = postgres.IntegerColumn("id")
+		IDColumn          = postgres.StringColumn("id")
 		TemplateColumn    = postgres.StringColumn("template")
 		ProjectIDColumn   = postgres.StringColumn("project_id")
 		EnvironmentColumn = postgres.StringColumn("environment")

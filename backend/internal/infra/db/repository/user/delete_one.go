@@ -13,18 +13,16 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *userRepositoryImpl) FindOne(ctx context.Context, id uuid.UUID) (user *entity.User, err error) {
-	const errLocation = "[repository user/find_one FindOne] "
+func (r *userRepositoryImpl) DeleteOne(ctx context.Context, id uuid.UUID) (user *entity.User, err error) {
+	const errLocation = "[repository user/delete Delete] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
 	usersTable := table.Users
-	// SQL statement
-	stmt := postgres.SELECT(
-		usersTable.AllColumns,
-	).
-		FROM(table.Users).
-		WHERE(table.Users.ID.EQ(postgres.UUID(id)))
 
+	// SQL statement
+	stmt := usersTable.DELETE().
+		WHERE(usersTable.ID.EQ(postgres.UUID(id))).
+		RETURNING(usersTable.AllColumns)
 	query, args := stmt.Sql()
 
 	var model User
@@ -33,7 +31,7 @@ func (r *userRepositoryImpl) FindOne(ctx context.Context, id uuid.UUID) (user *e
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errs.NewNotFoundError("user not found", nil)
 		}
-		return nil, misc.WrapError(err, errs.NewDatabaseError("error while querying user by id", err.Error()))
+		return nil, misc.WrapError(err, errs.NewDatabaseError("error while deleting user", err.Error()))
 	}
 
 	user = model.ToEntity()
@@ -42,4 +40,5 @@ func (r *userRepositoryImpl) FindOne(ctx context.Context, id uuid.UUID) (user *e
 	}
 
 	return user, nil
+
 }

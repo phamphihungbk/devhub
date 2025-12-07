@@ -11,30 +11,30 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type createUserRequest struct {
-	Name  string `json:"name" example:"User Name" binding:"required"`
-	Email string `json:"email" example:"user@example.com" binding:"required,email"`
-	Role  string `json:"role" example:"user" binding:"required" validate:"oneof=admin user"`
+type updateUserRequest struct {
+	Name *string `json:"name" example:"User Name" binding:"required"`
+	Role *string `json:"role" example:"user" binding:"required" validate:"oneof=admin user"`
 }
 
-type createUserResponse struct {
+type updateUserResponse struct {
 	ID    string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	Name  string `json:"name" example:"User Name"`
 	Email string `json:"email" example:"user@example.com"`
 }
 
-// @Summary		Create User
-// @Description	Create a new user
+// @Summary		Update User
+// @Description	Update an existing user
 // @Tags			User
 // @Accept			json
 // @Produce		json
-// @Param			request	body		createUserRequest													true	"User creation input"
-// @Success		201		{object}	httpresponse.SuccessResponse{data=createUserResponse,metadata=nil}	"User created"
+// @Param			request	body		updateUserRequest													true	"User update input"
+// @Success		200		{object}	httpresponse.SuccessResponse{data=updateUserResponse,metadata=nil}	    "User updated"
 // @Failure		400		{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
 // @Failure		500		{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
-// @Router			/users [post]
-func (h *userHandler) CreateUser(c *gin.Context) {
-	var input createUserRequest
+// @Router			/users/{id} [patch]
+func (h *userHandler) UpdateUser(c *gin.Context) {
+	userID := c.Param("id")
+	var input updateUserRequest
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		err = misc.WrapError(err, errs.NewBadRequestError("unable to parse request", map[string]string{"details": err.Error()}))
@@ -42,10 +42,10 @@ func (h *userHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	createdUser, err := h.userUsecase.CreateUser(c.Request.Context(), userUsecase.CreateUserInput{
-		Name:  input.Name,
-		Email: input.Email,
-		Role:  input.Role,
+	updatedUser, err := h.userUsecase.UpdateUser(c.Request.Context(), userUsecase.UpdateUserInput{
+		ID:   userID,
+		Name: input.Name,
+		Role: input.Role,
 	})
 
 	if err != nil {
@@ -53,15 +53,15 @@ func (h *userHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	httpresponse.SuccessWithStatus(c, http.StatusCreated, h.newCreateUserResponse(createdUser))
+	httpresponse.SuccessWithStatus(c, http.StatusOK, h.newUpdateUserResponse(updatedUser))
 }
 
-func (h *userHandler) newCreateUserResponse(user *entity.User) createUserResponse {
+func (h *userHandler) newUpdateUserResponse(user *entity.User) updateUserResponse {
 	if user == nil {
-		return createUserResponse{}
+		return updateUserResponse{}
 	}
 
-	return createUserResponse{
+	return updateUserResponse{
 		ID:    user.ID.String(),
 		Name:  user.Name,
 		Email: user.Email,

@@ -72,7 +72,7 @@ func newProjectsTableImpl(schemaName, tableName, alias string) projectsTable {
 		DeletedAtColumn    = postgres.TimestampColumn("deleted_at")
 		allColumns         = postgres.ColumnList{IDColumn, NameColumn, DescriptionColumn, EnvironmentsColumn, CreatedByColumn, DeletedAtColumn}
 		mutableColumns     = postgres.ColumnList{NameColumn, DescriptionColumn, EnvironmentsColumn, CreatedByColumn, DeletedAtColumn}
-		defaultColumns     = postgres.ColumnList{}
+		defaultColumns     = postgres.ColumnList{IDColumn}
 	)
 
 	return projectsTable{

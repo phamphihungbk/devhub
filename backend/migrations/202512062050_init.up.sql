@@ -1,7 +1,7 @@
 -- 202512062050_init.up.sql
 -- Migration: Create users table
 CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     role VARCHAR(16) NOT NULL DEFAULT 'user',
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Migration: Create projects table
 CREATE TABLE IF NOT EXISTS projects (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
     description TEXT,
     environments TEXT[],
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS projects (
 
 -- Migration: Create plugins table
 CREATE TABLE IF NOT EXISTS plugins (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
     version VARCHAR(64) NOT NULL,
     type VARCHAR(16) NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS plugins (
 
 -- Migration: Create deployments table
 CREATE TABLE IF NOT EXISTS deployments (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL,
     environment VARCHAR(32) NOT NULL,
     service VARCHAR(255) NOT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS deployments (
 
 -- Migration: Create scaffold_requests table
 CREATE TABLE IF NOT EXISTS scaffold_requests (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     template VARCHAR(255) NOT NULL,
     project_id UUID NOT NULL,
     environment VARCHAR(32) NOT NULL,

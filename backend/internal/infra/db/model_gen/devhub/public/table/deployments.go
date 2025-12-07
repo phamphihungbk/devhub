@@ -76,7 +76,7 @@ func newDeploymentsTableImpl(schemaName, tableName, alias string) deploymentsTab
 		CreatedAtColumn   = postgres.TimestampColumn("created_at")
 		allColumns        = postgres.ColumnList{IDColumn, ProjectIDColumn, EnvironmentColumn, ServiceColumn, VersionColumn, StatusColumn, TriggeredByColumn, CreatedAtColumn}
 		mutableColumns    = postgres.ColumnList{ProjectIDColumn, EnvironmentColumn, ServiceColumn, VersionColumn, StatusColumn, TriggeredByColumn, CreatedAtColumn}
-		defaultColumns    = postgres.ColumnList{}
+		defaultColumns    = postgres.ColumnList{IDColumn}
 	)
 
 	return deploymentsTable{

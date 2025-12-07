@@ -12,7 +12,7 @@ import (
 )
 
 type ScaffoldRequests struct {
-	ID          int32     `sql:"primary_key" db:"scaffold_requests.id"`
+	ID          uuid.UUID `sql:"primary_key" db:"scaffold_requests.id"`
 	Template    string    `db:"scaffold_requests.template"`
 	ProjectID   uuid.UUID `db:"scaffold_requests.project_id"`
 	Environment string    `db:"scaffold_requests.environment"`

@@ -46,6 +46,8 @@ func (r *router) applyUserRoutes(router *gin.Engine) {
 		userRoute.GET("/", r.UserHandler.FindAllUsers)
 		userRoute.POST("/", r.UserHandler.CreateUser)
 		userRoute.GET("/:id", r.UserHandler.FindUserByID)
+		userRoute.DELETE("/:id", r.UserHandler.DeleteUser)
+		userRoute.PATCH("/:id", r.UserHandler.UpdateUser)
 	}
 }
 

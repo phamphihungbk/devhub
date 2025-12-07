@@ -36,5 +36,5 @@ func (r *userRepositoryImpl) CreateOne(ctx context.Context, input *entity.User) 
 		return nil, errs.NewInternalServerError("failed to convert user model to entity", nil)
 	}
 
-	return
+	return user, nil
 }
