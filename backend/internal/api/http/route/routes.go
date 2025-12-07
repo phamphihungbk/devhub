@@ -1,8 +1,11 @@
 package httproute
 
 import (
+	userHandler "devhub-backend/internal/api/http/handler/user"
+	"devhub-backend/internal/api/http/middleware"
+	"devhub-backend/internal/config"
+
 	"github.com/gin-gonic/gin"
-	// "github.com/phamphihungbk/devhub-backend/internal/http/middleware"
 )
 
 type Router interface {
@@ -10,45 +13,50 @@ type Router interface {
 }
 
 type router struct {
-	cfg                config.AppConfig                 // Configuration for the application
-	Middleware         middleware.Middleware            // Middleware for handling requests
-	HealthCheckHandler healthHandler.HealthCheckHandler // Handler for health check routes
-	ConcertHandler     concertHandler.ConcertHandler    // Handler for concert routes
-	SeatHandler        seatHandler.SeatHandler          // Handler for seat routes
+	cfg         config.AppConfig        // Configuration for the application
+	Middleware  middleware.Middleware   // Middleware for handling requests
+	UserHandler userHandler.UserHandler // Handler for user routes
 }
 
 type Dependency struct {
-	// Middleware         middleware.Middleware
-	// HealthCheckHandler healthHandler.HealthCheckHandler
-	// ConcertHandler     concertHandler.ConcertHandler
-	// SeatHandler        seatHandler.SeatHandler
+	Middleware  middleware.Middleware
+	UserHandler userHandler.UserHandler
 }
 
 func NewHTTPRoutes(cfg config.AppConfig, dep Dependency) Router {
 	return &router{
-		cfg:                cfg,
-		Middleware:         dep.Middleware,
-		HealthCheckHandler: dep.HealthCheckHandler,
-		ConcertHandler:     dep.ConcertHandler,
-		SeatHandler:        dep.SeatHandler,
+		cfg:         cfg,
+		Middleware:  dep.Middleware,
+		UserHandler: dep.UserHandler,
 	}
 }
 
 // RegisterRoutes registers the routes for the application
 func (r *router) RegisterRoutes(router *gin.Engine) {
-	r.applyHealthCheckRoutes(router)
-	r.applyConcertRoutes(router)
-	r.applySeatReservationRoutes(router)
+	r.applyUserRoutes(router)
+	// r.applyHealthCheckRoutes(router)
+	// r.applyConcertRoutes(router)
+	// r.applySeatReservationRoutes(router)
+}
+
+// applyUserRoutes applies the user routes to the provided router
+func (r *router) applyUserRoutes(router *gin.Engine) {
+	userRoute := router.Group("/users")
+	{
+		userRoute.GET("/", r.UserHandler.FindAllUsers)
+		userRoute.POST("/", r.UserHandler.CreateUser)
+		userRoute.GET("/:id", r.UserHandler.FindUserByID)
+	}
 }
 
 // applyHealthCheckRoutes applies the health check routes to the provided router
-func (r *router) applyHealthCheckRoutes(router *gin.Engine) {
-	healthRoute := router.Group("/health")
-	{
-		healthRoute.GET("/liveness", r.Middleware.BasicAuth(r.cfg.AdminAPIKey, r.cfg.AdminAPISecret), r.HealthCheckHandler.Liveness)
-		healthRoute.GET("/readiness", r.Middleware.BasicAuth(r.cfg.AdminAPIKey, r.cfg.AdminAPISecret), r.HealthCheckHandler.Readiness)
-	}
-}
+// func (r *router) applyHealthCheckRoutes(router *gin.Engine) {
+// 	healthRoute := router.Group("/health")
+// 	{
+// 		healthRoute.GET("/liveness", r.Middleware.BasicAuth(r.cfg.AdminAPIKey, r.cfg.AdminAPISecret), r.HealthCheckHandler.Liveness)
+// 		healthRoute.GET("/readiness", r.Middleware.BasicAuth(r.cfg.AdminAPIKey, r.cfg.AdminAPISecret), r.HealthCheckHandler.Readiness)
+// 	}
+// }
 
 // func RegisterRoutes(r *gin.Engine) {
 // 	// r.Use(middleware.Logger())

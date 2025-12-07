@@ -1,6 +1,10 @@
 package entity
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type DeploymentStatus string
 
@@ -12,14 +16,14 @@ const (
 )
 
 type Deployment struct {
-	ID          string           `gorm:"type:uuid;primaryKey" json:"id"`
-	ProjectID   string           `json:"projectId"`
-	Environment string           `json:"environment"`
-	Service     string           `json:"service"`
-	Version     string           `json:"version"`
-	Status      DeploymentStatus `gorm:"type:varchar(16)" json:"status"`
-	TriggeredBy string           `json:"triggeredBy"`
-	CreatedAt   time.Time        `json:"createdAt"`
+	ID          uuid.UUID
+	ProjectID   string
+	Environment string
+	Service     string
+	Version     string
+	Status      DeploymentStatus
+	TriggeredBy string
+	CreatedAt   time.Time
 }
 
 type Deployments []Deployment

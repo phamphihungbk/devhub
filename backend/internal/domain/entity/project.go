@@ -1,6 +1,10 @@
 package entity
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type ProjectEnvironment string
 
@@ -10,12 +14,12 @@ const (
 )
 
 type Project struct {
-	ID           string               `gorm:"type:uuid;primaryKey" json:"id"`
-	Name         string               `json:"name"`
-	Description  string               `json:"description,omitempty"`
-	Environments []ProjectEnvironment `gorm:"type:text[]" json:"environments"`
-	CreatedBy    string               `json:"createdBy"`
-	DeletedAt    gorm.DeletedAt       `gorm:"index" json:"-"`
+	ID           uuid.UUID
+	Name         string
+	Description  string
+	Environments []ProjectEnvironment
+	CreatedBy    string
+	DeletedAt    time.Time
 }
 
 type Projects []Project

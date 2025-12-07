@@ -3,7 +3,7 @@ package entity
 import (
 	"time"
 
-	"gorm.io/gorm"
+	"github.com/google/uuid"
 )
 
 type UserRole string
@@ -14,13 +14,13 @@ const (
 )
 
 type User struct {
-	ID        string         `gorm:"type:uuid;primaryKey" json:"id"`
-	Name      string         `json:"name"`
-	Email     string         `gorm:"uniqueIndex" json:"email"`
-	Role      UserRole       `gorm:"type:varchar(16);default:'user'" json:"role"`
-	CreatedAt time.Time      `json:"createdAt"`
-	LastLogin time.Time      `json:"lastLogin"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+	ID        uuid.UUID
+	Name      string
+	Email     string
+	Role      UserRole
+	CreatedAt time.Time
+	LastLogin time.Time
+	DeletedAt time.Time
 }
 
 type Users []User
