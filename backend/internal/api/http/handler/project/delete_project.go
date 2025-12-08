@@ -15,7 +15,7 @@ import (
 // @Param			id	path		string																	true	"Project ID"
 // @Success		200	{object}	httpresponse.SuccessResponse{data=nil,metadata=nil}	"Project deleted"
 // @Failure		400	{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
-// @Failure		404	{object}	httpresponse.ErrorResponse{data=nil}									"Project not found"
+// @Failure		404	{object}	httpresponse.ErrorResponse{data=nil}									"User not found"
 // @Failure		500	{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
 // @Router			/projects/{id} [delete]
 func (h *projectHandler) DeleteProject(c *gin.Context) {

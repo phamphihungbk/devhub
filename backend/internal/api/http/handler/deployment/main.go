@@ -2,27 +2,27 @@ package handler
 
 import (
 	"devhub-backend/internal/config"
-	projectUsecase "devhub-backend/internal/usecase/project"
+	deploymentUsecase "devhub-backend/internal/usecase/deployment"
 
 	"github.com/gin-gonic/gin"
 )
 
-type ProjectHandler interface {
-	CreateProject(c *gin.Context)
-	FindProjectByID(c *gin.Context)
-	FindAllProjects(c *gin.Context)
-	UpdateProject(c *gin.Context)
-	DeleteProject(c *gin.Context)
+type DeploymentHandler interface {
+	CreateDeployment(c *gin.Context)
+	FindDeploymentByID(c *gin.Context)
+	FindAllDeployments(c *gin.Context)
+	UpdateDeployment(c *gin.Context)
+	DeleteDeployment(c *gin.Context)
 }
 
-type projectHandler struct {
-	appConfig      config.AppConfig
-	projectUsecase projectUsecase.ProjectUsecase
+type deploymentHandler struct {
+	appConfig         config.AppConfig
+	deploymentUsecase deploymentUsecase.DeploymentUsecase
 }
 
-func NewProjectHandler(appConfig config.AppConfig, projectUsecase projectUsecase.ProjectUsecase) ProjectHandler {
-	return &projectHandler{
-		appConfig:      appConfig,
-		projectUsecase: projectUsecase,
+func NewDeploymentHandler(appConfig config.AppConfig, deploymentUsecase deploymentUsecase.DeploymentUsecase) DeploymentHandler {
+	return &deploymentHandler{
+		appConfig:         appConfig,
+		deploymentUsecase: deploymentUsecase,
 	}
 }

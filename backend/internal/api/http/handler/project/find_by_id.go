@@ -4,14 +4,14 @@ import (
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/util/httpresponse"
 
-	userUsecase "devhub-backend/internal/usecase/user"
+	projectUsecase "devhub-backend/internal/usecase/project"
 
 	"github.com/gin-gonic/gin"
 )
 
-type findOneUserResponse struct {
+type findOneProjectResponse struct {
 	ID    string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name  string `json:"name" example:"User Name"`
+	Name  string `json:"name" example:"Project Name"`
 	Email string `json:"email" example:"user@example.com"`
 }
 
@@ -24,28 +24,28 @@ type findOneUserResponse struct {
 // @Failure		400	{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
 // @Failure		404	{object}	httpresponse.ErrorResponse{data=nil}									"Concert not found"
 // @Failure		500	{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
-// @Router			/users/{id} [get]
-func (h *userHandler) FindUserByID(c *gin.Context) {
-	userID := c.Param("id")
-	user, err := h.userUsecase.FindOneUser(c.Request.Context(), userUsecase.FindOneUserInput{
-		ID: userID,
+// @Router			/projects/{project} [get]
+func (h *projectHandler) FindProjectByID(c *gin.Context) {
+	projectID := c.Param("project")
+	project, err := h.projectUsecase.FindOneProject(c.Request.Context(), projectUsecase.FindOneProjectInput{
+		ID: projectID,
 	})
 	if err != nil {
 		httpresponse.Error(c, err)
 		return
 	}
 
-	httpresponse.Success(c, h.newFindOneUserResponse(user))
+	httpresponse.Success(c, h.newFindOneProjectResponse(project))
 }
 
-func (h *userHandler) newFindOneUserResponse(user *entity.User) findOneUserResponse {
-	if user == nil {
-		return findOneUserResponse{}
+func (h *projectHandler) newFindOneProjectResponse(project *entity.Project) findOneProjectResponse {
+	if project == nil {
+		return findOneProjectResponse{}
 	}
 
-	return findOneUserResponse{
-		ID:    user.ID.String(),
-		Name:  user.Name,
-		Email: user.Email,
+	return findOneProjectResponse{
+		ID:    project.ID.String(),
+		Name:  project.Name,
+		Email: project.Email,
 	}
 }

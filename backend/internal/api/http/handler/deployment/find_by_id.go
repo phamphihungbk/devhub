@@ -4,55 +4,55 @@ import (
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/util/httpresponse"
 
-	projectUsecase "devhub-backend/internal/usecase/project"
+	deploymentUsecase "devhub-backend/internal/usecase/deployment"
 
 	"github.com/gin-gonic/gin"
 )
 
-type findOneProjectResponse struct {
+type findOneDeploymentResponse struct {
 	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	Name         string   `json:"name" example:"Project Name"`
 	Description  string   `json:"description" example:"Project Description"`
 	Environments []string `json:"environments" example:"[prod,dev,staging]"`
 }
 
-// @Summary		Find Project by ID
-// @Description	Retrieve project details by its ID
-// @Tags			Project
+// @Summary		Find Deployment by ID
+// @Description	Retrieve deployment details by its ID
+// @Tags			Deployment
 // @Produce		json
-// @Param			id	path		string																	true	"Project ID"
-// @Success		200	{object}	httpresponse.SuccessResponse{data=findOneProjectResponse,metadata=nil}	"Project found"
+// @Param			id	path		string																	true	"Deployment ID"
+// @Success		200	{object}	httpresponse.SuccessResponse{data=findOneDeploymentResponse,metadata=nil}	"Deployment found"
 // @Failure		400	{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
-// @Failure		404	{object}	httpresponse.ErrorResponse{data=nil}									"Project not found"
+// @Failure		404	{object}	httpresponse.ErrorResponse{data=nil}									"Deployment not found"
 // @Failure		500	{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
 // @Router			/deployment/:deployment [get]
-func (h *projectHandler) FindProjectByID(c *gin.Context) {
-	projectID := c.Param("id")
-	project, err := h.projectUsecase.FindOneProject(c.Request.Context(), projectUsecase.FindOneProjectInput{
-		ID: projectID,
+func (h *deploymentHandler) FindDeploymentByID(c *gin.Context) {
+	deploymentID := c.Param("id")
+	deployment, err := h.deploymentUsecase.FindOneDeployment(c.Request.Context(), deploymentUsecase.FindOneDeploymentInput{
+		ID: deploymentID,
 	})
 	if err != nil {
 		httpresponse.Error(c, err)
 		return
 	}
 
-	httpresponse.Success(c, h.newFindOneProjectResponse(project))
+	httpresponse.Success(c, h.newFindOneDeploymentResponse(deployment))
 }
 
-func (h *projectHandler) newFindOneProjectResponse(project *entity.Project) findOneProjectResponse {
-	if project == nil {
-		return findOneProjectResponse{}
+func (h *deploymentHandler) newFindOneDeploymentResponse(deployment *entity.Deployment) findOneDeploymentResponse {
+	if deployment == nil {
+		return findOneDeploymentResponse{}
 	}
 
-	environments := make([]string, len(project.Environments))
-	for i, env := range project.Environments {
+	environments := make([]string, len(deployment.Environments))
+	for i, env := range deployment.Environments {
 		environments[i] = string(env)
 	}
 
-	return findOneProjectResponse{
-		ID:           project.ID.String(),
-		Name:         project.Name,
-		Description:  project.Description,
+	return findOneDeploymentResponse{
+		ID:           deployment.ID.String(),
+		Name:         deployment.Name,
+		Description:  deployment.Description,
 		Environments: environments,
 	}
 }

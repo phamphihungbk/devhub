@@ -3,7 +3,7 @@ package handler
 import (
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/domain/errs"
-	userUsecase "devhub-backend/internal/usecase/user"
+	projectUsecase "devhub-backend/internal/usecase/project"
 	"devhub-backend/internal/util/httpresponse"
 	"devhub-backend/internal/util/misc"
 	"time"
@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type FindAllUsersQuery struct {
+type FindAllProjectsQuery struct {
 	StartDate *time.Time `form:"startDate" time_format:"2006-01-02" time_location:"Asia/Bangkok"`
 	EndDate   *time.Time `form:"endDate" time_format:"2006-01-02" time_location:"Asia/Bangkok"`
 	Limit     *int64     `form:"limit"`
@@ -20,15 +20,15 @@ type FindAllUsersQuery struct {
 	SortOrder *string    `form:"sortOrder"`
 }
 
-type findAllUsersResponse struct {
+type findAllProjectsResponse struct {
 	ID    string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name  string `json:"name" example:"User Name"`
+	Name  string `json:"name" example:"Project Name"`
 	Email string `json:"email" example:"user@example.com"`
 }
 
-// @Summary		List Users
-// @Description	List all users, filterable by date range and venue
-// @Tags			User
+// @Summary		List Projects
+// @Description	List all projects, filterable by date range and venue
+// @Tags			Project
 // @Produce		json
 // @Param			startDate	query		string																									false	"Start date (format: 2006-01-02) (UTC+7)"
 // @Param			endDate		query		string																									false	"End date (format: 2006-01-02) (UTC+7)"
@@ -40,9 +40,9 @@ type findAllUsersResponse struct {
 // @Success		200			{object}	httpresponse.SuccessResponse{data=[]findAllConcertsResponse,metadata=httpresponse.PaginationMetadata}	"List of concerts with pagination details"
 // @Failure		400			{object}	httpresponse.ErrorResponse{data=nil}																	"Bad request"
 // @Failure		500			{object}	httpresponse.ErrorResponse{data=nil}																	"Internal server error"
-// @Router			/users [get]
-func (h *userHandler) FindAllUsers(c *gin.Context) {
-	var query FindAllUsersQuery
+// @Router			/projects [get]
+func (h *projectHandler) FindAllProjects(c *gin.Context) {
+	var query FindAllProjectsQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
 		err = misc.WrapError(err, errs.NewBadRequestError("unable to parse request", map[string]string{"details": err.Error()}))
 		httpresponse.Error(c, err)
@@ -72,7 +72,7 @@ func (h *userHandler) FindAllUsers(c *gin.Context) {
 		}
 	}
 
-	users, err := h.userUsecase.FindAllUsers(c.Request.Context(), userUsecase.FindAllUsersInput{
+	projects, err := h.projectUsecase.FindAllProjects(c.Request.Context(), projectUsecase.FindAllProjectsInput{
 		StartDate: query.StartDate,
 		EndDate:   query.EndDate,
 		Limit:     limit,
@@ -85,20 +85,20 @@ func (h *userHandler) FindAllUsers(c *gin.Context) {
 		return
 	}
 
-	httpresponse.SuccessWithMetadata(c, h.newFindAllUsersResponse(users.GetData()), httpresponse.PaginationMetadata{Pagination: users.GetPagination()})
+	httpresponse.SuccessWithMetadata(c, h.newFindAllProjectsResponse(projects.GetData()), httpresponse.PaginationMetadata{Pagination: projects.GetPagination()})
 }
 
-func (h *userHandler) newFindAllUsersResponse(users entity.Users) []findAllUsersResponse {
-	if len(users) == 0 {
-		return []findAllUsersResponse{}
+func (h *projectHandler) newFindAllProjectsResponse(projects entity.Projects) []findAllProjectsResponse {
+	if len(projects) == 0 {
+		return []findAllProjectsResponse{}
 	}
 
 	response := make([]findAllUsersResponse, 0, len(users))
 	for _, user := range users {
-		response = append(response, findAllUsersResponse{
-			ID:    user.ID.String(),
-			Name:  user.Name,
-			Email: user.Email,
+		response = append(response, findAllProjectsResponse{
+			ID:    project.ID.String(),
+			Name:  project.Name,
+			Email: project.Email,
 		})
 	}
 	return response

@@ -3,7 +3,7 @@ package handler
 import (
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/domain/errs"
-	userUsecase "devhub-backend/internal/usecase/user"
+	projectUsecase "devhub-backend/internal/usecase/project"
 	"devhub-backend/internal/util/httpresponse"
 	"devhub-backend/internal/util/misc"
 	"net/http"
@@ -11,12 +11,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type updateUserRequest struct {
-	Name *string `json:"name" example:"User Name" binding:"required"`
+type updateProjectRequest struct {
+	Name *string `json:"name" example:"Project Name" binding:"required"`
 	Role *string `json:"role" example:"user" binding:"required" validate:"oneof=admin user"`
 }
 
-type updateUserResponse struct {
+type updateProjectResponse struct {
 	ID    string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	Name  string `json:"name" example:"User Name"`
 	Email string `json:"email" example:"user@example.com"`
@@ -27,14 +27,14 @@ type updateUserResponse struct {
 // @Tags			User
 // @Accept			json
 // @Produce		json
-// @Param			request	body		updateUserRequest													true	"User update input"
-// @Success		200		{object}	httpresponse.SuccessResponse{data=updateUserResponse,metadata=nil}	    "User updated"
+// @Param			request	body		updateProjectRequest													true	"Project update input"
+// @Success		200		{object}	httpresponse.SuccessResponse{data=updateProjectResponse,metadata=nil}	    "Project updated"
 // @Failure		400		{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
 // @Failure		500		{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
-// @Router			/users/{id} [patch]
-func (h *userHandler) UpdateUser(c *gin.Context) {
-	userID := c.Param("id")
-	var input updateUserRequest
+// @Router			/projects/{project} [patch]
+func (h *projectHandler) UpdateProject(c *gin.Context) {
+	projectID := c.Param("project")
+	var input updateProjectRequest
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		err = misc.WrapError(err, errs.NewBadRequestError("unable to parse request", map[string]string{"details": err.Error()}))
@@ -42,8 +42,8 @@ func (h *userHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	updatedUser, err := h.userUsecase.UpdateUser(c.Request.Context(), userUsecase.UpdateUserInput{
-		ID:   userID,
+	updatedProject, err := h.projectUsecase.UpdateProject(c.Request.Context(), projectUsecase.UpdateProjectInput{
+		ID:   projectID,
 		Name: input.Name,
 		Role: input.Role,
 	})
@@ -53,17 +53,17 @@ func (h *userHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	httpresponse.SuccessWithStatus(c, http.StatusOK, h.newUpdateUserResponse(updatedUser))
+	httpresponse.SuccessWithStatus(c, http.StatusOK, h.newUpdateProjectResponse(updatedProject))
 }
 
-func (h *userHandler) newUpdateUserResponse(user *entity.User) updateUserResponse {
-	if user == nil {
-		return updateUserResponse{}
+func (h *projectHandler) newUpdateProjectResponse(project *entity.Project) updateProjectResponse {
+	if project == nil {
+		return updateProjectResponse{}
 	}
 
-	return updateUserResponse{
-		ID:    user.ID.String(),
-		Name:  user.Name,
-		Email: user.Email,
+	return updateProjectResponse{
+		ID:    project.ID.String(),
+		Name:  project.Name,
+		Email: project.Email,
 	}
 }

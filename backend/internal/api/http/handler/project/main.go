@@ -2,27 +2,27 @@ package handler
 
 import (
 	"devhub-backend/internal/config"
-	userUsecase "devhub-backend/internal/usecase/user"
+	projectUsecase "devhub-backend/internal/usecase/project"
 
 	"github.com/gin-gonic/gin"
 )
 
-type UserHandler interface {
-	CreateUser(c *gin.Context)
-	FindUserByID(c *gin.Context)
-	FindAllUsers(c *gin.Context)
-	UpdateUser(c *gin.Context)
-	DeleteUser(c *gin.Context)
+type ProjectHandler interface {
+	CreateProject(c *gin.Context)
+	FindProjectByID(c *gin.Context)
+	FindAllProjects(c *gin.Context)
+	UpdateProject(c *gin.Context)
+	DeleteProject(c *gin.Context)
 }
 
-type userHandler struct {
-	appConfig   config.AppConfig
-	userUsecase userUsecase.UserUsecase
+type projectHandler struct {
+	appConfig      config.AppConfig
+	projectUsecase projectUsecase.ProjectUsecase
 }
 
-func NewUserHandler(appConfig config.AppConfig, userUsecase userUsecase.UserUsecase) UserHandler {
-	return &userHandler{
-		appConfig:   appConfig,
-		userUsecase: userUsecase,
+func NewProjectHandler(appConfig config.AppConfig, projectUsecase projectUsecase.ProjectUsecase) ProjectHandler {
+	return &projectHandler{
+		appConfig:      appConfig,
+		projectUsecase: projectUsecase,
 	}
 }

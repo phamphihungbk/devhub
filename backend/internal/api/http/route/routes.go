@@ -22,20 +22,20 @@ type router struct {
 	Middleware             middleware.Middleware                         // Middleware for handling requests
 	UserHandler            userHandler.UserHandler                       // Handler for user routes
 	AuthHandler            authHandler.AuthHandler                       // Handler for auth routes
-	ScaffoldRequestHandler scaffoldRequestHandler.ScaffoldRequestHandler // Handler for scaffold request routes
 	PluginHandler          pluginHandler.PluginHandler                   // Handler for plugin request routes
 	DeploymentHandler      deploymentHandler.DeploymentHandler           // Handler for deployment routes
 	ProjectHandler         projectHandler.ProjectHandler                 // Handler for project routes
+	ScaffoldRequestHandler scaffoldRequestHandler.ScaffoldRequestHandler // Handler for scaffold request routes
 }
 
 type Dependency struct {
 	Middleware             middleware.Middleware
 	UserHandler            userHandler.UserHandler
 	AuthHandler            authHandler.AuthHandler
-	ScaffoldRequestHandler scaffoldRequestHandler.ScaffoldRequestHandler
 	PluginHandler          pluginHandler.PluginHandler
 	DeploymentHandler      deploymentHandler.DeploymentHandler
 	ProjectHandler         projectHandler.ProjectHandler
+	ScaffoldRequestHandler scaffoldRequestHandler.ScaffoldRequestHandler
 }
 
 func NewHTTPRoutes(cfg config.AppConfig, dep Dependency) Router {

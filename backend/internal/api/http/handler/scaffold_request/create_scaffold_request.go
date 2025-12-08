@@ -41,7 +41,7 @@ type createScaffoldRequestResponse struct {
 // @Success		201		{object}	httpresponse.SuccessResponse{data=createScaffoldRequestResponse,metadata=nil}	"Scaffold request created"
 // @Failure		400		{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
 // @Failure		500		{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
-// @Router			/projects/:project/scaffold_requests [post]
+// @Router			/projects/{project}/scaffold_requests [post]
 func (h *scaffoldRequestHandler) CreateScaffoldRequest(c *gin.Context) {
 	projectID := c.Param("project")
 	var input createScaffoldRequest

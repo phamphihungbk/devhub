@@ -2,25 +2,25 @@ package handler
 
 import (
 	"devhub-backend/internal/config"
-	projectUsecase "devhub-backend/internal/usecase/project"
+	pluginUsecase "devhub-backend/internal/usecase/plugin"
 
 	"github.com/gin-gonic/gin"
 )
 
-type ProjectHandler interface {
-	CreateProject(c *gin.Context)
-	FindProjectByID(c *gin.Context)
-	FindAllProjects(c *gin.Context)
-	UpdateProject(c *gin.Context)
-	DeleteProject(c *gin.Context)
+type PluginHandler interface {
+	CreatePlugin(c *gin.Context)
+	FindPluginByID(c *gin.Context)
+	FindAllPlugins(c *gin.Context)
+	UpdatePlugin(c *gin.Context)
+	DeletePlugin(c *gin.Context)
 }
 
-type projectHandler struct {
-	appConfig      config.AppConfig
-	projectUsecase projectUsecase.ProjectUsecase
+type pluginHandler struct {
+	appConfig     config.AppConfig
+	pluginUsecase pluginUsecase.PluginUsecase
 }
 
-func NewProjectHandler(appConfig config.AppConfig, projectUsecase projectUsecase.ProjectUsecase) ProjectHandler {
+func NewPluginHandler(appConfig config.AppConfig, pluginUsecase pluginUsecase.PluginUsecase) PluginHandler {
 	return &projectHandler{
 		appConfig:      appConfig,
 		projectUsecase: projectUsecase,

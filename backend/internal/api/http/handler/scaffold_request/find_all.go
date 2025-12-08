@@ -42,7 +42,7 @@ type findAllScaffoldRequestsResponse struct {
 // @Success		200			{object}	httpresponse.SuccessResponse{data=[]findAllScaffoldRequestsResponse,metadata=httpresponse.PaginationMetadata}	"List of scaffold requests with pagination details"
 // @Failure		400			{object}	httpresponse.ErrorResponse{data=nil}																	"Bad request"
 // @Failure		500			{object}	httpresponse.ErrorResponse{data=nil}																	"Internal server error"
-// @Router			/projects/:project/scaffold_requests [get]
+// @Router			/projects/{project}/scaffold_requests [get]
 func (h *scaffoldRequestHandler) FindAllScaffoldRequests(c *gin.Context) {
 	projectID := c.Param("project")
 

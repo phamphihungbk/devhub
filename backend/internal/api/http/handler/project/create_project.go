@@ -12,16 +12,15 @@ import (
 )
 
 type createProjectRequest struct {
-	Name         string   `json:"name" example:"Project Name" binding:"required"`
-	Description  string   `json:"description" example:"Project Description" binding:"required"`
-	Environments []string `json:"environments" example:"[prod,dev,staging]" binding:"required,dive,required"`
+	Name  string `json:"name" example:"Project Name" binding:"required"`
+	Email string `json:"email" example:"user@example.com" binding:"required,email"`
+	Role  string `json:"role" example:"user" binding:"required" validate:"oneof=admin user"`
 }
 
 type createProjectResponse struct {
-	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name         string   `json:"name" example:"Project Name"`
-	Description  string   `json:"description" example:"Project Description"`
-	Environments []string `json:"environments" example:"[prod,dev,staging]"`
+	ID    string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name  string `json:"name" example:"Project Name"`
+	Email string `json:"email" example:"user@example.com"`
 }
 
 // @Summary		Create Project
@@ -44,9 +43,9 @@ func (h *projectHandler) CreateProject(c *gin.Context) {
 	}
 
 	createdProject, err := h.projectUsecase.CreateProject(c.Request.Context(), projectUsecase.CreateProjectInput{
-		Name:         input.Name,
-		Description:  input.Description,
-		Environments: input.Environments,
+		Name:  input.Name,
+		Email: input.Email,
+		Role:  input.Role,
 	})
 
 	if err != nil {
@@ -63,8 +62,8 @@ func (h *projectHandler) newCreateProjectResponse(project *entity.Project) creat
 	}
 
 	return createProjectResponse{
-		ID:          project.ID.String(),
-		Name:        project.Name,
-		Description: project.Description,
+		ID:    project.ID.String(),
+		Name:  project.Name,
+		Email: project.Email,
 	}
 }

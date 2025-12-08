@@ -17,7 +17,7 @@ import (
 // @Failure		400	{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
 // @Failure		404	{object}	httpresponse.ErrorResponse{data=nil}									"Scaffold Request not found"
 // @Failure		500	{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
-// @Router			/scaffold-requests/:scaffold-request [delete]
+// @Router			/scaffold-requests/{scaffold-request} [delete]
 func (h *scaffoldRequestHandler) DeleteScaffoldRequest(c *gin.Context) {
 	scaffoldRequestID := c.Param("scaffold-request")
 	_, err := h.scaffoldRequestUsecase.DeleteScaffoldRequest(c.Request.Context(), scaffoldRequestUsecase.DeleteScaffoldRequestInput{

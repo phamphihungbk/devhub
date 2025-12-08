@@ -34,7 +34,7 @@ type createDeploymentResponse struct {
 // @Failure		400		{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
 // @Failure		500		{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
 // @Router			/projects/:project/deployment [post]
-func (h *projectHandler) CreateDeployment(c *gin.Context) {
+func (h *deploymentHandler) CreateDeployment(c *gin.Context) {
 	projectID := c.Param("project")
 	var input createDeploymentRequest
 
@@ -59,7 +59,7 @@ func (h *projectHandler) CreateDeployment(c *gin.Context) {
 	httpresponse.SuccessWithStatus(c, http.StatusCreated, h.newCreateDeploymentResponse(createdDeployment))
 }
 
-func (h *projectHandler) newCreateDeploymentResponse(deployment *entity.Deployment) createDeploymentResponse {
+func (h *deploymentHandler) newCreateDeploymentResponse(deployment *entity.Deployment) createDeploymentResponse {
 	if deployment == nil {
 		return createDeploymentResponse{}
 	}

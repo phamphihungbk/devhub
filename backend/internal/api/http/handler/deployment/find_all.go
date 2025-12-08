@@ -3,7 +3,7 @@ package handler
 import (
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/domain/errs"
-	projectUsecase "devhub-backend/internal/usecase/project"
+	deploymentUsecase "devhub-backend/internal/usecase/deployment"
 	"devhub-backend/internal/util/httpresponse"
 	"devhub-backend/internal/util/misc"
 	"time"
@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type FindAllProjectsQuery struct {
+type FindAllDeploymentsQuery struct {
 	StartDate *time.Time `form:"startDate" time_format:"2006-01-02" time_location:"Asia/Bangkok"`
 	EndDate   *time.Time `form:"endDate" time_format:"2006-01-02" time_location:"Asia/Bangkok"`
 	Limit     *int64     `form:"limit"`
@@ -20,14 +20,14 @@ type FindAllProjectsQuery struct {
 	SortOrder *string    `form:"sortOrder"`
 }
 
-type findAllProjectsResponse struct {
+type findAllDeploymentsResponse struct {
 	ID   string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	Name string `json:"name" example:"Project Name"`
 }
 
-// @Summary		List Projects
-// @Description	List all projects, filterable by date range and venue
-// @Tags			Project
+// @Summary		List Deployments
+// @Description	List all deployments, filterable by date range and venue
+// @Tags			Deployment
 // @Produce		json
 // @Param			startDate	query		string																									false	"Start date (format: 2006-01-02) (UTC+7)"
 // @Param			endDate		query		string																									false	"End date (format: 2006-01-02) (UTC+7)"
@@ -36,12 +36,12 @@ type findAllProjectsResponse struct {
 // @Param			offset		query		int64																									false	"Number of results to skip (default: 0)"
 // @Param			sortBy		query		string																									false	"Field to sort by (default: date) (options: date, name, venue)"
 // @Param			sortOrder	query		string																									false	"Sort order (default: asc) (options: asc, desc)"
-// @Success		200			{object}	httpresponse.SuccessResponse{data=[]findAllConcertsResponse,metadata=httpresponse.PaginationMetadata}	"List of concerts with pagination details"
+// @Success		200			{object}	httpresponse.SuccessResponse{data=[]findAllDeploymentsResponse,metadata=httpresponse.PaginationMetadata}	"List of deployments with pagination details"
 // @Failure		400			{object}	httpresponse.ErrorResponse{data=nil}																	"Bad request"
 // @Failure		500			{object}	httpresponse.ErrorResponse{data=nil}																	"Internal server error"
 // @Router			/projects/:project/deployment [get]
-func (h *projectHandler) FindAllProjects(c *gin.Context) {
-	var query FindAllProjectsQuery
+func (h *deploymentHandler) FindAllDeployments(c *gin.Context) {
+	var query FindAllDeploymentsQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
 		err = misc.WrapError(err, errs.NewBadRequestError("unable to parse request", map[string]string{"details": err.Error()}))
 		httpresponse.Error(c, err)
@@ -71,7 +71,7 @@ func (h *projectHandler) FindAllProjects(c *gin.Context) {
 		}
 	}
 
-	projects, err := h.projectUsecase.FindAllProjects(c.Request.Context(), projectUsecase.FindAllProjectsInput{
+	deployments, err := h.deploymentUsecase.FindAllDeployments(c.Request.Context(), deploymentUsecase.FindAllDeploymentsInput{
 		StartDate: query.StartDate,
 		EndDate:   query.EndDate,
 		Limit:     limit,
@@ -84,19 +84,19 @@ func (h *projectHandler) FindAllProjects(c *gin.Context) {
 		return
 	}
 
-	httpresponse.SuccessWithMetadata(c, h.newFindAllProjectsResponse(projects.GetData()), httpresponse.PaginationMetadata{Pagination: projects.GetPagination()})
+	httpresponse.SuccessWithMetadata(c, h.newFindAllDeploymentsResponse(deployments.GetData()), httpresponse.PaginationMetadata{Pagination: deployments.GetPagination()})
 }
 
-func (h *projectHandler) newFindAllProjectsResponse(projects entity.Projects) []findAllProjectsResponse {
-	if len(projects) == 0 {
-		return []findAllProjectsResponse{}
+func (h *deploymentHandler) newFindAllDeploymentsResponse(deployments entity.Deployments) []findAllDeploymentsResponse {
+	if len(deployments) == 0 {
+		return []findAllDeploymentsResponse{}
 	}
 
-	response := make([]findAllProjectsResponse, 0, len(projects))
-	for _, project := range projects {
-		response = append(response, findAllProjectsResponse{
-			ID:   project.ID.String(),
-			Name: project.Name,
+	response := make([]findAllDeploymentsResponse, 0, len(deployments))
+	for _, deployment := range deployments {
+		response = append(response, findAllDeploymentsResponse{
+			ID:   deployment.ID.String(),
+			Name: deployment.Name,
 		})
 	}
 	return response

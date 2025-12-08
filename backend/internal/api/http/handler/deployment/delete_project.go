@@ -3,25 +3,25 @@ package handler
 import (
 	"devhub-backend/internal/util/httpresponse"
 
-	projectUsecase "devhub-backend/internal/usecase/project"
+	deploymentUsecase "devhub-backend/internal/usecase/deployment"
 
 	"github.com/gin-gonic/gin"
 )
 
-// @Summary		Delete Project by ID
-// @Description	Delete a project by its ID
-// @Tags			Project
+// @Summary		Delete Deployment by ID
+// @Description	Delete a deployment by its ID
+// @Tags			Deployment
 // @Produce		json
-// @Param			id	path		string																	true	"Project ID"
-// @Success		200	{object}	httpresponse.SuccessResponse{data=nil,metadata=nil}	"Project deleted"
+// @Param			id	path		string																	true	"Deployment ID"
+// @Success		200	{object}	httpresponse.SuccessResponse{data=nil,metadata=nil}	"Deployment deleted"
 // @Failure		400	{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
-// @Failure		404	{object}	httpresponse.ErrorResponse{data=nil}									"Project not found"
+// @Failure		404	{object}	httpresponse.ErrorResponse{data=nil}									"Deployment not found"
 // @Failure		500	{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
-// @Router			/projects/{id} [delete]
-func (h *projectHandler) DeleteProject(c *gin.Context) {
-	projectID := c.Param("id")
-	_, err := h.projectUsecase.DeleteProject(c.Request.Context(), projectUsecase.DeleteProjectInput{
-		ID: projectID,
+// @Router			/deployments/{id} [delete]
+func (h *deploymentHandler) DeleteDeployment(c *gin.Context) {
+	deploymentID := c.Param("id")
+	_, err := h.deploymentUsecase.DeleteDeployment(c.Request.Context(), deploymentUsecase.DeleteDeploymentInput{
+		ID: deploymentID,
 	})
 	if err != nil {
 		httpresponse.Error(c, err)

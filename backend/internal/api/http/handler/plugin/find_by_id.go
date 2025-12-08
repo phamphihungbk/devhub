@@ -4,55 +4,55 @@ import (
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/util/httpresponse"
 
-	projectUsecase "devhub-backend/internal/usecase/project"
+	pluginUsecase "devhub-backend/internal/usecase/plugin"
 
 	"github.com/gin-gonic/gin"
 )
 
-type findOneProjectResponse struct {
+type findOnePluginResponse struct {
 	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name         string   `json:"name" example:"Project Name"`
-	Description  string   `json:"description" example:"Project Description"`
+	Name         string   `json:"name" example:"Plugin Name"`
+	Description  string   `json:"description" example:"Plugin Description"`
 	Environments []string `json:"environments" example:"[prod,dev,staging]"`
 }
 
-// @Summary		Find Project by ID
-// @Description	Retrieve project details by its ID
-// @Tags			Project
+// @Summary		Find Plugin by ID
+// @Description	Retrieve plugin details by its ID
+// @Tags			Plugin
 // @Produce		json
-// @Param			id	path		string																	true	"Project ID"
-// @Success		200	{object}	httpresponse.SuccessResponse{data=findOneProjectResponse,metadata=nil}	"Project found"
+// @Param			plugin	path		string																	true	"Plugin ID"
+// @Success		200	{object}	httpresponse.SuccessResponse{data=findOnePluginResponse,metadata=nil}	"Plugin found"
 // @Failure		400	{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
-// @Failure		404	{object}	httpresponse.ErrorResponse{data=nil}									"Project not found"
+// @Failure		404	{object}	httpresponse.ErrorResponse{data=nil}									"Plugin not found"
 // @Failure		500	{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
-// @Router			/projects/{id} [get]
-func (h *projectHandler) FindProjectByID(c *gin.Context) {
-	projectID := c.Param("id")
-	project, err := h.projectUsecase.FindOneProject(c.Request.Context(), projectUsecase.FindOneProjectInput{
-		ID: projectID,
+// @Router			/plugins/{plugin} [get]
+func (h *pluginHandler) FindPluginByID(c *gin.Context) {
+	pluginID := c.Param("plugin")
+	plugin, err := h.pluginUsecase.FindOnePlugin(c.Request.Context(), pluginUsecase.FindOnePluginInput{
+		ID: pluginID,
 	})
 	if err != nil {
 		httpresponse.Error(c, err)
 		return
 	}
 
-	httpresponse.Success(c, h.newFindOneProjectResponse(project))
+	httpresponse.Success(c, h.newFindOnePluginResponse(plugin))
 }
 
-func (h *projectHandler) newFindOneProjectResponse(project *entity.Project) findOneProjectResponse {
-	if project == nil {
-		return findOneProjectResponse{}
+func (h *pluginHandler) newFindOnePluginResponse(plugin *entity.Plugin) findOnePluginResponse {
+	if plugin == nil {
+		return findOnePluginResponse{}
 	}
 
-	environments := make([]string, len(project.Environments))
-	for i, env := range project.Environments {
+	environments := make([]string, len(plugin.Environments))
+	for i, env := range plugin.Environments {
 		environments[i] = string(env)
 	}
 
-	return findOneProjectResponse{
-		ID:           project.ID.String(),
-		Name:         project.Name,
-		Description:  project.Description,
+	return findOnePluginResponse{
+		ID:           plugin.ID.String(),
+		Name:         plugin.Name,
+		Description:  plugin.Description,
 		Environments: environments,
 	}
 }
