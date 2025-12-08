@@ -8,16 +8,16 @@ import (
 	"devhub-backend/internal/util/misc"
 
 	"devhub-backend/pkg/validator"
+
+	"github.com/google/uuid"
 )
 
-type CreateUserInput struct {
-	Name  string `json:"name" validate:"required,min=2,max=100"`
-	Email string `json:"email" validate:"required,email"`
-	Role  string `json:"role" validate:"required,oneof=admin user"`
+type DeleteDeploymentInput struct {
+	ID string `json:"id" validate:"required,uuid"`
 }
 
-func (u *userUsecase) CreateUser(ctx context.Context, input CreateUserInput) (user *entity.User, err error) {
-	const errLocation = "[usecase user/create_user CreateUser] "
+func (u *deploymentUsecase) DeleteDeployment(ctx context.Context, input DeleteDeploymentInput) (deployment *entity.Deployment, err error) {
+	const errLocation = "[usecase deployment/delete_deployment DeleteDeployment] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
 	// Create a new validator instance
@@ -35,16 +35,15 @@ func (u *userUsecase) CreateUser(ctx context.Context, input CreateUserInput) (us
 		return nil, misc.WrapError(err, errs.NewBadRequestError("the request is invalid", map[string]string{"details": err.Error()}))
 	}
 
-	user = &entity.User{
-		Name:  input.Name,
-		Email: input.Email,
-		Role:  entity.UserRole(input.Role),
-	}
-
-	created, err := u.userRepository.CreateOne(ctx, user)
+	deploymentID, err := uuid.Parse(input.ID)
 	if err != nil {
-		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to create user", nil))
+		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid deployment ID", nil))
 	}
 
-	return created, nil
+	deleted, err := u.deploymentRepository.DeleteOne(ctx, deploymentID)
+	if err != nil {
+		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to delete deployment", nil))
+	}
+
+	return deleted, nil
 }

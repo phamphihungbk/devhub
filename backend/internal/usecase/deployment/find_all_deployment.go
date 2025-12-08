@@ -11,7 +11,7 @@ import (
 	"devhub-backend/pkg/validator"
 )
 
-type FindAllUsersInput struct {
+type FindAllDeploymentsInput struct {
 	StartDate *time.Time        `json:"start_date" validate:"omitempty"`
 	EndDate   *time.Time        `json:"end_date" validate:"omitempty,gtfield=StartDate"`
 	Venue     *string           `json:"venue" validate:"omitempty,gt=0"`
@@ -21,8 +21,8 @@ type FindAllUsersInput struct {
 	SortOrder *entity.SortOrder `json:"sort_order" validate:"omitempty,oneof=asc desc"`
 }
 
-func (u *userUsecase) FindAllUsers(ctx context.Context, input FindAllUsersInput) (users entity.Page[entity.User], err error) {
-	const errLocation = "[usecase user/find_all_user FindAllUsers] "
+func (u *deploymentUsecase) FindAllDeployments(ctx context.Context, input FindAllDeploymentsInput) (deployments entity.Page[entity.Deployment], err error) {
+	const errLocation = "[usecase deployment/find_all_deployment FindAllDeployments] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
 	// Create a new validator instance
@@ -40,13 +40,13 @@ func (u *userUsecase) FindAllUsers(ctx context.Context, input FindAllUsersInput)
 		return nil, misc.WrapError(err, errs.NewBadRequestError("the request is invalid", map[string]string{"details": err.Error()}))
 	}
 
-	return entity.NewPage(u.findAllUsers(ctx, input))
+	return entity.NewPage(u.findAllDeployments(ctx, input))
 }
 
-func (u *userUsecase) findAllUsers(ctx context.Context, input FindAllUsersInput) entity.PageProvider[entity.User] {
-	return func() ([]entity.User, entity.PageProvider[entity.User], entity.Pagination, error) {
-		// Fetch all users with optional filters
-		users, count, err := u.userRepository.FindAll(ctx, repository.FindAllUsersFilter{
+func (u *deploymentUsecase) findAllDeployments(ctx context.Context, input FindAllDeploymentsInput) entity.PageProvider[entity.Deployment] {
+	return func() ([]entity.Deployment, entity.PageProvider[entity.Deployment], entity.Pagination, error) {
+		// Fetch all deployments with optional filters
+		deployments, count, err := u.deploymentRepository.FindAll(ctx, repository.FindAllDeploymentsFilter{
 			StartDate: input.StartDate,
 			EndDate:   input.EndDate,
 			Limit:     input.Limit,
@@ -56,16 +56,16 @@ func (u *userUsecase) findAllUsers(ctx context.Context, input FindAllUsersInput)
 		})
 
 		if err != nil {
-			return entity.Users{}, nil, entity.Pagination{}, errs.NewInternalServerError("failed to fetch users", nil)
+			return entity.Deployments{}, nil, entity.Pagination{}, errs.NewInternalServerError("failed to fetch deployments", nil)
 		}
 
-		if users == nil || len(misc.GetValue(users)) == 0 {
-			return entity.Users{}, nil, entity.Pagination{}, nil
+		if deployments == nil || len(misc.GetValue(deployments)) == 0 {
+			return entity.Deployments{}, nil, entity.Pagination{}, nil
 		}
 
 		// Create pagination and next search criteria
 		pagination := entity.NewPagination(count, misc.GetValue(input.Limit), misc.GetValue(input.Offset))
-		nextSearchCriteria := FindAllUsersInput{
+		nextSearchCriteria := FindAllDeploymentsInput{
 			StartDate: input.StartDate,
 			EndDate:   input.EndDate,
 			Limit:     input.Limit,
@@ -73,6 +73,6 @@ func (u *userUsecase) findAllUsers(ctx context.Context, input FindAllUsersInput)
 			SortBy:    input.SortBy,
 			SortOrder: input.SortOrder,
 		}
-		return misc.GetValue(users), u.findAllUsers(ctx, nextSearchCriteria), pagination, nil
+		return misc.GetValue(deployments), u.findAllDeployments(ctx, nextSearchCriteria), pagination, nil
 	}
 }

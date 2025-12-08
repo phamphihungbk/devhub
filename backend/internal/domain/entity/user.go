@@ -19,7 +19,7 @@ type User struct {
 	Email     string
 	Role      UserRole
 	CreatedAt time.Time
-	LastLogin time.Time
+	UpdatedAt time.Time
 	DeletedAt time.Time
 }
 

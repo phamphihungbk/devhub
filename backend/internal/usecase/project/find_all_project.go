@@ -11,7 +11,7 @@ import (
 	"devhub-backend/pkg/validator"
 )
 
-type FindAllUsersInput struct {
+type FindAllProjectsInput struct {
 	StartDate *time.Time        `json:"start_date" validate:"omitempty"`
 	EndDate   *time.Time        `json:"end_date" validate:"omitempty,gtfield=StartDate"`
 	Venue     *string           `json:"venue" validate:"omitempty,gt=0"`
@@ -21,8 +21,8 @@ type FindAllUsersInput struct {
 	SortOrder *entity.SortOrder `json:"sort_order" validate:"omitempty,oneof=asc desc"`
 }
 
-func (u *userUsecase) FindAllUsers(ctx context.Context, input FindAllUsersInput) (users entity.Page[entity.User], err error) {
-	const errLocation = "[usecase user/find_all_user FindAllUsers] "
+func (u *projectUsecase) FindAllProjects(ctx context.Context, input FindAllProjectsInput) (projects entity.Page[entity.Project], err error) {
+	const errLocation = "[usecase project/find_all_project FindAllProjects] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
 	// Create a new validator instance
@@ -40,13 +40,13 @@ func (u *userUsecase) FindAllUsers(ctx context.Context, input FindAllUsersInput)
 		return nil, misc.WrapError(err, errs.NewBadRequestError("the request is invalid", map[string]string{"details": err.Error()}))
 	}
 
-	return entity.NewPage(u.findAllUsers(ctx, input))
+	return entity.NewPage(u.findAllProjects(ctx, input))
 }
 
-func (u *userUsecase) findAllUsers(ctx context.Context, input FindAllUsersInput) entity.PageProvider[entity.User] {
-	return func() ([]entity.User, entity.PageProvider[entity.User], entity.Pagination, error) {
-		// Fetch all users with optional filters
-		users, count, err := u.userRepository.FindAll(ctx, repository.FindAllUsersFilter{
+func (u *projectUsecase) findAllProjects(ctx context.Context, input FindAllProjectsInput) entity.PageProvider[entity.Project] {
+	return func() ([]entity.Project, entity.PageProvider[entity.Project], entity.Pagination, error) {
+		// Fetch all projects with optional filters
+		projects, count, err := u.projectRepository.FindAll(ctx, repository.FindAllProjectsFilter{
 			StartDate: input.StartDate,
 			EndDate:   input.EndDate,
 			Limit:     input.Limit,
@@ -56,16 +56,16 @@ func (u *userUsecase) findAllUsers(ctx context.Context, input FindAllUsersInput)
 		})
 
 		if err != nil {
-			return entity.Users{}, nil, entity.Pagination{}, errs.NewInternalServerError("failed to fetch users", nil)
+			return entity.Projects{}, nil, entity.Pagination{}, errs.NewInternalServerError("failed to fetch projects", nil)
 		}
 
-		if users == nil || len(misc.GetValue(users)) == 0 {
-			return entity.Users{}, nil, entity.Pagination{}, nil
+		if projects == nil || len(misc.GetValue(projects)) == 0 {
+			return entity.Projects{}, nil, entity.Pagination{}, nil
 		}
 
 		// Create pagination and next search criteria
 		pagination := entity.NewPagination(count, misc.GetValue(input.Limit), misc.GetValue(input.Offset))
-		nextSearchCriteria := FindAllUsersInput{
+		nextSearchCriteria := FindAllProjectsInput{
 			StartDate: input.StartDate,
 			EndDate:   input.EndDate,
 			Limit:     input.Limit,
@@ -73,6 +73,6 @@ func (u *userUsecase) findAllUsers(ctx context.Context, input FindAllUsersInput)
 			SortBy:    input.SortBy,
 			SortOrder: input.SortOrder,
 		}
-		return misc.GetValue(users), u.findAllUsers(ctx, nextSearchCriteria), pagination, nil
+		return misc.GetValue(projects), u.findAllProjects(ctx, nextSearchCriteria), pagination, nil
 	}
 }

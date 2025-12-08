@@ -27,13 +27,14 @@ type updateUserResponse struct {
 // @Tags			User
 // @Accept			json
 // @Produce		json
+// @Param			user	path		string
 // @Param			request	body		updateUserRequest													true	"User update input"
 // @Success		200		{object}	httpresponse.SuccessResponse{data=updateUserResponse,metadata=nil}	    "User updated"
 // @Failure		400		{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
 // @Failure		500		{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
-// @Router			/users/{id} [patch]
+// @Router			/users/{user} [patch]
 func (h *userHandler) UpdateUser(c *gin.Context) {
-	userID := c.Param("id")
+	userID := c.Param("user")
 	var input updateUserRequest
 
 	if err := c.ShouldBindJSON(&input); err != nil {

@@ -5,11 +5,24 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
+	authHandler "devhub-backend/internal/api/http/handler/auth"
+	deploymentHandler "devhub-backend/internal/api/http/handler/deployment"
+	pluginHandler "devhub-backend/internal/api/http/handler/plugin"
+	projectHandler "devhub-backend/internal/api/http/handler/project"
+	scaffoldRequestHandler "devhub-backend/internal/api/http/handler/scaffold_request"
 	userHandler "devhub-backend/internal/api/http/handler/user"
 	"devhub-backend/internal/api/http/middleware"
 	httproute "devhub-backend/internal/api/http/route"
+	dbDeploymentRepo "devhub-backend/internal/infra/db/repository/deployment"
+	dbPluginRepo "devhub-backend/internal/infra/db/repository/plugin"
+	dbProjectRepo "devhub-backend/internal/infra/db/repository/project"
+	dbScaffoldRequestRepo "devhub-backend/internal/infra/db/repository/scaffold_request"
 	dbUserRepo "devhub-backend/internal/infra/db/repository/user"
 	"devhub-backend/internal/infra/logger"
+	deploymentUsecase "devhub-backend/internal/usecase/deployment"
+	pluginUsecase "devhub-backend/internal/usecase/plugin"
+	projectUsecase "devhub-backend/internal/usecase/project"
+	scaffoldRequestUsecase "devhub-backend/internal/usecase/scaffold_request"
 	userUsecase "devhub-backend/internal/usecase/user"
 )
 
@@ -20,10 +33,10 @@ func (s *Server) setupRouteDependencies(ctx context.Context, appLogger logger.Lo
 
 	// DB Repositories
 	dbUserRepo := dbUserRepo.NewUserRepository(dbConn)
-	// concertRepo := concertRepo.NewConcertRepository(dbConn)
-	// zoneRepo := zonerepo.NewZoneRepository(dbConn)
-	// seatRepo := seatRepo.NewSeatRepository(dbConn)
-	// reservationRepo := reservationRepo.NewReservationRepository(dbConn)
+	dbProjectRepo := dbProjectRepo.NewProjectRepository(dbConn)
+	dbDeploymentRepo := dbDeploymentRepo.NewDeploymentRepository(dbConn)
+	dbPluginRepo := dbPluginRepo.NewPluginRepository(dbConn)
+	dbScaffoldRequestRepo := dbScaffoldRequestRepo.NewScaffoldRequestRepository(dbConn)
 
 	// Query retrier
 	// queryBackoff, _ := retry.NewExponentialBackoffStrategy(500*time.Millisecond, 2.0, 5*time.Second)
@@ -34,24 +47,29 @@ func (s *Server) setupRouteDependencies(ctx context.Context, appLogger logger.Lo
 
 	// Usecases
 	userUsecase := userUsecase.NewUserUsecase(s.cfg.App, dbUserRepo)
-	// healthcheckUsecase := healthcheckUsecase.NewHealthCheckUsecase(queryRetrier, dbHealthRepo, redisHealthRepo)
-	// concertUsecase := concertUsecase.NewConcertUsecase(s.cfg.App, transactorFactory, concertRepo)
-	// seatUsecase := seatUsecase.NewSeatUsecase(s.cfg.App, concertRepo, zoneRepo, seatRepo, reservationRepo, transactorFactory, seatLockerRepo, seatMapRepo)
+	projectUsecase := projectUsecase.NewProjectUsecase(s.cfg.App, dbProjectRepo)
+	deploymentUsecase := deploymentUsecase.NewDeploymentUsecase(s.cfg.App, dbDeploymentRepo)
+	pluginUsecase := pluginUsecase.NewPluginUsecase(s.cfg.App, dbPluginRepo)
+	scaffoldRequestUsecase := scaffoldRequestUsecase.NewScaffoldRequestUsecase(s.cfg.App, dbScaffoldRequestRepo)
 
 	// Application middleware
 	appMiddleware := middleware.New()
 
 	// Handlers
 	userHandler := userHandler.NewUserHandler(s.cfg.App, userUsecase)
-	// healthHandler := healthcheckHandler.NewHealthCheckHandler(healthcheckUsecase)
-	// concertHandler := concertHandler.NewConcertHandler(s.cfg.App, concertUsecase)
-	// seatHandler := seatHandler.NewSeatHandler(s.cfg.App, seatUsecase)
+	projectHandler := projectHandler.NewProjectHandler(s.cfg.App, projectUsecase)
+	deploymentHandler := deploymentHandler.NewDeploymentHandler(s.cfg.App, deploymentUsecase)
+	pluginHandler := pluginHandler.NewPluginHandler(s.cfg.App, pluginUsecase)
+	scaffoldRequestHandler := scaffoldRequestHandler.NewScaffoldRequestHandler(s.cfg.App, scaffoldRequestUsecase)
+	authHandler := authHandler.NewAuthHandler(s.cfg.App, userUsecase)
 
 	return httproute.Dependency{
-		Middleware:  appMiddleware,
-		UserHandler: userHandler,
-		// HealthCheckHandler: healthHandler,
-		// ConcertHandler:     concertHandler,
-		// SeatHandler:        seatHandler,
+		Middleware:             appMiddleware,
+		UserHandler:            userHandler,
+		ProjectHandler:         projectHandler,
+		DeploymentHandler:      deploymentHandler,
+		PluginHandler:          pluginHandler,
+		AuthHandler:            authHandler,
+		ScaffoldRequestHandler: scaffoldRequestHandler,
 	}, nil
 }

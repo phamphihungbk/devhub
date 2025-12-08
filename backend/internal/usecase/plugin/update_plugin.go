@@ -13,14 +13,14 @@ import (
 	"github.com/google/uuid"
 )
 
-type UpdateUserInput struct {
+type UpdatePluginInput struct {
 	ID   string  `json:"id" validate:"required,uuid"`
 	Name *string `json:"name" validate:"required,min=2,max=100"`
 	Role *string `json:"role" validate:"required,oneof=admin user"`
 }
 
-func (u *userUsecase) UpdateUser(ctx context.Context, input UpdateUserInput) (user *entity.User, err error) {
-	const errLocation = "[usecase user/update_user UpdateUser] "
+func (u *pluginUsecase) UpdatePlugin(ctx context.Context, input UpdatePluginInput) (plugin *entity.Plugin, err error) {
+	const errLocation = "[usecase plugin/update_plugin UpdatePlugin] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
 	// Create a new validator instance
@@ -38,14 +38,14 @@ func (u *userUsecase) UpdateUser(ctx context.Context, input UpdateUserInput) (us
 		return nil, misc.WrapError(err, errs.NewBadRequestError("the request is invalid", map[string]string{"details": err.Error()}))
 	}
 
-	updated, err := u.userRepository.UpdateOne(ctx, repository.UpdateUserInput{
+	updated, err := u.pluginRepository.UpdateOne(ctx, repository.UpdatePluginInput{
 		ID:   uuid.MustParse(input.ID),
 		Name: input.Name,
 		Role: (*entity.UserRole)(input.Role),
 	})
 
 	if err != nil {
-		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to update user", nil))
+		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to update plugin", nil))
 	}
 
 	return updated, nil

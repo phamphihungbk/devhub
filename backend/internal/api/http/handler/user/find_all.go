@@ -12,8 +12,8 @@ import (
 )
 
 type FindAllUsersQuery struct {
-	StartDate *time.Time `form:"startDate" time_format:"2006-01-02" time_location:"Asia/Bangkok"`
-	EndDate   *time.Time `form:"endDate" time_format:"2006-01-02" time_location:"Asia/Bangkok"`
+	StartDate *time.Time `form:"startDate" time_format:"2006-01-02"`
+	EndDate   *time.Time `form:"endDate" time_format:"2006-01-02"`
 	Limit     *int64     `form:"limit"`
 	Offset    *int64     `form:"offset"`
 	SortBy    *string    `form:"sortBy"`

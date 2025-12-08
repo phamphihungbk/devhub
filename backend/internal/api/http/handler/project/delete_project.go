@@ -12,14 +12,14 @@ import (
 // @Description	Delete a project by its ID
 // @Tags			Project
 // @Produce		json
-// @Param			id	path		string																	true	"Project ID"
+// @Param			project	path		string																	true	"Project ID"
 // @Success		200	{object}	httpresponse.SuccessResponse{data=nil,metadata=nil}	"Project deleted"
 // @Failure		400	{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
 // @Failure		404	{object}	httpresponse.ErrorResponse{data=nil}									"User not found"
 // @Failure		500	{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
-// @Router			/projects/{id} [delete]
+// @Router			/projects/{project} [delete]
 func (h *projectHandler) DeleteProject(c *gin.Context) {
-	projectID := c.Param("id")
+	projectID := c.Param("project")
 	_, err := h.projectUsecase.DeleteProject(c.Request.Context(), projectUsecase.DeleteProjectInput{
 		ID: projectID,
 	})

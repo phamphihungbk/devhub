@@ -12,15 +12,17 @@ import (
 )
 
 type createProjectRequest struct {
-	Name  string `json:"name" example:"Project Name" binding:"required"`
-	Email string `json:"email" example:"user@example.com" binding:"required,email"`
-	Role  string `json:"role" example:"user" binding:"required" validate:"oneof=admin user"`
+	Name         string   `json:"name" example:"Project Name" binding:"required"`
+	Description  string   `json:"description" example:"Project Description" binding:"required"`
+	Environments []string `json:"environments" example:"[development, production]" binding:"required"`
 }
 
 type createProjectResponse struct {
-	ID    string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name  string `json:"name" example:"Project Name"`
-	Email string `json:"email" example:"user@example.com"`
+	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Description  string   `json:"description" example:"Project Description"`
+	Environments []string `json:"environments" example:"[development, production]"`
+	CreatedAt    string   `json:"created_at" example:"2024-01-01T00:00:00Z"`
+	UpdatedAt    string   `json:"updated_at" example:"2024-01-01T00:00:00Z"`
 }
 
 // @Summary		Create Project
@@ -34,6 +36,20 @@ type createProjectResponse struct {
 // @Failure		500		{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
 // @Router			/projects [post]
 func (h *projectHandler) CreateProject(c *gin.Context) {
+	user, exists := c.Get("user")
+
+	if !exists {
+		httpresponse.Error(c, errs.NewBadRequestError("unauthorized", nil))
+		return
+	}
+
+	userEntity, ok := user.(*entity.User)
+
+	if !ok {
+		httpresponse.Error(c, errs.NewBadRequestError("invalid user type", nil))
+		return
+	}
+
 	var input createProjectRequest
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -43,9 +59,10 @@ func (h *projectHandler) CreateProject(c *gin.Context) {
 	}
 
 	createdProject, err := h.projectUsecase.CreateProject(c.Request.Context(), projectUsecase.CreateProjectInput{
-		Name:  input.Name,
-		Email: input.Email,
-		Role:  input.Role,
+		Name:         input.Name,
+		Description:  input.Description,
+		Environments: input.Environments,
+		CreatedBy:    userEntity.ID,
 	})
 
 	if err != nil {
@@ -62,8 +79,11 @@ func (h *projectHandler) newCreateProjectResponse(project *entity.Project) creat
 	}
 
 	return createProjectResponse{
-		ID:    project.ID.String(),
-		Name:  project.Name,
-		Email: project.Email,
+		ID:           project.ID.String(),
+		Name:         project.Name,
+		Description:  project.Description,
+		Environments: project.Environments,
+		CreatedAt:    project.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		UpdatedAt:    project.UpdatedAt.Format("2006-01-02T15:04:05Z"),
 	}
 }

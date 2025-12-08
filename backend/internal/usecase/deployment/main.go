@@ -7,25 +7,25 @@ import (
 	"devhub-backend/internal/domain/repository"
 )
 
-type UserUsecase interface {
-	CreateUser(ctx context.Context, user CreateUserInput) (*entity.User, error)
-	FindOneUser(ctx context.Context, id FindOneUserInput) (*entity.User, error)
-	FindAllUsers(ctx context.Context, input FindAllUsersInput) (entity.Page[entity.User], error)
-	UpdateUser(ctx context.Context, input UpdateUserInput) (*entity.User, error)
-	DeleteUser(ctx context.Context, id DeleteUserInput) (*entity.User, error)
+type DeploymentUsecase interface {
+	CreateDeployment(ctx context.Context, deployment CreateDeploymentInput) (*entity.Deployment, error)
+	FindOneDeployment(ctx context.Context, id FindOneDeploymentInput) (*entity.Deployment, error)
+	FindAllDeployments(ctx context.Context, input FindAllDeploymentsInput) (entity.Page[entity.Deployment], error)
+	UpdateDeployment(ctx context.Context, input UpdateDeploymentInput) (*entity.Deployment, error)
+	DeleteDeployment(ctx context.Context, id DeleteDeploymentInput) (*entity.Deployment, error)
 }
 
-type userUsecase struct {
-	appConfig      config.AppConfig
-	userRepository repository.UserRepository
+type deploymentUsecase struct {
+	appConfig            config.AppConfig
+	deploymentRepository repository.DeploymentRepository
 }
 
-func NewUserUsecase(
+func NewDeploymentUsecase(
 	appConfig config.AppConfig,
-	userRepository repository.UserRepository,
-) UserUsecase {
-	return &userUsecase{
-		appConfig:      appConfig,
-		userRepository: userRepository,
+	deploymentRepository repository.DeploymentRepository,
+) DeploymentUsecase {
+	return &deploymentUsecase{
+		appConfig:            appConfig,
+		deploymentRepository: deploymentRepository,
 	}
 }

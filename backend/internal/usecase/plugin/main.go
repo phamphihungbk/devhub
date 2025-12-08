@@ -7,25 +7,25 @@ import (
 	"devhub-backend/internal/domain/repository"
 )
 
-type UserUsecase interface {
-	CreateUser(ctx context.Context, user CreateUserInput) (*entity.User, error)
-	FindOneUser(ctx context.Context, id FindOneUserInput) (*entity.User, error)
-	FindAllUsers(ctx context.Context, input FindAllUsersInput) (entity.Page[entity.User], error)
-	UpdateUser(ctx context.Context, input UpdateUserInput) (*entity.User, error)
-	DeleteUser(ctx context.Context, id DeleteUserInput) (*entity.User, error)
+type PluginUsecase interface {
+	CreatePlugin(ctx context.Context, user CreatePluginInput) (*entity.Plugin, error)
+	FindOnePlugin(ctx context.Context, id FindOnePluginInput) (*entity.Plugin, error)
+	FindAllPlugins(ctx context.Context, input FindAllPluginsInput) (entity.Page[entity.Plugin], error)
+	UpdatePlugin(ctx context.Context, input UpdatePluginInput) (*entity.Plugin, error)
+	DeletePlugin(ctx context.Context, id DeletePluginInput) (*entity.Plugin, error)
 }
 
-type userUsecase struct {
-	appConfig      config.AppConfig
-	userRepository repository.UserRepository
+type pluginUsecase struct {
+	appConfig        config.AppConfig
+	pluginRepository repository.PluginRepository
 }
 
-func NewUserUsecase(
+func NewPluginUsecase(
 	appConfig config.AppConfig,
-	userRepository repository.UserRepository,
-) UserUsecase {
-	return &userUsecase{
-		appConfig:      appConfig,
-		userRepository: userRepository,
+	pluginRepository repository.PluginRepository,
+) PluginUsecase {
+	return &pluginUsecase{
+		appConfig:        appConfig,
+		pluginRepository: pluginRepository,
 	}
 }

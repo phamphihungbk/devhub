@@ -12,19 +12,22 @@ import (
 )
 
 type updateProjectRequest struct {
-	Name *string `json:"name" example:"Project Name" binding:"required"`
-	Role *string `json:"role" example:"user" binding:"required" validate:"oneof=admin user"`
+	Name         string    `json:"name" example:"Project Name" binding:"required"`
+	Description  *string   `json:"description" example:"Project Description"`
+	Environments *[]string `json:"environments" example:"[development, production]"`
 }
 
 type updateProjectResponse struct {
-	ID    string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name  string `json:"name" example:"User Name"`
-	Email string `json:"email" example:"user@example.com"`
+	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Description  string   `json:"description" example:"Project Description"`
+	Environments []string `json:"environments" example:"[development, production]"`
+	CreatedAt    string   `json:"created_at" example:"2024-01-01T00:00:00Z"`
+	UpdatedAt    string   `json:"updated_at" example:"2024-01-01T00:00:00Z"`
 }
 
-// @Summary		Update User
-// @Description	Update an existing user
-// @Tags			User
+// @Summary		Update Project
+// @Description	Update an existing project
+// @Tags			Project
 // @Accept			json
 // @Produce		json
 // @Param			request	body		updateProjectRequest													true	"Project update input"
@@ -43,9 +46,9 @@ func (h *projectHandler) UpdateProject(c *gin.Context) {
 	}
 
 	updatedProject, err := h.projectUsecase.UpdateProject(c.Request.Context(), projectUsecase.UpdateProjectInput{
-		ID:   projectID,
-		Name: input.Name,
-		Role: input.Role,
+		ID:           projectID,
+		Description:  input.Description,
+		Environments: input.Environments,
 	})
 
 	if err != nil {
@@ -62,8 +65,10 @@ func (h *projectHandler) newUpdateProjectResponse(project *entity.Project) updat
 	}
 
 	return updateProjectResponse{
-		ID:    project.ID.String(),
-		Name:  project.Name,
-		Email: project.Email,
+		ID:           project.ID.String(),
+		Description:  project.Description,
+		Environments: project.Environments,
+		CreatedAt:    project.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		UpdatedAt:    project.UpdatedAt.Format("2006-01-02T15:04:05Z"),
 	}
 }

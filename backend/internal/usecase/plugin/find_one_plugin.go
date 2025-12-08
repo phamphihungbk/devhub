@@ -3,21 +3,21 @@ package usecase
 import (
 	"context"
 	"devhub-backend/internal/domain/entity"
-
 	"devhub-backend/internal/domain/errs"
 	"devhub-backend/internal/util/misc"
+	"errors"
 
 	"devhub-backend/pkg/validator"
 
 	"github.com/google/uuid"
 )
 
-type DeleteUserInput struct {
-	ID string `json:"id" validate:"required,uuid"`
+type FindOnePluginInput struct {
+	ID string `json:"id" validate:"required,uuid4"`
 }
 
-func (u *userUsecase) DeleteUser(ctx context.Context, input DeleteUserInput) (user *entity.User, err error) {
-	const errLocation = "[usecase user/delete_user DeleteUser] "
+func (u *pluginUsecase) FindOnePlugin(ctx context.Context, input FindOnePluginInput) (plugin *entity.Plugin, err error) {
+	const errLocation = "[usecase plugin/find_one_plugin FindOnePlugin] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
 	// Create a new validator instance
@@ -35,16 +35,20 @@ func (u *userUsecase) DeleteUser(ctx context.Context, input DeleteUserInput) (us
 		return nil, misc.WrapError(err, errs.NewBadRequestError("the request is invalid", map[string]string{"details": err.Error()}))
 	}
 
-	userID, err := uuid.Parse(input.ID)
+	pluginID, err := uuid.Parse(input.ID)
 
 	if err != nil {
-		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid user ID", nil))
+		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid plugin ID", nil))
 	}
 
-	deleted, err := u.userRepository.DeleteOne(ctx, userID)
+	plugin, err = u.pluginRepository.FindOne(ctx, pluginID)
+
 	if err != nil {
-		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to delete user", nil))
+		if !errors.As(err, &errs.NotFoundError{}) { // If the error is not a NotFoundError, wrap it as an internal server error
+			return nil, misc.WrapError(err, errs.NewInternalServerError("failed to find plugin by ID", nil))
+		}
+		return nil, err // Return the NotFoundError directly
 	}
 
-	return deleted, nil
+	return plugin, nil
 }

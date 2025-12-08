@@ -5,8 +5,8 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     role VARCHAR(16) NOT NULL DEFAULT 'user',
-    created_at TIMESTAMP NOT NULL,
-    last_login TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at TIMESTAMP NOT NULL DEFAULT now(),
     deleted_at TIMESTAMP
 );
 
@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS projects (
     description TEXT,
     environments TEXT[],
     created_by UUID NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at TIMESTAMP NOT NULL DEFAULT now(),
     deleted_at TIMESTAMP
 );
 
@@ -27,7 +29,7 @@ CREATE TABLE IF NOT EXISTS plugins (
     version VARCHAR(64) NOT NULL,
     type VARCHAR(16) NOT NULL,
     description TEXT,
-    installed_at TIMESTAMP NOT NULL
+    installed_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 -- Migration: Create deployments table
@@ -39,7 +41,7 @@ CREATE TABLE IF NOT EXISTS deployments (
     version VARCHAR(64) NOT NULL,
     status VARCHAR(16) NOT NULL,
     triggered_by UUID NOT NULL,
-    created_at TIMESTAMP NOT NULL
+    created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 -- Migration: Create scaffold_requests table

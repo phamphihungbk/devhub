@@ -19,7 +19,9 @@ type Project struct {
 	Name         string
 	Description  string
 	Environments []ProjectEnvironment
-	CreatedBy    string
+	CreatedBy    uuid.UUID
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 	DeletedAt    time.Time
 }
 

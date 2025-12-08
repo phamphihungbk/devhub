@@ -7,25 +7,25 @@ import (
 	"devhub-backend/internal/domain/repository"
 )
 
-type UserUsecase interface {
-	CreateUser(ctx context.Context, user CreateUserInput) (*entity.User, error)
-	FindOneUser(ctx context.Context, id FindOneUserInput) (*entity.User, error)
-	FindAllUsers(ctx context.Context, input FindAllUsersInput) (entity.Page[entity.User], error)
-	UpdateUser(ctx context.Context, input UpdateUserInput) (*entity.User, error)
-	DeleteUser(ctx context.Context, id DeleteUserInput) (*entity.User, error)
+type ProjectUsecase interface {
+	CreateProject(ctx context.Context, project CreateProjectInput) (*entity.Project, error)
+	FindOneProject(ctx context.Context, id FindOneProjectInput) (*entity.Project, error)
+	FindAllProjects(ctx context.Context, input FindAllProjectsInput) (entity.Page[entity.Project], error)
+	UpdateProject(ctx context.Context, input UpdateProjectInput) (*entity.Project, error)
+	DeleteProject(ctx context.Context, id DeleteProjectInput) (*entity.Project, error)
 }
 
-type userUsecase struct {
-	appConfig      config.AppConfig
-	userRepository repository.UserRepository
+type projectUsecase struct {
+	appConfig         config.AppConfig
+	projectRepository repository.ProjectRepository
 }
 
-func NewUserUsecase(
+func NewProjectUsecase(
 	appConfig config.AppConfig,
-	userRepository repository.UserRepository,
-) UserUsecase {
-	return &userUsecase{
-		appConfig:      appConfig,
-		userRepository: userRepository,
+	projectRepository repository.ProjectRepository,
+) ProjectUsecase {
+	return &projectUsecase{
+		appConfig:         appConfig,
+		projectRepository: projectRepository,
 	}
 }

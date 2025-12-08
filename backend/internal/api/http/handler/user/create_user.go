@@ -13,8 +13,8 @@ import (
 
 type createUserRequest struct {
 	Name  string `json:"name" example:"User Name" binding:"required"`
-	Email string `json:"email" example:"user@example.com" binding:"required,email"`
-	Role  string `json:"role" example:"user" binding:"required" validate:"oneof=admin user"`
+	Email string `json:"email" example:"user@example.com" binding:"required"`
+	Role  string `json:"role" example:"user" binding:"required"`
 }
 
 type createUserResponse struct {

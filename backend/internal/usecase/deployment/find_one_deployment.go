@@ -12,12 +12,12 @@ import (
 	"github.com/google/uuid"
 )
 
-type FindOneUserInput struct {
+type FindOneDeploymentInput struct {
 	ID string `json:"id" validate:"required,uuid4"`
 }
 
-func (u *userUsecase) FindOneUser(ctx context.Context, input FindOneUserInput) (user *entity.User, err error) {
-	const errLocation = "[usecase user/find_one_user FindOneUser] "
+func (u *deploymentUsecase) FindOneDeployment(ctx context.Context, input FindOneDeploymentInput) (deployment *entity.Deployment, err error) {
+	const errLocation = "[usecase deployment/find_one_deployment FindOneDeployment] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
 	// Create a new validator instance
@@ -35,20 +35,20 @@ func (u *userUsecase) FindOneUser(ctx context.Context, input FindOneUserInput) (
 		return nil, misc.WrapError(err, errs.NewBadRequestError("the request is invalid", map[string]string{"details": err.Error()}))
 	}
 
-	userID, err := uuid.Parse(input.ID)
+	deploymentID, err := uuid.Parse(input.ID)
 
 	if err != nil {
-		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid user ID", nil))
+		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid deployment ID", nil))
 	}
 
-	user, err = u.userRepository.FindOne(ctx, userID)
+	deployment, err = u.deploymentRepository.FindOne(ctx, deploymentID)
 
 	if err != nil {
 		if !errors.As(err, &errs.NotFoundError{}) { // If the error is not a NotFoundError, wrap it as an internal server error
-			return nil, misc.WrapError(err, errs.NewInternalServerError("failed to find user by ID", nil))
+			return nil, misc.WrapError(err, errs.NewInternalServerError("failed to find deployment by ID", nil))
 		}
 		return nil, err // Return the NotFoundError directly
 	}
 
-	return user, nil
+	return deployment, nil
 }

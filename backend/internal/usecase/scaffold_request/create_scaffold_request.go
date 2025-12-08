@@ -13,10 +13,17 @@ import (
 )
 
 type CreateScaffoldRequestInput struct {
-	ProjectID   string `json:"project_id" validate:"required,uuid"`
-	Template    string `json:"template" validate:"required,min=2,max=100"`
-	Environment string `json:"environment" validate:"required,oneof=dev staging prod"`
-	Variables   string `json:"variables" validate:"required"`
+	ProjectID   string            `json:"project_id" validate:"required,uuid"`
+	Template    string            `json:"template" validate:"required,min=2,max=100"`
+	Environment string            `json:"environment" validate:"required,oneof=dev staging prod"`
+	Variables   ScaffoldVariables `json:"variables" validate:"required,dive"`
+}
+
+type ScaffoldVariables struct {
+	ServiceName   string `json:"service_name" validate:"required"`
+	Port          int    `json:"port" validate:"required"`
+	Database      string `json:"database" validate:"required"`
+	EnableLogging bool   `json:"enable_logging" validate:"required"`
 }
 
 func (u *scaffoldRequestUsecase) CreateScaffoldRequest(ctx context.Context, input CreateScaffoldRequestInput) (scaffoldRequest *entity.ScaffoldRequest, err error) {
@@ -47,8 +54,8 @@ func (u *scaffoldRequestUsecase) CreateScaffoldRequest(ctx context.Context, inpu
 	scaffoldRequest = &entity.ScaffoldRequest{
 		ProjectID:   projectID,
 		Template:    input.Template,
-		Environment: entity.Environment(input.Environment),
-		Variables:   input.Variables,
+		Environment: string(input.Environment),
+		Variables:   entity.ScaffoldVariables(input.Variables),
 	}
 	created, err := u.scaffoldRequestRepository.CreateOne(ctx, scaffoldRequest)
 	if err != nil {

@@ -13,14 +13,14 @@ import (
 	"github.com/google/uuid"
 )
 
-type UpdateUserInput struct {
+type UpdateDeploymentInput struct {
 	ID   string  `json:"id" validate:"required,uuid"`
 	Name *string `json:"name" validate:"required,min=2,max=100"`
 	Role *string `json:"role" validate:"required,oneof=admin user"`
 }
 
-func (u *userUsecase) UpdateUser(ctx context.Context, input UpdateUserInput) (user *entity.User, err error) {
-	const errLocation = "[usecase user/update_user UpdateUser] "
+func (u *deploymentUsecase) UpdateDeployment(ctx context.Context, input UpdateDeploymentInput) (deployment *entity.Deployment, err error) {
+	const errLocation = "[usecase deployment/update_deployment UpdateDeployment] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
 	// Create a new validator instance
@@ -38,14 +38,14 @@ func (u *userUsecase) UpdateUser(ctx context.Context, input UpdateUserInput) (us
 		return nil, misc.WrapError(err, errs.NewBadRequestError("the request is invalid", map[string]string{"details": err.Error()}))
 	}
 
-	updated, err := u.userRepository.UpdateOne(ctx, repository.UpdateUserInput{
+	updated, err := u.deploymentRepository.UpdateOne(ctx, repository.UpdateDeploymentInput{
 		ID:   uuid.MustParse(input.ID),
 		Name: input.Name,
 		Role: (*entity.UserRole)(input.Role),
 	})
 
 	if err != nil {
-		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to update user", nil))
+		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to update deployment", nil))
 	}
 
 	return updated, nil

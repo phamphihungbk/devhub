@@ -12,12 +12,12 @@ import (
 	"github.com/google/uuid"
 )
 
-type DeleteUserInput struct {
+type DeleteProjectInput struct {
 	ID string `json:"id" validate:"required,uuid"`
 }
 
-func (u *userUsecase) DeleteUser(ctx context.Context, input DeleteUserInput) (user *entity.User, err error) {
-	const errLocation = "[usecase user/delete_user DeleteUser] "
+func (u *projectUsecase) DeleteProject(ctx context.Context, input DeleteProjectInput) (project *entity.Project, err error) {
+	const errLocation = "[usecase project/delete_project DeleteProject] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
 	// Create a new validator instance
@@ -38,12 +38,12 @@ func (u *userUsecase) DeleteUser(ctx context.Context, input DeleteUserInput) (us
 	userID, err := uuid.Parse(input.ID)
 
 	if err != nil {
-		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid user ID", nil))
+		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid project ID", nil))
 	}
 
-	deleted, err := u.userRepository.DeleteOne(ctx, userID)
+	deleted, err := u.projectRepository.DeleteOne(ctx, userID)
 	if err != nil {
-		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to delete user", nil))
+		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to delete project", nil))
 	}
 
 	return deleted, nil

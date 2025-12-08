@@ -36,6 +36,7 @@ func (s *Server) Start() error {
 		ServiceName: s.cfg.Service.Name,
 		Environment: s.cfg.Service.Env,
 	}
+
 	appLogger, err := infraLogger.NewLogger(logConfig)
 
 	if err != nil {

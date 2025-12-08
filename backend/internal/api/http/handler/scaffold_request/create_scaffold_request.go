@@ -13,23 +13,23 @@ import (
 
 type createScaffoldRequest struct {
 	Template    string            `json:"template" binding:"required"`
-	Environment string            `json:"environment" binding:"required,oneof=dev staging prod"`
-	Variables   scaffoldVariables `json:"variables" binding:"required,dive"`
+	Environment string            `json:"environment" binding:"required"`
+	Variables   scaffoldVariables `json:"variables" binding:"required"`
 }
 
 type scaffoldVariables struct {
 	ServiceName   string `json:"service_name" binding:"required"`
 	Port          int    `json:"port" binding:"required"`
-	Database      string `json:"database" binding:"required,oneof=postgres mysql"`
-	EnableLogging bool   `json:"enable_logging"`
+	Database      string `json:"database" binding:"required"`
+	EnableLogging bool   `json:"enable_logging" binding:"required"`
 }
 
 type createScaffoldRequestResponse struct {
-	ID          string                 `json:"id" example:"ad5b0c1f-762a-4ab3-a3e9-50a9057c49f3"`
-	Template    string                 `json:"template" example:"go-service"`
-	ProjectID   string                 `json:"project_id" example:"1a221b2c-abb7-44c0-8a96-8e92638b2422"`
-	Environment string                 `json:"environment" example:"dev"`
-	Variables   map[string]interface{} `json:"variables" example:"{\"service_name\":\"payment-service\",\"port\":8080,\"database\":\"postgres\",\"enable_logging\":true}"`
+	ID          string            `json:"id" example:"ad5b0c1f-762a-4ab3-a3e9-50a9057c49f3"`
+	Template    string            `json:"template" example:"go-service"`
+	ProjectID   string            `json:"project_id" example:"1a221b2c-abb7-44c0-8a96-8e92638b2422"`
+	Environment string            `json:"environment" example:"dev"`
+	Variables   scaffoldVariables `json:"variables" example:"{\"service_name\":\"payment-service\",\"port\":8080,\"database\":\"postgres\",\"enable_logging\":true}"`
 }
 
 // @Summary		Create Scaffold Request
@@ -56,7 +56,7 @@ func (h *scaffoldRequestHandler) CreateScaffoldRequest(c *gin.Context) {
 		ProjectID:   projectID,
 		Template:    input.Template,
 		Environment: input.Environment,
-		Variables:   input.Variables,
+		Variables:   scaffoldRequestUsecase.ScaffoldVariables(input.Variables),
 	})
 
 	if err != nil {
@@ -74,14 +74,9 @@ func (h *scaffoldRequestHandler) newCreateScaffoldRequestResponse(scaffoldReques
 
 	return createScaffoldRequestResponse{
 		ID:          scaffoldRequest.ID.String(),
-		Name:        scaffoldRequest.Name,
-		Description: scaffoldRequest.Description,
-		Environments: func() []string {
-			envs := make([]string, len(scaffoldRequest.Environments))
-			for i, env := range scaffoldRequest.Environments {
-				envs[i] = string(env)
-			}
-			return envs
-		}(),
+		Template:    scaffoldRequest.Template,
+		ProjectID:   scaffoldRequest.ProjectID.String(),
+		Environment: string(scaffoldRequest.Environment),
+		Variables:   scaffoldVariables(scaffoldRequest.Variables),
 	}
 }

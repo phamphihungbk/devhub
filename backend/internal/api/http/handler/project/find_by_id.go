@@ -10,17 +10,19 @@ import (
 )
 
 type findOneProjectResponse struct {
-	ID    string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name  string `json:"name" example:"Project Name"`
-	Email string `json:"email" example:"user@example.com"`
+	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Description  string   `json:"description" example:"Project Description"`
+	Environments []string `json:"environments" example:"[development, production]"`
+	CreatedAt    string   `json:"created_at" example:"2024-01-01T00:00:00Z"`
+	UpdatedAt    string   `json:"updated_at" example:"2024-01-01T00:00:00Z"`
 }
 
-// @Summary		Find User by ID
-// @Description	Retrieve user details by its ID
-// @Tags			User
+// @Summary		Find Project by ID
+// @Description	Retrieve project details by its ID
+// @Tags			Project
 // @Produce		json
-// @Param			id	path		string																	true	"User ID"
-// @Success		200	{object}	httpresponse.SuccessResponse{data=findOneUserResponse,metadata=nil}	"User found"
+// @Param			project	path		string																	true	"Project ID"
+// @Success		200	{object}	httpresponse.SuccessResponse{data=findOneProjectResponse,metadata=nil}	"Project found"
 // @Failure		400	{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
 // @Failure		404	{object}	httpresponse.ErrorResponse{data=nil}									"Concert not found"
 // @Failure		500	{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
@@ -44,8 +46,10 @@ func (h *projectHandler) newFindOneProjectResponse(project *entity.Project) find
 	}
 
 	return findOneProjectResponse{
-		ID:    project.ID.String(),
-		Name:  project.Name,
-		Email: project.Email,
+		ID:           project.ID.String(),
+		Description:  project.Description,
+		Environments: project.Environments,
+		CreatedAt:    project.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		UpdatedAt:    project.UpdatedAt.Format("2006-01-02T15:04:05Z"),
 	}
 }

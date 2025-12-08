@@ -8,16 +8,16 @@ import (
 	"devhub-backend/internal/util/misc"
 
 	"devhub-backend/pkg/validator"
+
+	"github.com/google/uuid"
 )
 
-type CreateUserInput struct {
-	Name  string `json:"name" validate:"required,min=2,max=100"`
-	Email string `json:"email" validate:"required,email"`
-	Role  string `json:"role" validate:"required,oneof=admin user"`
+type DeletePluginInput struct {
+	ID string `json:"id" validate:"required,uuid"`
 }
 
-func (u *userUsecase) CreateUser(ctx context.Context, input CreateUserInput) (user *entity.User, err error) {
-	const errLocation = "[usecase user/create_user CreateUser] "
+func (u *pluginUsecase) DeletePlugin(ctx context.Context, input DeletePluginInput) (plugin *entity.Plugin, err error) {
+	const errLocation = "[usecase plugin/delete_plugin DeletePlugin] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
 	// Create a new validator instance
@@ -35,16 +35,16 @@ func (u *userUsecase) CreateUser(ctx context.Context, input CreateUserInput) (us
 		return nil, misc.WrapError(err, errs.NewBadRequestError("the request is invalid", map[string]string{"details": err.Error()}))
 	}
 
-	user = &entity.User{
-		Name:  input.Name,
-		Email: input.Email,
-		Role:  entity.UserRole(input.Role),
-	}
+	pluginID, err := uuid.Parse(input.ID)
 
-	created, err := u.userRepository.CreateOne(ctx, user)
 	if err != nil {
-		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to create user", nil))
+		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid plugin ID", nil))
 	}
 
-	return created, nil
+	deleted, err := u.pluginRepository.DeleteOne(ctx, pluginID)
+	if err != nil {
+		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to delete plugin", nil))
+	}
+
+	return deleted, nil
 }

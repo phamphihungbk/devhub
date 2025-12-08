@@ -19,14 +19,14 @@ type findOneUserResponse struct {
 // @Description	Retrieve user details by its ID
 // @Tags			User
 // @Produce		json
-// @Param			id	path		string																	true	"User ID"
+// @Param			user	path		string																	true	"User ID"
 // @Success		200	{object}	httpresponse.SuccessResponse{data=findOneUserResponse,metadata=nil}	"User found"
 // @Failure		400	{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
 // @Failure		404	{object}	httpresponse.ErrorResponse{data=nil}									"Concert not found"
 // @Failure		500	{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
-// @Router			/users/{id} [get]
+// @Router			/users/{user} [get]
 func (h *userHandler) FindUserByID(c *gin.Context) {
-	userID := c.Param("id")
+	userID := c.Param("user")
 	user, err := h.userUsecase.FindOneUser(c.Request.Context(), userUsecase.FindOneUserInput{
 		ID: userID,
 	})

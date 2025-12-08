@@ -9,6 +9,8 @@ import (
 	repository "devhub-backend/internal/domain/repository"
 	"devhub-backend/internal/util/misc"
 	"devhub-backend/pkg/validator"
+
+	"github.com/google/uuid"
 )
 
 type FindAllScaffoldRequestsInput struct {
@@ -48,7 +50,7 @@ func (u *scaffoldRequestUsecase) findAllScaffoldRequests(ctx context.Context, in
 	return func() ([]entity.ScaffoldRequest, entity.PageProvider[entity.ScaffoldRequest], entity.Pagination, error) {
 		// Fetch all scaffold requests with optional filters
 		scaffoldRequests, count, err := u.scaffoldRequestRepository.FindAll(ctx, repository.FindAllScaffoldRequestsFilter{
-			ProjectID: input.ProjectID,
+			ProjectID: uuid.MustParse(input.ProjectID),
 			StartDate: input.StartDate,
 			EndDate:   input.EndDate,
 			Limit:     input.Limit,

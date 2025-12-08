@@ -13,14 +13,14 @@ import (
 	"github.com/google/uuid"
 )
 
-type UpdateUserInput struct {
-	ID   string  `json:"id" validate:"required,uuid"`
-	Name *string `json:"name" validate:"required,min=2,max=100"`
-	Role *string `json:"role" validate:"required,oneof=admin user"`
+type UpdateProjectInput struct {
+	ID           string    `json:"id" validate:"required,uuid"`
+	Description  *string   `json:"description" validate:"min=2,max=100"`
+	Environments *[]string `json:"environments" validate:"required,dive,required"`
 }
 
-func (u *userUsecase) UpdateUser(ctx context.Context, input UpdateUserInput) (user *entity.User, err error) {
-	const errLocation = "[usecase user/update_user UpdateUser] "
+func (u *projectUsecase) UpdateProject(ctx context.Context, input UpdateProjectInput) (project *entity.Project, err error) {
+	const errLocation = "[usecase project/update_project UpdateProject] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
 	// Create a new validator instance
@@ -38,14 +38,14 @@ func (u *userUsecase) UpdateUser(ctx context.Context, input UpdateUserInput) (us
 		return nil, misc.WrapError(err, errs.NewBadRequestError("the request is invalid", map[string]string{"details": err.Error()}))
 	}
 
-	updated, err := u.userRepository.UpdateOne(ctx, repository.UpdateUserInput{
-		ID:   uuid.MustParse(input.ID),
-		Name: input.Name,
-		Role: (*entity.UserRole)(input.Role),
+	updated, err := u.projectRepository.UpdateOne(ctx, repository.UpdateProjectInput{
+		ID:           uuid.MustParse(input.ID),
+		Description:  input.Description,
+		Environments: input.Environments,
 	})
 
 	if err != nil {
-		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to update user", nil))
+		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to update project", nil))
 	}
 
 	return updated, nil

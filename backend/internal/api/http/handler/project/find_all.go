@@ -12,8 +12,8 @@ import (
 )
 
 type FindAllProjectsQuery struct {
-	StartDate *time.Time `form:"startDate" time_format:"2006-01-02" time_location:"Asia/Bangkok"`
-	EndDate   *time.Time `form:"endDate" time_format:"2006-01-02" time_location:"Asia/Bangkok"`
+	StartDate *time.Time `form:"startDate" time_format:"2006-01-02"`
+	EndDate   *time.Time `form:"endDate" time_format:"2006-01-02"`
 	Limit     *int64     `form:"limit"`
 	Offset    *int64     `form:"offset"`
 	SortBy    *string    `form:"sortBy"`
@@ -21,9 +21,11 @@ type FindAllProjectsQuery struct {
 }
 
 type findAllProjectsResponse struct {
-	ID    string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name  string `json:"name" example:"Project Name"`
-	Email string `json:"email" example:"user@example.com"`
+	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Description  string   `json:"description" example:"Project Description"`
+	Environments []string `json:"environments" example:"[development, production]"`
+	CreatedAt    string   `json:"created_at" example:"2024-01-01T00:00:00Z"`
+	UpdatedAt    string   `json:"updated_at" example:"2024-01-01T00:00:00Z"`
 }
 
 // @Summary		List Projects
@@ -93,12 +95,14 @@ func (h *projectHandler) newFindAllProjectsResponse(projects entity.Projects) []
 		return []findAllProjectsResponse{}
 	}
 
-	response := make([]findAllUsersResponse, 0, len(users))
-	for _, user := range users {
+	response := make([]findAllProjectsResponse, 0, len(projects))
+	for _, project := range projects {
 		response = append(response, findAllProjectsResponse{
-			ID:    project.ID.String(),
-			Name:  project.Name,
-			Email: project.Email,
+			ID:           project.ID.String(),
+			Description:  project.Description,
+			Environments: project.Environments,
+			CreatedAt:    project.CreatedAt.Format("2006-01-02T15:04:05Z"),
+			UpdatedAt:    project.UpdatedAt.Format("2006-01-02T15:04:05Z"),
 		})
 	}
 	return response
