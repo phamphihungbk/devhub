@@ -1,6 +1,11 @@
 package httproute
 
 import (
+	authHandler "devhub-backend/internal/api/http/handler/auth"
+	deploymentHandler "devhub-backend/internal/api/http/handler/deployment"
+	pluginHandler "devhub-backend/internal/api/http/handler/plugin"
+	projectHandler "devhub-backend/internal/api/http/handler/project"
+	scaffoldRequestHandler "devhub-backend/internal/api/http/handler/scaffold_request"
 	userHandler "devhub-backend/internal/api/http/handler/user"
 	"devhub-backend/internal/api/http/middleware"
 	"devhub-backend/internal/config"
@@ -13,30 +18,57 @@ type Router interface {
 }
 
 type router struct {
-	cfg         config.AppConfig        // Configuration for the application
-	Middleware  middleware.Middleware   // Middleware for handling requests
-	UserHandler userHandler.UserHandler // Handler for user routes
+	cfg                    config.AppConfig                              // Configuration for the application
+	Middleware             middleware.Middleware                         // Middleware for handling requests
+	UserHandler            userHandler.UserHandler                       // Handler for user routes
+	AuthHandler            authHandler.AuthHandler                       // Handler for auth routes
+	ScaffoldRequestHandler scaffoldRequestHandler.ScaffoldRequestHandler // Handler for scaffold request routes
+	PluginHandler          pluginHandler.PluginHandler                   // Handler for plugin request routes
+	DeploymentHandler      deploymentHandler.DeploymentHandler           // Handler for deployment routes
+	ProjectHandler         projectHandler.ProjectHandler                 // Handler for project routes
 }
 
 type Dependency struct {
-	Middleware  middleware.Middleware
-	UserHandler userHandler.UserHandler
+	Middleware             middleware.Middleware
+	UserHandler            userHandler.UserHandler
+	AuthHandler            authHandler.AuthHandler
+	ScaffoldRequestHandler scaffoldRequestHandler.ScaffoldRequestHandler
+	PluginHandler          pluginHandler.PluginHandler
+	DeploymentHandler      deploymentHandler.DeploymentHandler
+	ProjectHandler         projectHandler.ProjectHandler
 }
 
 func NewHTTPRoutes(cfg config.AppConfig, dep Dependency) Router {
 	return &router{
-		cfg:         cfg,
-		Middleware:  dep.Middleware,
-		UserHandler: dep.UserHandler,
+		cfg:                    cfg,
+		Middleware:             dep.Middleware,
+		UserHandler:            dep.UserHandler,
+		AuthHandler:            dep.AuthHandler,
+		ScaffoldRequestHandler: dep.ScaffoldRequestHandler,
+		PluginHandler:          dep.PluginHandler,
+		DeploymentHandler:      dep.DeploymentHandler,
+		ProjectHandler:         dep.ProjectHandler,
 	}
 }
 
 // RegisterRoutes registers the routes for the application
 func (r *router) RegisterRoutes(router *gin.Engine) {
+	r.applyAuthRoutes(router)
 	r.applyUserRoutes(router)
-	// r.applyHealthCheckRoutes(router)
-	// r.applyConcertRoutes(router)
-	// r.applySeatReservationRoutes(router)
+	r.applyProjectRoutes(router)
+	r.applyScaffoldRequestRoutes(router)
+	r.applyDeploymentRoutes(router)
+	r.applyPluginRoutes(router)
+}
+
+// applyAuthRoutes applies the auth routes to the provided router
+func (r *router) applyAuthRoutes(router *gin.Engine) {
+	authRoute := router.Group("/auth")
+	{
+		authRoute.POST("/login", r.AuthHandler.Login)
+		authRoute.POST("/logout", r.AuthHandler.Logout)
+		authRoute.GET("/me", r.AuthHandler.GetMe)
+	}
 }
 
 // applyUserRoutes applies the user routes to the provided router
@@ -45,77 +77,59 @@ func (r *router) applyUserRoutes(router *gin.Engine) {
 	{
 		userRoute.GET("/", r.UserHandler.FindAllUsers)
 		userRoute.POST("/", r.UserHandler.CreateUser)
-		userRoute.GET("/:id", r.UserHandler.FindUserByID)
-		userRoute.DELETE("/:id", r.UserHandler.DeleteUser)
-		userRoute.PATCH("/:id", r.UserHandler.UpdateUser)
+		userRoute.GET("/:user", r.UserHandler.FindUserByID)
+		userRoute.DELETE("/:user", r.UserHandler.DeleteUser)
+		userRoute.PATCH("/:user", r.UserHandler.UpdateUser)
 	}
 }
 
-// applyHealthCheckRoutes applies the health check routes to the provided router
-// func (r *router) applyHealthCheckRoutes(router *gin.Engine) {
-// 	healthRoute := router.Group("/health")
-// 	{
-// 		healthRoute.GET("/liveness", r.Middleware.BasicAuth(r.cfg.AdminAPIKey, r.cfg.AdminAPISecret), r.HealthCheckHandler.Liveness)
-// 		healthRoute.GET("/readiness", r.Middleware.BasicAuth(r.cfg.AdminAPIKey, r.cfg.AdminAPISecret), r.HealthCheckHandler.Readiness)
-// 	}
-// }
+// applyProjectRoutes applies the project routes to the provided router
+func (r *router) applyProjectRoutes(router *gin.Engine) {
+	projectRoute := router.Group("/projects")
+	{
+		projectRoute.GET("/", r.ProjectHandler.FindAllProjects)
+		projectRoute.POST("/", r.ProjectHandler.CreateProject)
+		projectRoute.GET("/:project", r.ProjectHandler.FindProjectByID)
+		projectRoute.DELETE("/:project", r.ProjectHandler.DeleteProject)
+		projectRoute.PATCH("/:project", r.ProjectHandler.UpdateProject)
+	}
+}
 
-// func RegisterRoutes(r *gin.Engine) {
-// 	// r.Use(middleware.Logger())
-// 	// r.Use(middleware.Auth())
+// applyScaffoldRequestRoutes applies the scaffold request routes to the provided router
+func (r *router) applyScaffoldRequestRoutes(router *gin.Engine) {
+	scaffoldRequestRoute := router.Group("/scaffold-requests")
+	projectRoute := router.Group("/projects/:project")
+	{
+		projectRoute.GET("/scaffold-requests", r.ScaffoldRequestHandler.FindAllScaffoldRequests)
+		projectRoute.POST("/scaffold-requests", r.ScaffoldRequestHandler.CreateScaffoldRequest)
 
-// 	v1 := r.Group("/api/v1")
+		scaffoldRequestRoute.GET("/:scaffold-request", r.ScaffoldRequestHandler.FindScaffoldRequestByID)
+		scaffoldRequestRoute.DELETE("/:scaffold-request", r.ScaffoldRequestHandler.DeleteScaffoldRequest)
+	}
+}
 
-// 	// // Service Scaffolding
-// 	// services := v1.Group("/services")
-// 	// services.POST("", handler.CreateServiceHandler)
-// 	// services.GET("/templates", handler.ListServiceTemplatesHandler)
-// 	// services.GET("", handler.ListServicesHandler)
-// 	// services.GET("/:id", handler.GetServiceHandler)
+// applyDeploymentRoutes applies the deployment routes to the provided router
+func (r *router) applyDeploymentRoutes(router *gin.Engine) {
+	projectRoute := router.Group("/projects/:project")
+	deploymentRoute := router.Group("/deployments")
+	{
+		projectRoute.GET("/deployments", r.DeploymentHandler.FindAllDeployments)
+		projectRoute.POST("/deployments", r.DeploymentHandler.CreateDeployment)
 
-// 	// // Deployment Management
-// 	// deployments := v1.Group("/deployments")
-// 	// deployments.POST("", handler.CreateDeploymentHandler)
-// 	// deployments.GET("", handler.ListDeploymentsHandler)
-// 	// deployments.GET("/:id", handler.GetDeploymentHandler)
-// 	// deployments.POST("/:id/rollback", handler.RollbackDeploymentHandler)
+		deploymentRoute.GET("/:deployment", r.DeploymentHandler.FindDeploymentByID)
+		deploymentRoute.DELETE("/:deployment", r.DeploymentHandler.DeleteDeployment)
+		deploymentRoute.PATCH("/:deployment", r.DeploymentHandler.UpdateDeployment)
+	}
+}
 
-// 	// // CI/CD Integration
-// 	// cicd := v1.Group("/cicd")
-// 	// cicd.GET("/pipelines", handler.ListPipelinesHandler)
-// 	// cicd.POST("/pipelines", handler.TriggerPipelineHandler)
-
-// 	// // Metrics & Monitoring
-// 	// metrics := v1.Group("/metrics")
-// 	// metrics.GET("", handler.ListMetricsHandler)
-// 	// metrics.GET("/:serviceId", handler.GetServiceMetricsHandler)
-
-// 	// // Authentication & Access Control
-// 	// auth := v1.Group("/auth")
-// 	// auth.POST("/login", handler.LoginHandler)
-// 	// auth.POST("/logout", handler.LogoutHandler)
-// 	// auth.GET("/roles", handler.ListRolesHandler)
-// 	// auth.POST("/roles", handler.CreateRoleHandler)
-
-// 	// // Git Integration
-// 	// git := v1.Group("/git")
-// 	// git.GET("/repos", handler.ListReposHandler)
-// 	// git.POST("/repos", handler.ConnectRepoHandler)
-
-// 	// // Background Jobs
-// 	// jobs := v1.Group("/jobs")
-// 	// jobs.POST("", handler.CreateJobHandler)
-// 	// jobs.GET("", handler.ListJobsHandler)
-// 	// jobs.GET("/:id", handler.GetJobHandler)
-
-// 	// // Plugin System
-// 	// plugins := v1.Group("/plugins")
-// 	// plugins.GET("", handler.ListPluginsHandler)
-// 	// plugins.POST("", handler.InstallPluginHandler)
-
-// 	// // API Testing
-// 	// v1.POST("/api-test", handler.RunApiTestHandler)
-
-// 	// Miscellaneous
-// 	v1.GET("/health", handler.HealthHandler)
-// }
+// applyPluginRoutes applies the plugin routes to the provided router
+func (r *router) applyPluginRoutes(router *gin.Engine) {
+	pluginRoute := router.Group("/plugins")
+	{
+		pluginRoute.GET("/", r.PluginHandler.FindAllPlugins)
+		pluginRoute.POST("/", r.PluginHandler.CreatePlugin)
+		pluginRoute.GET("/:id", r.PluginHandler.FindPluginByID)
+		pluginRoute.DELETE("/:id", r.PluginHandler.DeletePlugin)
+		pluginRoute.PATCH("/:id", r.PluginHandler.UpdatePlugin)
+	}
+}

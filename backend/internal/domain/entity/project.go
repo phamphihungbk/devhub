@@ -9,8 +9,9 @@ import (
 type ProjectEnvironment string
 
 const (
-	EnvDev  ProjectEnvironment = "dev"
-	EnvProd ProjectEnvironment = "prod"
+	EnvDev     ProjectEnvironment = "dev"
+	EnvProd    ProjectEnvironment = "prod"
+	EnvStaging ProjectEnvironment = "staging"
 )
 
 type Project struct {

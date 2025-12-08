@@ -17,8 +17,8 @@ type Plugin struct {
 	ID          uuid.UUID
 	Name        string
 	Version     string
-	Type        PluginType
 	Description string
+	Type        PluginType
 	InstalledAt time.Time
 }
 

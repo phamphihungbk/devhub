@@ -17,12 +17,12 @@ const (
 
 type Deployment struct {
 	ID          uuid.UUID
-	ProjectID   string
+	ProjectID   uuid.UUID
 	Environment string
 	Service     string
 	Version     string
 	Status      DeploymentStatus
-	TriggeredBy string
+	TriggeredBy uuid.UUID
 	CreatedAt   time.Time
 }
 
