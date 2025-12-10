@@ -69,6 +69,7 @@ services:
   plugins:
     image: devhub-plugins:dev
     container_name: devhub-plugins
+    tty: true 
     build:
       context: .
       dockerfile: infra/docker/plugins.Dockerfile
