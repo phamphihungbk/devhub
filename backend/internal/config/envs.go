@@ -1,5 +1,11 @@
 package config
 
+// Token configuration environment variable keys
+const (
+	TokenDurationKey = "TOKEN_DURATION"
+	TokenSecretKey   = "TOKEN_SECRET"
+)
+
 // Service configuration environment variable keys
 const (
 	ServiceNameKey      = "SERVICE_NAME"
@@ -38,4 +44,7 @@ var configDefaults = map[string]any{
 	DatabaseMaxIdleConnsKey:    15,
 	DatabaseConnMaxLifetimeKey: "30m",
 	DatabaseConnMaxIdleTimeKey: "5m",
+	// Token configuration
+	TokenDurationKey: 30,
+	TokenSecretKey:   "your-secret-key",
 }

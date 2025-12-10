@@ -11,9 +11,10 @@ import (
 )
 
 type CreatePluginInput struct {
-	Name  string `json:"name" validate:"required,min=2,max=100"`
-	Email string `json:"email" validate:"required,email"`
-	Role  string `json:"role" validate:"required,oneof=admin user"`
+	Name        string `json:"name" validate:"required,min=2,max=100"`
+	Version     string `json:"version" validate:"required"`
+	Type        string `json:"type" validate:"required,oneof=scaffolder runner"`
+	Description string `json:"description" validate:"required,min=2,max=100"`
 }
 
 func (u *pluginUsecase) CreatePlugin(ctx context.Context, input CreatePluginInput) (plugin *entity.Plugin, err error) {
@@ -35,10 +36,16 @@ func (u *pluginUsecase) CreatePlugin(ctx context.Context, input CreatePluginInpu
 		return nil, misc.WrapError(err, errs.NewBadRequestError("the request is invalid", map[string]string{"details": err.Error()}))
 	}
 
+	pluginType, err := new(entity.PluginType).Parse(input.Type)
+	if err != nil {
+		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid plugin type", nil))
+	}
+
 	plugin = &entity.Plugin{
-		Name:  input.Name,
-		Email: input.Email,
-		Role:  entity.PluginRole(input.Role),
+		Name:        input.Name,
+		Version:     input.Version,
+		Type:        pluginType,
+		Description: input.Description,
 	}
 
 	created, err := u.pluginRepository.CreateOne(ctx, plugin)

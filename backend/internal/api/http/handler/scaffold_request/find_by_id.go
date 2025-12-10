@@ -10,10 +10,11 @@ import (
 )
 
 type findOneScaffoldRequestResponse struct {
-	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name         string   `json:"name" example:"Project Name"`
-	Description  string   `json:"description" example:"Project Description"`
-	Environments []string `json:"environments" example:"[prod,dev,staging]"`
+	ID           string                          `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ProjectID    string                          `json:"project_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Template     string                          `json:"template" example:"template-name"`
+	Environments string                          `json:"environments" example:"prod"`
+	Variables    entity.ScaffoldRequestVariables `json:"variables" example:"key=value"`
 }
 
 // @Summary		Find Scaffold Request by ID
@@ -44,15 +45,11 @@ func (h *scaffoldRequestHandler) newFindOneScaffoldRequestResponse(scaffoldReque
 		return findOneScaffoldRequestResponse{}
 	}
 
-	environments := make([]string, len(scaffoldRequest.Environments))
-	for i, env := range scaffoldRequest.Environments {
-		environments[i] = string(env)
-	}
-
 	return findOneScaffoldRequestResponse{
 		ID:           scaffoldRequest.ID.String(),
-		Name:         scaffoldRequest.Name,
-		Description:  scaffoldRequest.Description,
-		Environments: environments,
+		ProjectID:    scaffoldRequest.ProjectID.String(),
+		Template:     scaffoldRequest.Template,
+		Environments: scaffoldRequest.Environment.String(),
+		Variables:    scaffoldRequest.Variables,
 	}
 }

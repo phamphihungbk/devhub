@@ -21,8 +21,8 @@ type pluginHandler struct {
 }
 
 func NewPluginHandler(appConfig config.AppConfig, pluginUsecase pluginUsecase.PluginUsecase) PluginHandler {
-	return &projectHandler{
-		appConfig:      appConfig,
-		projectUsecase: projectUsecase,
+	return &pluginHandler{
+		appConfig:     appConfig,
+		pluginUsecase: pluginUsecase,
 	}
 }

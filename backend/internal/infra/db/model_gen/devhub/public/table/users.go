@@ -17,13 +17,14 @@ type usersTable struct {
 	postgres.Table
 
 	// Columns
-	ID        postgres.ColumnString
-	Name      postgres.ColumnString
-	Email     postgres.ColumnString
-	Role      postgres.ColumnString
-	CreatedAt postgres.ColumnTimestamp
-	LastLogin postgres.ColumnTimestamp
-	DeletedAt postgres.ColumnTimestamp
+	ID           postgres.ColumnString
+	Name         postgres.ColumnString
+	Email        postgres.ColumnString
+	PasswordHash postgres.ColumnString
+	Role         postgres.ColumnString
+	CreatedAt    postgres.ColumnTimestamp
+	UpdatedAt    postgres.ColumnTimestamp
+	DeletedAt    postgres.ColumnTimestamp
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -65,29 +66,31 @@ func newUsersTable(schemaName, tableName, alias string) *UsersTable {
 
 func newUsersTableImpl(schemaName, tableName, alias string) usersTable {
 	var (
-		IDColumn        = postgres.StringColumn("id")
-		NameColumn      = postgres.StringColumn("name")
-		EmailColumn     = postgres.StringColumn("email")
-		RoleColumn      = postgres.StringColumn("role")
-		CreatedAtColumn = postgres.TimestampColumn("created_at")
-		LastLoginColumn = postgres.TimestampColumn("last_login")
-		DeletedAtColumn = postgres.TimestampColumn("deleted_at")
-		allColumns      = postgres.ColumnList{IDColumn, NameColumn, EmailColumn, RoleColumn, CreatedAtColumn, LastLoginColumn, DeletedAtColumn}
-		mutableColumns  = postgres.ColumnList{NameColumn, EmailColumn, RoleColumn, CreatedAtColumn, LastLoginColumn, DeletedAtColumn}
-		defaultColumns  = postgres.ColumnList{IDColumn, RoleColumn}
+		IDColumn           = postgres.StringColumn("id")
+		NameColumn         = postgres.StringColumn("name")
+		EmailColumn        = postgres.StringColumn("email")
+		PasswordHashColumn = postgres.StringColumn("password_hash")
+		RoleColumn         = postgres.StringColumn("role")
+		CreatedAtColumn    = postgres.TimestampColumn("created_at")
+		UpdatedAtColumn    = postgres.TimestampColumn("updated_at")
+		DeletedAtColumn    = postgres.TimestampColumn("deleted_at")
+		allColumns         = postgres.ColumnList{IDColumn, NameColumn, EmailColumn, PasswordHashColumn, RoleColumn, CreatedAtColumn, UpdatedAtColumn, DeletedAtColumn}
+		mutableColumns     = postgres.ColumnList{NameColumn, EmailColumn, PasswordHashColumn, RoleColumn, CreatedAtColumn, UpdatedAtColumn, DeletedAtColumn}
+		defaultColumns     = postgres.ColumnList{IDColumn, RoleColumn, CreatedAtColumn, UpdatedAtColumn}
 	)
 
 	return usersTable{
 		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
-		ID:        IDColumn,
-		Name:      NameColumn,
-		Email:     EmailColumn,
-		Role:      RoleColumn,
-		CreatedAt: CreatedAtColumn,
-		LastLogin: LastLoginColumn,
-		DeletedAt: DeletedAtColumn,
+		ID:           IDColumn,
+		Name:         NameColumn,
+		Email:        EmailColumn,
+		PasswordHash: PasswordHashColumn,
+		Role:         RoleColumn,
+		CreatedAt:    CreatedAtColumn,
+		UpdatedAt:    UpdatedAtColumn,
+		DeletedAt:    DeletedAtColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

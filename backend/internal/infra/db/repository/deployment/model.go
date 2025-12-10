@@ -11,14 +11,24 @@ type Deployment struct {
 }
 
 func (c *Deployment) ToEntity() *entity.Deployment {
+	status, err := new(entity.DeploymentStatus).Parse(c.Status)
+	if err != nil {
+		return nil
+	}
+	env, err := new(entity.ProjectEnvironment).Parse(c.Environment)
+	if err != nil {
+		return nil
+	}
+
 	return &entity.Deployment{
-		ID:        c.ID,
-		Email:     c.Email,
-		Name:      c.Name,
-		Role:      entity.UserRole(c.Role),
-		CreatedAt: c.CreatedAt,
-		LastLogin: misc.DerefTime(c.LastLogin),
-		DeletedAt: misc.DerefTime(c.DeletedAt),
+		ID:          c.ID,
+		ProjectID:   c.ProjectID,
+		Environment: env,
+		Service:     c.Service,
+		Version:     c.Version,
+		Status:      status,
+		TriggeredBy: c.TriggeredBy,
+		CreatedAt:   c.CreatedAt,
 	}
 }
 

@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"devhub-backend/internal/domain/entity"
-	"time"
 
 	"devhub-backend/internal/domain/errs"
 	repository "devhub-backend/internal/domain/repository"
@@ -14,12 +13,9 @@ import (
 )
 
 type FindAllScaffoldRequestsInput struct {
-	StartDate *time.Time        `json:"start_date" validate:"omitempty"`
-	EndDate   *time.Time        `json:"end_date" validate:"omitempty,gtfield=StartDate"`
-	Venue     *string           `json:"venue" validate:"omitempty,gt=0"`
 	Limit     *int64            `json:"limit" validate:"required,gte=1,lte=100"`
 	Offset    *int64            `json:"offset" validate:"required,gte=0"`
-	SortBy    *string           `json:"sort_by" validate:"required_with=SortOrder,omitempty,oneof=date name venue"`
+	SortBy    *string           `json:"sort_by" validate:"required_with=SortOrder,omitempty,oneof=date name"`
 	SortOrder *entity.SortOrder `json:"sort_order" validate:"omitempty,oneof=asc desc"`
 	ProjectID string            `json:"project_id" validate:"required,uuid"`
 }
@@ -51,8 +47,6 @@ func (u *scaffoldRequestUsecase) findAllScaffoldRequests(ctx context.Context, in
 		// Fetch all scaffold requests with optional filters
 		scaffoldRequests, count, err := u.scaffoldRequestRepository.FindAll(ctx, repository.FindAllScaffoldRequestsFilter{
 			ProjectID: uuid.MustParse(input.ProjectID),
-			StartDate: input.StartDate,
-			EndDate:   input.EndDate,
 			Limit:     input.Limit,
 			Offset:    input.Offset,
 			SortBy:    input.SortBy,
@@ -71,8 +65,6 @@ func (u *scaffoldRequestUsecase) findAllScaffoldRequests(ctx context.Context, in
 		pagination := entity.NewPagination(count, misc.GetValue(input.Limit), misc.GetValue(input.Offset))
 		nextSearchCriteria := FindAllScaffoldRequestsInput{
 			ProjectID: input.ProjectID,
-			StartDate: input.StartDate,
-			EndDate:   input.EndDate,
 			Limit:     input.Limit,
 			Offset:    misc.ToPointer((*input.Limit) + (*input.Offset)),
 			SortBy:    input.SortBy,

@@ -10,7 +10,7 @@ import (
 )
 
 type DeploymentRepository interface {
-	CreateOne(ctx context.Context, project *entity.Project) (*entity.Deployment, error)
+	CreateOne(ctx context.Context, deployment *entity.Deployment) (*entity.Deployment, error)
 	FindOne(ctx context.Context, id uuid.UUID) (*entity.Deployment, error)
 	FindAll(ctx context.Context, filter FindAllDeploymentsFilter) (*entity.Deployments, int64, error)
 	UpdateOne(ctx context.Context, input UpdateDeploymentInput) (*entity.Deployment, error)
@@ -18,6 +18,7 @@ type DeploymentRepository interface {
 }
 
 type FindAllDeploymentsFilter struct {
+	ProjectID uuid.UUID
 	StartDate *time.Time
 	EndDate   *time.Time
 	Limit     *int64
@@ -27,8 +28,9 @@ type FindAllDeploymentsFilter struct {
 }
 
 type UpdateDeploymentInput struct {
-	ID           uuid.UUID
-	Name         *string
-	Description  *string
-	Environments *[]string
+	ID          uuid.UUID
+	Environment *entity.ProjectEnvironment
+	Status      *entity.DeploymentStatus
+	Version     *string
+	Service     *string
 }

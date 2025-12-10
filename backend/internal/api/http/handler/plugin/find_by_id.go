@@ -10,10 +10,11 @@ import (
 )
 
 type findOnePluginResponse struct {
-	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name         string   `json:"name" example:"Plugin Name"`
-	Description  string   `json:"description" example:"Plugin Description"`
-	Environments []string `json:"environments" example:"[prod,dev,staging]"`
+	ID          string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name        string `json:"name" example:"Plugin Name"`
+	Type        string `json:"type" example:"scaffolder"`
+	Version     string `json:"version" example:"1.0.0"`
+	Description string `json:"description" example:"Plugin Description"`
 }
 
 // @Summary		Find Plugin by ID
@@ -44,15 +45,11 @@ func (h *pluginHandler) newFindOnePluginResponse(plugin *entity.Plugin) findOneP
 		return findOnePluginResponse{}
 	}
 
-	environments := make([]string, len(plugin.Environments))
-	for i, env := range plugin.Environments {
-		environments[i] = string(env)
-	}
-
 	return findOnePluginResponse{
-		ID:           plugin.ID.String(),
-		Name:         plugin.Name,
-		Description:  plugin.Description,
-		Environments: environments,
+		ID:          plugin.ID.String(),
+		Name:        plugin.Name,
+		Type:        plugin.Type.String(),
+		Version:     plugin.Version,
+		Description: plugin.Description,
 	}
 }

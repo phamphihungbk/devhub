@@ -8,21 +8,25 @@ import (
 )
 
 type AuthUsecase interface {
-	LoginUser(ctx context.Context, input LoginUserInput) (*entity.User, error)
-	LogoutUser(ctx context.Context) (*entity.User, error)
+	IssueToken(ctx context.Context, input IssueTokenInput) (*entity.Token, error)
+	RevokeToken(ctx context.Context, input RevokeTokenInput) (*entity.RefreshToken, error)
+	FindOneUser(ctx context.Context, input FindOneUserInput) (*entity.User, error)
 }
 
 type authUsecase struct {
-	appConfig      config.AppConfig
-	userRepository repository.UserRepository
+	tokenConfig            config.TokenConfig
+	userRepository         repository.UserRepository
+	refreshTokenRepository repository.RefreshTokenRepository
 }
 
 func NewAuthUsecase(
-	appConfig config.AppConfig,
+	tokenConfig config.TokenConfig,
 	userRepository repository.UserRepository,
+	refreshTokenRepository repository.RefreshTokenRepository,
 ) AuthUsecase {
 	return &authUsecase{
-		appConfig:      appConfig,
-		userRepository: userRepository,
+		tokenConfig:            tokenConfig,
+		refreshTokenRepository: refreshTokenRepository,
+		userRepository:         userRepository,
 	}
 }

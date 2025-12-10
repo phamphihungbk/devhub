@@ -12,16 +12,21 @@ import (
 )
 
 type createDeploymentRequest struct {
-	Name         string   `json:"name" example:"Project Name" binding:"required"`
-	Description  string   `json:"description" example:"Project Description" binding:"required"`
-	Environments []string `json:"environments" example:"[prod,dev,staging]" binding:"required,dive,required"`
+	Environment string `json:"environment" example:"prod" binding:"required"`
+	Service     string `json:"service" example:"Service Name" binding:"required"`
+	Version     string `json:"version" example:"1.0.0" binding:"required"`
+	Status      string `json:"status" example:"Deployment Status" binding:"required"`
+	TriggeredBy string `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000" binding:"required"`
 }
 
 type createDeploymentResponse struct {
-	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name         string   `json:"name" example:"Project Name"`
-	Description  string   `json:"description" example:"Project Description"`
-	Environments []string `json:"environments" example:"[prod,dev,staging]"`
+	ID          string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ProjectID   string `json:"project_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Environment string `json:"environment" example:"prod"`
+	Service     string `json:"service" example:"Service Name"`
+	Version     string `json:"version" example:"1.0.0"`
+	Status      string `json:"status" example:"Deployment Status"`
+	TriggeredBy string `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
 // @Summary		Create Deployment
@@ -33,7 +38,7 @@ type createDeploymentResponse struct {
 // @Success		201		{object}	httpresponse.SuccessResponse{data=createDeploymentResponse,metadata=nil}	"Deployment created"
 // @Failure		400		{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
 // @Failure		500		{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
-// @Router			/projects/:project/deployment [post]
+// @Router			/projects/:project/deployments [post]
 func (h *deploymentHandler) CreateDeployment(c *gin.Context) {
 	projectID := c.Param("project")
 	var input createDeploymentRequest
@@ -45,10 +50,12 @@ func (h *deploymentHandler) CreateDeployment(c *gin.Context) {
 	}
 
 	createdDeployment, err := h.deploymentUsecase.CreateDeployment(c.Request.Context(), deploymentUsecase.CreateDeploymentInput{
-		ProjectID:    projectID,
-		Name:         input.Name,
-		Description:  input.Description,
-		Environments: input.Environments,
+		ProjectID:   projectID,
+		Environment: input.Environment,
+		Service:     input.Service,
+		Version:     input.Version,
+		Status:      input.Status,
+		TriggeredBy: input.TriggeredBy,
 	})
 
 	if err != nil {
@@ -65,9 +72,12 @@ func (h *deploymentHandler) newCreateDeploymentResponse(deployment *entity.Deplo
 	}
 
 	return createDeploymentResponse{
-		ID:           deployment.ID.String(),
-		Name:         deployment.Name,
-		Description:  deployment.Description,
-		Environments: deployment.Environments,
+		ID:          deployment.ID.String(),
+		ProjectID:   deployment.ProjectID.String(),
+		Environment: deployment.Environment.String(),
+		Service:     deployment.Service,
+		Version:     deployment.Version,
+		Status:      deployment.Status.String(),
+		TriggeredBy: deployment.TriggeredBy.String(),
 	}
 }

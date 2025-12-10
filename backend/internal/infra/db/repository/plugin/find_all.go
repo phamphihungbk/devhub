@@ -19,10 +19,10 @@ func (r *pluginRepositoryImpl) FindAll(ctx context.Context, filter repository.Fi
 	// Build WHERE conditions for filtering
 	whereClauses := []postgres.BoolExpression{}
 	if filter.StartDate != nil {
-		whereClauses = append(whereClauses, table.Plugins.CreatedAt.GT_EQ(postgres.TimestampT(*filter.StartDate)))
+		whereClauses = append(whereClauses, table.Plugins.InstalledAt.GT_EQ(postgres.TimestampT(*filter.StartDate)))
 	}
 	if filter.EndDate != nil {
-		whereClauses = append(whereClauses, table.Plugins.CreatedAt.LT_EQ(postgres.TimestampT(*filter.EndDate)))
+		whereClauses = append(whereClauses, table.Plugins.InstalledAt.LT_EQ(postgres.TimestampT(*filter.EndDate)))
 	}
 
 	// Get total count of plugins matching the filter
@@ -69,9 +69,9 @@ func (r *pluginRepositoryImpl) FindAll(ctx context.Context, filter repository.Fi
 			}
 		case "date":
 			if *filter.SortOrder == entity.SortOrderDesc {
-				stmt = stmt.ORDER_BY(table.Plugins.CreatedAt.DESC())
+				stmt = stmt.ORDER_BY(table.Plugins.InstalledAt.DESC())
 			} else {
-				stmt = stmt.ORDER_BY(table.Plugins.CreatedAt.ASC())
+				stmt = stmt.ORDER_BY(table.Plugins.InstalledAt.ASC())
 			}
 		}
 	}

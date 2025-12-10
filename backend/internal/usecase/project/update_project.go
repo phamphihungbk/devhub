@@ -15,8 +15,9 @@ import (
 
 type UpdateProjectInput struct {
 	ID           string    `json:"id" validate:"required,uuid"`
-	Description  *string   `json:"description" validate:"min=2,max=100"`
-	Environments *[]string `json:"environments" validate:"required,dive,required"`
+	Name         *string   `json:"name" validate:"min=0,max=100"`
+	Description  *string   `json:"description" validate:"min=0,max=100"`
+	Environments *[]string `json:"environments" validate:"dive,required"`
 }
 
 func (u *projectUsecase) UpdateProject(ctx context.Context, input UpdateProjectInput) (project *entity.Project, err error) {
@@ -40,6 +41,7 @@ func (u *projectUsecase) UpdateProject(ctx context.Context, input UpdateProjectI
 
 	updated, err := u.projectRepository.UpdateOne(ctx, repository.UpdateProjectInput{
 		ID:           uuid.MustParse(input.ID),
+		Name:         input.Name,
 		Description:  input.Description,
 		Environments: input.Environments,
 	})

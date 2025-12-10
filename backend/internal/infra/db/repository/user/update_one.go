@@ -24,11 +24,12 @@ func (r *userRepositoryImpl) UpdateOne(ctx context.Context, input repository.Upd
 
 	// build the update model
 	if input.Name != nil {
-		updateModel.Name = string(*input.Name)
+		updateModel.Name = misc.GetValue(input.Name)
 		columns = append(columns, usersTable.Name)
 	}
+
 	if input.Role != nil {
-		updateModel.Role = string(*input.Role)
+		updateModel.Role = string(misc.GetValue(input.Role))
 		columns = append(columns, usersTable.Role)
 	}
 

@@ -54,8 +54,8 @@ func (u *scaffoldRequestUsecase) CreateScaffoldRequest(ctx context.Context, inpu
 	scaffoldRequest = &entity.ScaffoldRequest{
 		ProjectID:   projectID,
 		Template:    input.Template,
-		Environment: string(input.Environment),
-		Variables:   entity.ScaffoldVariables(input.Variables),
+		Environment: new(entity.ProjectEnvironment).MustParse(input.Environment),
+		Variables:   entity.ScaffoldRequestVariables(input.Variables),
 	}
 	created, err := u.scaffoldRequestRepository.CreateOne(ctx, scaffoldRequest)
 	if err != nil {

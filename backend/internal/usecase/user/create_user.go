@@ -11,9 +11,10 @@ import (
 )
 
 type CreateUserInput struct {
-	Name  string `json:"name" validate:"required,min=2,max=100"`
-	Email string `json:"email" validate:"required,email"`
-	Role  string `json:"role" validate:"required,oneof=admin user"`
+	Name     *string `json:"name" validate:"min=0,max=100"`
+	Email    string  `json:"email" validate:"required,email"`
+	Password string  `json:"password" validate:"required,min=8,max=100"`
+	Role     string  `json:"role" validate:"required,oneof=admin user"`
 }
 
 func (u *userUsecase) CreateUser(ctx context.Context, input CreateUserInput) (user *entity.User, err error) {
@@ -35,10 +36,17 @@ func (u *userUsecase) CreateUser(ctx context.Context, input CreateUserInput) (us
 		return nil, misc.WrapError(err, errs.NewBadRequestError("the request is invalid", map[string]string{"details": err.Error()}))
 	}
 
+	passwordHash, err := misc.HashPassword(input.Password)
+
+	if err != nil {
+		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to hash password", nil))
+	}
+
 	user = &entity.User{
-		Name:  input.Name,
-		Email: input.Email,
-		Role:  entity.UserRole(input.Role),
+		Name:         misc.GetValue(input.Name),
+		Email:        input.Email,
+		Role:         new(entity.UserRole).MustParse(input.Role),
+		PasswordHash: passwordHash,
 	}
 
 	created, err := u.userRepository.CreateOne(ctx, user)

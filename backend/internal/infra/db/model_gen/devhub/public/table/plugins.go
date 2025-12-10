@@ -72,7 +72,7 @@ func newPluginsTableImpl(schemaName, tableName, alias string) pluginsTable {
 		InstalledAtColumn = postgres.TimestampColumn("installed_at")
 		allColumns        = postgres.ColumnList{IDColumn, NameColumn, VersionColumn, TypeColumn, DescriptionColumn, InstalledAtColumn}
 		mutableColumns    = postgres.ColumnList{NameColumn, VersionColumn, TypeColumn, DescriptionColumn, InstalledAtColumn}
-		defaultColumns    = postgres.ColumnList{IDColumn}
+		defaultColumns    = postgres.ColumnList{IDColumn, InstalledAtColumn}
 	)
 
 	return pluginsTable{

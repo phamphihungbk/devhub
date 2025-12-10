@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"time"
 
 	entity "devhub-backend/internal/domain/entity"
 
@@ -18,8 +17,6 @@ type ScaffoldRequestRepository interface {
 
 type FindAllScaffoldRequestsFilter struct {
 	ProjectID uuid.UUID
-	StartDate *time.Time
-	EndDate   *time.Time
 	Limit     *int64
 	Offset    *int64
 	SortBy    *string

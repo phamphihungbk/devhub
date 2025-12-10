@@ -19,9 +19,17 @@ func (r *projectRepositoryImpl) CreateOne(ctx context.Context, input *entity.Pro
 	stmt := projectsTable.INSERT(
 		projectsTable.AllColumns.Except(projectsTable.DefaultColumns), // Exclude columns with default values
 	).MODEL(model.Projects{
-		Name:  input.Name,
-		Email: input.Email,
-		Role:  string(input.Role),
+		Name:        input.Name,
+		Description: &input.Description,
+		Environments: func() []string {
+			envs := make([]string, 0, len(input.Environments))
+
+			for _, env := range input.Environments {
+				envs = append(envs, env.String())
+			}
+
+			return envs
+		}(),
 	}).RETURNING(projectsTable.AllColumns)
 	query, args := stmt.Sql()
 

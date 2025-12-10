@@ -13,7 +13,7 @@ import (
 
 type updateUserRequest struct {
 	Name *string `json:"name" example:"User Name" binding:"required"`
-	Role *string `json:"role" example:"user" binding:"required" validate:"oneof=admin user"`
+	Role *string `json:"role" example:"user" binding:"required"`
 }
 
 type updateUserResponse struct {

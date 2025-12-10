@@ -6,26 +6,23 @@ import (
 	scaffoldRequestUsecase "devhub-backend/internal/usecase/scaffold_request"
 	"devhub-backend/internal/util/httpresponse"
 	"devhub-backend/internal/util/misc"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 type FindAllScaffoldRequestsQuery struct {
-	StartDate *time.Time `form:"startDate" time_format:"2006-01-02" time_location:"Asia/Bangkok"`
-	EndDate   *time.Time `form:"endDate" time_format:"2006-01-02" time_location:"Asia/Bangkok"`
-	Limit     *int64     `form:"limit"`
-	Offset    *int64     `form:"offset"`
-	SortBy    *string    `form:"sortBy"`
-	SortOrder *string    `form:"sortOrder"`
+	Limit     *int64  `form:"limit"`
+	Offset    *int64  `form:"offset"`
+	SortBy    *string `form:"sortBy"`
+	SortOrder *string `form:"sortOrder"`
 }
 
 type findAllScaffoldRequestsResponse struct {
-	ID          string                 `json:"id" example:"ad5b0c1f-762a-4ab3-a3e9-50a9057c49f3"`
-	Template    string                 `json:"template" example:"go-service"`
-	ProjectID   string                 `json:"project_id" example:"1a221b2c-abb7-44c0-8a96-8e92638b2422"`
-	Environment string                 `json:"environment" example:"dev"`
-	Variables   map[string]interface{} `json:"variables" example:"{\"service_name\":\"payment-service\",\"port\":8080,\"database\":\"postgres\",\"enable_logging\":true}"`
+	ID          string                          `json:"id" example:"ad5b0c1f-762a-4ab3-a3e9-50a9057c49f3"`
+	Template    string                          `json:"template" example:"go-service"`
+	ProjectID   string                          `json:"project_id" example:"1a221b2c-abb7-44c0-8a96-8e92638b2422"`
+	Environment string                          `json:"environment" example:"dev"`
+	Variables   entity.ScaffoldRequestVariables `json:"variables" example:"{\"service_name\":\"payment-service\",\"port\":8080,\"database\":\"postgres\",\"enable_logging\":true}"`
 }
 
 // @Summary		List Scaffold Requests
@@ -78,8 +75,6 @@ func (h *scaffoldRequestHandler) FindAllScaffoldRequests(c *gin.Context) {
 
 	scaffoldRequests, err := h.scaffoldRequestUsecase.FindAllScaffoldRequests(c.Request.Context(), scaffoldRequestUsecase.FindAllScaffoldRequestsInput{
 		ProjectID: projectID,
-		StartDate: query.StartDate,
-		EndDate:   query.EndDate,
 		Limit:     limit,
 		Offset:    offset,
 		SortBy:    sortBy,
@@ -105,7 +100,7 @@ func (h *scaffoldRequestHandler) newFindAllScaffoldRequestsResponse(scaffoldRequ
 			ID:          scaffoldRequest.ID.String(),
 			Template:    scaffoldRequest.Template,
 			ProjectID:   scaffoldRequest.ProjectID.String(),
-			Environment: string(scaffoldRequest.Environment),
+			Environment: scaffoldRequest.Environment.String(),
 			Variables:   scaffoldRequest.Variables,
 		})
 	}

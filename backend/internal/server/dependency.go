@@ -16,9 +16,11 @@ import (
 	dbDeploymentRepo "devhub-backend/internal/infra/db/repository/deployment"
 	dbPluginRepo "devhub-backend/internal/infra/db/repository/plugin"
 	dbProjectRepo "devhub-backend/internal/infra/db/repository/project"
+	dbRefreshTokenRepo "devhub-backend/internal/infra/db/repository/refresh_token"
 	dbScaffoldRequestRepo "devhub-backend/internal/infra/db/repository/scaffold_request"
 	dbUserRepo "devhub-backend/internal/infra/db/repository/user"
 	"devhub-backend/internal/infra/logger"
+	authUsecase "devhub-backend/internal/usecase/auth"
 	deploymentUsecase "devhub-backend/internal/usecase/deployment"
 	pluginUsecase "devhub-backend/internal/usecase/plugin"
 	projectUsecase "devhub-backend/internal/usecase/project"
@@ -37,6 +39,7 @@ func (s *Server) setupRouteDependencies(ctx context.Context, appLogger logger.Lo
 	dbDeploymentRepo := dbDeploymentRepo.NewDeploymentRepository(dbConn)
 	dbPluginRepo := dbPluginRepo.NewPluginRepository(dbConn)
 	dbScaffoldRequestRepo := dbScaffoldRequestRepo.NewScaffoldRequestRepository(dbConn)
+	dbRefreshTokenRepo := dbRefreshTokenRepo.NewRefreshTokenRepository(dbConn)
 
 	// Query retrier
 	// queryBackoff, _ := retry.NewExponentialBackoffStrategy(500*time.Millisecond, 2.0, 5*time.Second)
@@ -51,6 +54,7 @@ func (s *Server) setupRouteDependencies(ctx context.Context, appLogger logger.Lo
 	deploymentUsecase := deploymentUsecase.NewDeploymentUsecase(s.cfg.App, dbDeploymentRepo)
 	pluginUsecase := pluginUsecase.NewPluginUsecase(s.cfg.App, dbPluginRepo)
 	scaffoldRequestUsecase := scaffoldRequestUsecase.NewScaffoldRequestUsecase(s.cfg.App, dbScaffoldRequestRepo)
+	authUsecase := authUsecase.NewAuthUsecase(s.cfg.Token, dbUserRepo, dbRefreshTokenRepo)
 
 	// Application middleware
 	appMiddleware := middleware.New()
@@ -61,7 +65,7 @@ func (s *Server) setupRouteDependencies(ctx context.Context, appLogger logger.Lo
 	deploymentHandler := deploymentHandler.NewDeploymentHandler(s.cfg.App, deploymentUsecase)
 	pluginHandler := pluginHandler.NewPluginHandler(s.cfg.App, pluginUsecase)
 	scaffoldRequestHandler := scaffoldRequestHandler.NewScaffoldRequestHandler(s.cfg.App, scaffoldRequestUsecase)
-	authHandler := authHandler.NewAuthHandler(s.cfg.App, userUsecase)
+	authHandler := authHandler.NewAuthHandler(s.cfg.App, authUsecase)
 
 	return httproute.Dependency{
 		Middleware:             appMiddleware,

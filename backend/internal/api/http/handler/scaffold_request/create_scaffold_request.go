@@ -12,12 +12,12 @@ import (
 )
 
 type createScaffoldRequest struct {
-	Template    string            `json:"template" binding:"required"`
-	Environment string            `json:"environment" binding:"required"`
-	Variables   scaffoldVariables `json:"variables" binding:"required"`
+	Template    string                   `json:"template" binding:"required"`
+	Environment string                   `json:"environment" binding:"required"`
+	Variables   scaffoldVariablesRequest `json:"variables" binding:"required"`
 }
 
-type scaffoldVariables struct {
+type scaffoldVariablesRequest struct {
 	ServiceName   string `json:"service_name" binding:"required"`
 	Port          int    `json:"port" binding:"required"`
 	Database      string `json:"database" binding:"required"`
@@ -25,11 +25,11 @@ type scaffoldVariables struct {
 }
 
 type createScaffoldRequestResponse struct {
-	ID          string            `json:"id" example:"ad5b0c1f-762a-4ab3-a3e9-50a9057c49f3"`
-	Template    string            `json:"template" example:"go-service"`
-	ProjectID   string            `json:"project_id" example:"1a221b2c-abb7-44c0-8a96-8e92638b2422"`
-	Environment string            `json:"environment" example:"dev"`
-	Variables   scaffoldVariables `json:"variables" example:"{\"service_name\":\"payment-service\",\"port\":8080,\"database\":\"postgres\",\"enable_logging\":true}"`
+	ID          string                          `json:"id" example:"ad5b0c1f-762a-4ab3-a3e9-50a9057c49f3"`
+	Template    string                          `json:"template" example:"go-service"`
+	ProjectID   string                          `json:"project_id" example:"1a221b2c-abb7-44c0-8a96-8e92638b2422"`
+	Environment string                          `json:"environment" example:"dev"`
+	Variables   entity.ScaffoldRequestVariables `json:"variables" example:"{\"service_name\":\"payment-service\",\"port\":8080,\"database\":\"postgres\",\"enable_logging\":true}"`
 }
 
 // @Summary		Create Scaffold Request
@@ -76,7 +76,7 @@ func (h *scaffoldRequestHandler) newCreateScaffoldRequestResponse(scaffoldReques
 		ID:          scaffoldRequest.ID.String(),
 		Template:    scaffoldRequest.Template,
 		ProjectID:   scaffoldRequest.ProjectID.String(),
-		Environment: string(scaffoldRequest.Environment),
-		Variables:   scaffoldVariables(scaffoldRequest.Variables),
+		Environment: scaffoldRequest.Environment.String(),
+		Variables:   scaffoldRequest.Variables,
 	}
 }

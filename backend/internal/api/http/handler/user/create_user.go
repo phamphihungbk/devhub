@@ -12,15 +12,17 @@ import (
 )
 
 type createUserRequest struct {
-	Name  string `json:"name" example:"User Name" binding:"required"`
-	Email string `json:"email" example:"user@example.com" binding:"required"`
-	Role  string `json:"role" example:"user" binding:"required"`
+	Name     *string `json:"name" example:"User Name"`
+	Email    string  `json:"email" example:"user@example.com" binding:"required"`
+	Password string  `json:"password" example:"password123" binding:"required"`
+	Role     string  `json:"role" example:"user" binding:"required"`
 }
 
 type createUserResponse struct {
 	ID    string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	Name  string `json:"name" example:"User Name"`
 	Email string `json:"email" example:"user@example.com"`
+	Role  string `json:"role" example:"admin"`
 }
 
 // @Summary		Create User
@@ -43,9 +45,10 @@ func (h *userHandler) CreateUser(c *gin.Context) {
 	}
 
 	createdUser, err := h.userUsecase.CreateUser(c.Request.Context(), userUsecase.CreateUserInput{
-		Name:  input.Name,
-		Email: input.Email,
-		Role:  input.Role,
+		Name:     input.Name,
+		Email:    input.Email,
+		Role:     input.Role,
+		Password: input.Password,
 	})
 
 	if err != nil {
@@ -65,5 +68,6 @@ func (h *userHandler) newCreateUserResponse(user *entity.User) createUserRespons
 		ID:    user.ID.String(),
 		Name:  user.Name,
 		Email: user.Email,
+		Role:  user.Role.String(),
 	}
 }

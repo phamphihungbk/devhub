@@ -27,8 +27,9 @@ type FindAllPluginsFilter struct {
 }
 
 type UpdatePluginInput struct {
-	ID           uuid.UUID
-	Name         *string
-	Description  *string
-	Environments *[]string
+	ID          uuid.UUID
+	Name        *string
+	Description *string
+	Type        *entity.PluginType
+	Version     *string
 }

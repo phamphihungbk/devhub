@@ -14,7 +14,7 @@ import (
 	postgres "github.com/go-jet/jet/v2/postgres"
 )
 
-func (r *deploymentRepositoryImpl) UpdateOne(ctx context.Context, input repository.UpdateUserInput) (deployment *entity.Deployment, err error) {
+func (r *deploymentRepositoryImpl) UpdateOne(ctx context.Context, input repository.UpdateDeploymentInput) (deployment *entity.Deployment, err error) {
 	const errLocation = "[repository deployment/update_one UpdateOne] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
@@ -23,13 +23,21 @@ func (r *deploymentRepositoryImpl) UpdateOne(ctx context.Context, input reposito
 	columns := make(postgres.ColumnList, 0)
 
 	// build the update model
-	if input.Name != nil {
-		updateModel.Name = string(*input.Name)
-		columns = append(columns, usersTable.Name)
+	if input.Environment != nil {
+		updateModel.Environment = string(*input.Environment)
+		columns = append(columns, deploymentsTable.Environment)
 	}
-	if input.Role != nil {
-		updateModel.Role = string(*input.Role)
-		columns = append(columns, deploymentsTable.Role)
+	if input.Status != nil {
+		updateModel.Status = string(*input.Status)
+		columns = append(columns, deploymentsTable.Status)
+	}
+	if input.Version != nil {
+		updateModel.Version = string(*input.Version)
+		columns = append(columns, deploymentsTable.Version)
+	}
+	if input.Service != nil {
+		updateModel.Service = string(*input.Service)
+		columns = append(columns, deploymentsTable.Service)
 	}
 
 	if len(columns) == 0 {

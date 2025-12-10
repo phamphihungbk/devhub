@@ -18,17 +18,19 @@ func (r *deploymentRepositoryImpl) FindAll(ctx context.Context, filter repositor
 
 	// Build WHERE conditions for filtering
 	whereClauses := []postgres.BoolExpression{}
+	whereClauses = append(whereClauses, table.Deployments.ProjectID.EQ((postgres.UUID(filter.ProjectID))))
+
 	if filter.StartDate != nil {
-		whereClauses = append(whereClauses, table.Users.CreatedAt.GT_EQ(postgres.TimestampT(*filter.StartDate)))
+		whereClauses = append(whereClauses, table.Deployments.CreatedAt.GT_EQ(postgres.TimestampT(*filter.StartDate)))
 	}
 	if filter.EndDate != nil {
-		whereClauses = append(whereClauses, table.Users.CreatedAt.LT_EQ(postgres.TimestampT(*filter.EndDate)))
+		whereClauses = append(whereClauses, table.Deployments.CreatedAt.LT_EQ(postgres.TimestampT(*filter.EndDate)))
 	}
 
 	// Get total count of users matching the filter
 	countStmt := postgres.SELECT(
-		postgres.COUNT(table.Users.ID).AS("total"),
-	).FROM(table.Users)
+		postgres.COUNT(table.Deployments.ID).AS("total"),
+	).FROM(table.Deployments)
 
 	if len(whereClauses) > 0 {
 		countStmt = countStmt.WHERE(postgres.AND(whereClauses...))
@@ -63,9 +65,9 @@ func (r *deploymentRepositoryImpl) FindAll(ctx context.Context, filter repositor
 		switch *filter.SortBy {
 		case "name":
 			if *filter.SortOrder == entity.SortOrderDesc {
-				stmt = stmt.ORDER_BY(table.Deployments.Name.DESC())
+				stmt = stmt.ORDER_BY(table.Deployments.Service.DESC())
 			} else {
-				stmt = stmt.ORDER_BY(table.Deployments.Name.ASC())
+				stmt = stmt.ORDER_BY(table.Deployments.Service.ASC())
 			}
 		case "date":
 			if *filter.SortOrder == entity.SortOrderDesc {

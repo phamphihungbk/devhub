@@ -19,9 +19,10 @@ func (r *pluginRepositoryImpl) CreateOne(ctx context.Context, input *entity.Plug
 	stmt := pluginsTable.INSERT(
 		pluginsTable.AllColumns.Except(pluginsTable.DefaultColumns), // Exclude columns with default values
 	).MODEL(model.Plugins{
-		Name:  input.Name,
-		Email: input.Email,
-		Role:  string(input.Role),
+		Name:        input.Name,
+		Type:        input.Type.String(),
+		Version:     input.Version,
+		Description: &input.Description,
 	}).RETURNING(pluginsTable.AllColumns)
 	query, args := stmt.Sql()
 

@@ -19,9 +19,10 @@ func (r *scaffoldRequestRepositoryImpl) CreateOne(ctx context.Context, input *en
 	stmt := scaffoldRequestsTable.INSERT(
 		scaffoldRequestsTable.AllColumns.Except(scaffoldRequestsTable.DefaultColumns), // Exclude columns with default values
 	).MODEL(model.ScaffoldRequests{
-		Name:  input.Name,
-		Email: input.Email,
-		Role:  string(input.Role),
+		ProjectID:   input.ProjectID,
+		Template:    input.Template,
+		Environment: input.Environment.String(),
+		Variables:   input.Variables.String(),
 	}).RETURNING(scaffoldRequestsTable.AllColumns)
 	query, args := stmt.Sql()
 

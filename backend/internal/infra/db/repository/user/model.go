@@ -11,14 +11,20 @@ type User struct {
 }
 
 func (c *User) ToEntity() *entity.User {
+	userRole, err := new(entity.UserRole).Parse(c.Role)
+	if err != nil {
+		return nil
+	}
+
 	return &entity.User{
-		ID:        c.ID,
-		Email:     c.Email,
-		Name:      c.Name,
-		Role:      entity.UserRole(c.Role),
-		CreatedAt: c.CreatedAt,
-		LastLogin: misc.DerefTime(c.LastLogin),
-		DeletedAt: misc.DerefTime(c.DeletedAt),
+		ID:           c.ID,
+		Email:        c.Email,
+		PasswordHash: c.PasswordHash,
+		Name:         c.Name,
+		Role:         userRole,
+		CreatedAt:    c.CreatedAt,
+		UpdatedAt:    c.UpdatedAt,
+		DeletedAt:    misc.DerefTime(c.DeletedAt),
 	}
 }
 

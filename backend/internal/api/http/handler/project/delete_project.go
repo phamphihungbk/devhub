@@ -20,9 +20,11 @@ import (
 // @Router			/projects/{project} [delete]
 func (h *projectHandler) DeleteProject(c *gin.Context) {
 	projectID := c.Param("project")
+
 	_, err := h.projectUsecase.DeleteProject(c.Request.Context(), projectUsecase.DeleteProjectInput{
 		ID: projectID,
 	})
+
 	if err != nil {
 		httpresponse.Error(c, err)
 		return

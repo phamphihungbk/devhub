@@ -15,8 +15,8 @@ import (
 
 type UpdateUserInput struct {
 	ID   string  `json:"id" validate:"required,uuid"`
-	Name *string `json:"name" validate:"required,min=2,max=100"`
-	Role *string `json:"role" validate:"required,oneof=admin user"`
+	Name *string `json:"name" validate:"min=2,max=100"`
+	Role *string `json:"role" validate:"oneof=admin user"`
 }
 
 func (u *userUsecase) UpdateUser(ctx context.Context, input UpdateUserInput) (user *entity.User, err error) {
@@ -41,7 +41,16 @@ func (u *userUsecase) UpdateUser(ctx context.Context, input UpdateUserInput) (us
 	updated, err := u.userRepository.UpdateOne(ctx, repository.UpdateUserInput{
 		ID:   uuid.MustParse(input.ID),
 		Name: input.Name,
-		Role: (*entity.UserRole)(input.Role),
+		Role: func() *entity.UserRole {
+			if input.Role == nil {
+				return nil
+			}
+			role, err := new(entity.UserRole).Parse(*input.Role)
+			if err != nil {
+				return nil
+			}
+			return &role
+		}(),
 	})
 
 	if err != nil {

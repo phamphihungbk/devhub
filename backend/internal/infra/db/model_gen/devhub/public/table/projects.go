@@ -22,6 +22,8 @@ type projectsTable struct {
 	Description  postgres.ColumnString
 	Environments postgres.ColumnStringArray
 	CreatedBy    postgres.ColumnString
+	CreatedAt    postgres.ColumnTimestamp
+	UpdatedAt    postgres.ColumnTimestamp
 	DeletedAt    postgres.ColumnTimestamp
 
 	AllColumns     postgres.ColumnList
@@ -69,10 +71,12 @@ func newProjectsTableImpl(schemaName, tableName, alias string) projectsTable {
 		DescriptionColumn  = postgres.StringColumn("description")
 		EnvironmentsColumn = postgres.StringArrayColumn("environments")
 		CreatedByColumn    = postgres.StringColumn("created_by")
+		CreatedAtColumn    = postgres.TimestampColumn("created_at")
+		UpdatedAtColumn    = postgres.TimestampColumn("updated_at")
 		DeletedAtColumn    = postgres.TimestampColumn("deleted_at")
-		allColumns         = postgres.ColumnList{IDColumn, NameColumn, DescriptionColumn, EnvironmentsColumn, CreatedByColumn, DeletedAtColumn}
-		mutableColumns     = postgres.ColumnList{NameColumn, DescriptionColumn, EnvironmentsColumn, CreatedByColumn, DeletedAtColumn}
-		defaultColumns     = postgres.ColumnList{IDColumn}
+		allColumns         = postgres.ColumnList{IDColumn, NameColumn, DescriptionColumn, EnvironmentsColumn, CreatedByColumn, CreatedAtColumn, UpdatedAtColumn, DeletedAtColumn}
+		mutableColumns     = postgres.ColumnList{NameColumn, DescriptionColumn, EnvironmentsColumn, CreatedByColumn, CreatedAtColumn, UpdatedAtColumn, DeletedAtColumn}
+		defaultColumns     = postgres.ColumnList{IDColumn, CreatedAtColumn, UpdatedAtColumn}
 	)
 
 	return projectsTable{
@@ -84,6 +88,8 @@ func newProjectsTableImpl(schemaName, tableName, alias string) projectsTable {
 		Description:  DescriptionColumn,
 		Environments: EnvironmentsColumn,
 		CreatedBy:    CreatedByColumn,
+		CreatedAt:    CreatedAtColumn,
+		UpdatedAt:    UpdatedAtColumn,
 		DeletedAt:    DeletedAtColumn,
 
 		AllColumns:     allColumns,

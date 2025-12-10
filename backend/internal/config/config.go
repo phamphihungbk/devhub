@@ -8,6 +8,7 @@ type Config struct {
 	App     AppConfig      // Application-level settings such as API keys or feature flags
 	Service ServiceConfig  // Infrastructure-level service settings like name, port, and environment
 	DB      DatabaseConfig // Database connection and pooling configuration
+	Token   TokenConfig    // Token-related configuration
 }
 
 func MustConfigure() *Config {
@@ -28,6 +29,7 @@ func Configure() (*Config, error) {
 		App:     LoadAppConfig(cfg),
 		Service: LoadServiceConfig(cfg),
 		DB:      LoadDatabaseConfig(cfg),
+		Token:   LoadTokenConfig(cfg),
 	}, nil
 }
 

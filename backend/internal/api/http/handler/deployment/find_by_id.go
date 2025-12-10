@@ -10,10 +10,13 @@ import (
 )
 
 type findOneDeploymentResponse struct {
-	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name         string   `json:"name" example:"Project Name"`
-	Description  string   `json:"description" example:"Project Description"`
-	Environments []string `json:"environments" example:"[prod,dev,staging]"`
+	ID          string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ProjectID   string `json:"project_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Environment string `json:"environment" example:"prod"`
+	Service     string `json:"service" example:"Service Name"`
+	Version     string `json:"version" example:"1.0.0"`
+	Status      string `json:"status" example:"Deployment Status"`
+	TriggeredBy string `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
 // @Summary		Find Deployment by ID
@@ -27,7 +30,7 @@ type findOneDeploymentResponse struct {
 // @Failure		500	{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
 // @Router			/deployment/:deployment [get]
 func (h *deploymentHandler) FindDeploymentByID(c *gin.Context) {
-	deploymentID := c.Param("id")
+	deploymentID := c.Param("deployment")
 	deployment, err := h.deploymentUsecase.FindOneDeployment(c.Request.Context(), deploymentUsecase.FindOneDeploymentInput{
 		ID: deploymentID,
 	})
@@ -44,15 +47,13 @@ func (h *deploymentHandler) newFindOneDeploymentResponse(deployment *entity.Depl
 		return findOneDeploymentResponse{}
 	}
 
-	environments := make([]string, len(deployment.Environments))
-	for i, env := range deployment.Environments {
-		environments[i] = string(env)
-	}
-
 	return findOneDeploymentResponse{
-		ID:           deployment.ID.String(),
-		Name:         deployment.Name,
-		Description:  deployment.Description,
-		Environments: environments,
+		ID:          deployment.ID.String(),
+		ProjectID:   deployment.ProjectID.String(),
+		Environment: deployment.Environment.String(),
+		Service:     deployment.Service,
+		Version:     deployment.Version,
+		Status:      deployment.Status.String(),
+		TriggeredBy: deployment.TriggeredBy.String(),
 	}
 }

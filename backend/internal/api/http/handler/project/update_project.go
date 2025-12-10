@@ -12,7 +12,7 @@ import (
 )
 
 type updateProjectRequest struct {
-	Name         string    `json:"name" example:"Project Name" binding:"required"`
+	Name         *string   `json:"name" example:"Project Name"`
 	Description  *string   `json:"description" example:"Project Description"`
 	Environments *[]string `json:"environments" example:"[development, production]"`
 }
@@ -21,8 +21,7 @@ type updateProjectResponse struct {
 	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	Description  string   `json:"description" example:"Project Description"`
 	Environments []string `json:"environments" example:"[development, production]"`
-	CreatedAt    string   `json:"created_at" example:"2024-01-01T00:00:00Z"`
-	UpdatedAt    string   `json:"updated_at" example:"2024-01-01T00:00:00Z"`
+	CreatedBy    string   `json:"created_by" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
 // @Summary		Update Project
@@ -47,6 +46,7 @@ func (h *projectHandler) UpdateProject(c *gin.Context) {
 
 	updatedProject, err := h.projectUsecase.UpdateProject(c.Request.Context(), projectUsecase.UpdateProjectInput{
 		ID:           projectID,
+		Name:         input.Name,
 		Description:  input.Description,
 		Environments: input.Environments,
 	})
@@ -63,12 +63,16 @@ func (h *projectHandler) newUpdateProjectResponse(project *entity.Project) updat
 	if project == nil {
 		return updateProjectResponse{}
 	}
+	envs := make([]string, 0, len(project.Environments))
+
+	for _, env := range project.Environments {
+		envs = append(envs, env.String())
+	}
 
 	return updateProjectResponse{
 		ID:           project.ID.String(),
 		Description:  project.Description,
-		Environments: project.Environments,
-		CreatedAt:    project.CreatedAt.Format("2006-01-02T15:04:05Z"),
-		UpdatedAt:    project.UpdatedAt.Format("2006-01-02T15:04:05Z"),
+		Environments: envs,
+		CreatedBy:    project.CreatedBy.String(),
 	}
 }

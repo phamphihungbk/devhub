@@ -24,12 +24,20 @@ func (r *pluginRepositoryImpl) UpdateOne(ctx context.Context, input repository.U
 
 	// build the update model
 	if input.Name != nil {
-		updateModel.Name = string(*input.Name)
-		columns = append(columns, usersTable.Name)
+		updateModel.Name = misc.GetValue(input.Name)
+		columns = append(columns, pluginsTable.Name)
 	}
-	if input.Role != nil {
-		updateModel.Role = string(*input.Role)
-		columns = append(columns, usersTable.Role)
+	if input.Description != nil {
+		updateModel.Description = input.Description
+		columns = append(columns, pluginsTable.Description)
+	}
+	if input.Type != nil {
+		updateModel.Type = string(*input.Type)
+		columns = append(columns, pluginsTable.Type)
+	}
+	if input.Version != nil {
+		updateModel.Version = misc.GetValue(input.Version)
+		columns = append(columns, pluginsTable.Version)
 	}
 
 	if len(columns) == 0 {

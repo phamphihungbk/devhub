@@ -12,16 +12,20 @@ import (
 )
 
 type updateDeploymentRequest struct {
-	Name         *string   `json:"name" example:"Deployment Name" binding:"required"`
-	Description  *string   `json:"description" example:"Deployment Description" binding:"required"`
-	Environments *[]string `json:"environments" example:"[prod,dev,staging]" binding:"required"`
+	Environment *string `json:"environment" example:"prod"`
+	Service     *string `json:"service" example:"Service Name"`
+	Version     *string `json:"version" example:"1.0.0"`
+	Status      *string `json:"status" example:"Deployment Status"`
 }
 
 type updateDeploymentResponse struct {
-	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name         string   `json:"name" example:"Deployment Name"`
-	Description  string   `json:"description" example:"Deployment Description"`
-	Environments []string `json:"environments" example:"[prod,dev,staging]"`
+	ID          string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ProjectID   string `json:"project_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Environment string `json:"environment" example:"prod"`
+	Service     string `json:"service" example:"Service Name"`
+	Version     string `json:"version" example:"1.0.0"`
+	Status      string `json:"status" example:"Deployment Status"`
+	TriggeredBy string `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
 // @Summary		Update Deployment
@@ -33,9 +37,9 @@ type updateDeploymentResponse struct {
 // @Success		200		{object}	httpresponse.SuccessResponse{data=updateDeploymentResponse,metadata=nil}	    "Deployment updated"
 // @Failure		400		{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
 // @Failure		500		{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
-// @Router			/deployments/{id} [patch]
+// @Router			/deployments/{deployment} [patch]
 func (h *deploymentHandler) UpdateDeployment(c *gin.Context) {
-	deploymentID := c.Param("id")
+	deploymentID := c.Param("deployment")
 	var input updateDeploymentRequest
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -45,10 +49,11 @@ func (h *deploymentHandler) UpdateDeployment(c *gin.Context) {
 	}
 
 	updatedDeployment, err := h.deploymentUsecase.UpdateDeployment(c.Request.Context(), deploymentUsecase.UpdateDeploymentInput{
-		ID:           deploymentID,
-		Name:         input.Name,
-		Description:  input.Description,
-		Environments: input.Environments,
+		ID:          deploymentID,
+		Environment: input.Environment,
+		Service:     input.Service,
+		Version:     input.Version,
+		Status:      input.Status,
 	})
 
 	if err != nil {
@@ -64,15 +69,13 @@ func (h *deploymentHandler) newUpdateDeploymentResponse(deployment *entity.Deplo
 		return updateDeploymentResponse{}
 	}
 
-	environments := make([]string, len(deployment.Environments))
-	for i, env := range deployment.Environments {
-		environments[i] = string(env)
-	}
-
 	return updateDeploymentResponse{
-		ID:           deployment.ID.String(),
-		Name:         deployment.Name,
-		Description:  deployment.Description,
-		Environments: environments,
+		ID:          deployment.ID.String(),
+		ProjectID:   deployment.ProjectID.String(),
+		Environment: deployment.Environment.String(),
+		Service:     deployment.Service,
+		Version:     deployment.Version,
+		Status:      deployment.Status.String(),
+		TriggeredBy: deployment.TriggeredBy.String(),
 	}
 }

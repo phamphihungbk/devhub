@@ -12,16 +12,18 @@ import (
 )
 
 type createPluginRequest struct {
-	Name         string   `json:"name" example:"Plugin Name" binding:"required"`
-	Description  string   `json:"description" example:"Plugin Description" binding:"required"`
-	Environments []string `json:"environments" example:"[prod,dev,staging]" binding:"required,dive,required"`
+	Name        string `json:"name" example:"Plugin Name" binding:"required"`
+	Version     string `json:"version" example:"1.0.0" binding:"required"`
+	Type        string `json:"type" example:"scaffolder" binding:"required"`
+	Description string `json:"description" example:"Plugin Description" binding:"required"`
 }
 
 type createPluginResponse struct {
-	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name         string   `json:"name" example:"Plugin Name"`
-	Description  string   `json:"description" example:"Plugin Description"`
-	Environments []string `json:"environments" example:"[prod,dev,staging]"`
+	ID          string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name        string `json:"name" example:"Plugin Name"`
+	Version     string `json:"version" example:"1.0.0"`
+	Type        string `json:"type" example:"scaffolder"`
+	Description string `json:"description" example:"Plugin Description"`
 }
 
 // @Summary		Create Plugin
@@ -44,9 +46,10 @@ func (h *pluginHandler) CreatePlugin(c *gin.Context) {
 	}
 
 	createdPlugin, err := h.pluginUsecase.CreatePlugin(c.Request.Context(), pluginUsecase.CreatePluginInput{
-		Name:         input.Name,
-		Description:  input.Description,
-		Environments: input.Environments,
+		Name:        input.Name,
+		Version:     input.Version,
+		Type:        input.Type,
+		Description: input.Description,
 	})
 
 	if err != nil {
@@ -63,9 +66,9 @@ func (h *pluginHandler) newCreatePluginResponse(plugin *entity.Plugin) createPlu
 	}
 
 	return createPluginResponse{
-		ID:           plugin.ID.String(),
-		Name:         plugin.Name,
-		Description:  plugin.Description,
-		Environments: plugin.Environments,
+		ID:          plugin.ID.String(),
+		Name:        plugin.Name,
+		Type:        plugin.Type.String(),
+		Description: plugin.Description,
 	}
 }

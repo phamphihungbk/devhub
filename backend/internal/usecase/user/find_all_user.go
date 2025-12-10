@@ -14,10 +14,9 @@ import (
 type FindAllUsersInput struct {
 	StartDate *time.Time        `json:"start_date" validate:"omitempty"`
 	EndDate   *time.Time        `json:"end_date" validate:"omitempty,gtfield=StartDate"`
-	Venue     *string           `json:"venue" validate:"omitempty,gt=0"`
 	Limit     *int64            `json:"limit" validate:"required,gte=1,lte=100"`
 	Offset    *int64            `json:"offset" validate:"required,gte=0"`
-	SortBy    *string           `json:"sort_by" validate:"required_with=SortOrder,omitempty,oneof=date name venue"`
+	SortBy    *string           `json:"sort_by" validate:"required_with=SortOrder,omitempty,oneof=date name email"`
 	SortOrder *entity.SortOrder `json:"sort_order" validate:"omitempty,oneof=asc desc"`
 }
 

@@ -12,11 +12,11 @@ import (
 	"github.com/google/uuid"
 )
 
-type ScaffoldRequestDeleteInput struct {
+type DeleteScaffoldRequestInput struct {
 	ID string `json:"id" validate:"required,uuid"`
 }
 
-func (u *scaffoldRequestUsecase) DeleteScaffoldRequest(ctx context.Context, input ScaffoldRequestDeleteInput) (scaffoldRequest *entity.ScaffoldRequest, err error) {
+func (u *scaffoldRequestUsecase) DeleteScaffoldRequest(ctx context.Context, input DeleteScaffoldRequestInput) (scaffoldRequest *entity.ScaffoldRequest, err error) {
 	const errLocation = "[usecase scaffold_request/delete_scaffold_request DeleteScaffoldRequest] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 

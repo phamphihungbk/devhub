@@ -13,6 +13,7 @@ type findOneUserResponse struct {
 	ID    string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	Name  string `json:"name" example:"User Name"`
 	Email string `json:"email" example:"user@example.com"`
+	Role  string `json:"role" example:"admin"`
 }
 
 // @Summary		Find User by ID
@@ -47,5 +48,6 @@ func (h *userHandler) newFindOneUserResponse(user *entity.User) findOneUserRespo
 		ID:    user.ID.String(),
 		Name:  user.Name,
 		Email: user.Email,
+		Role:  user.Role.String(),
 	}
 }

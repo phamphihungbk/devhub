@@ -19,9 +19,10 @@ func (r *userRepositoryImpl) CreateOne(ctx context.Context, input *entity.User) 
 	stmt := usersTable.INSERT(
 		usersTable.AllColumns.Except(usersTable.DefaultColumns), // Exclude columns with default values
 	).MODEL(model.Users{
-		Name:  input.Name,
-		Email: input.Email,
-		Role:  string(input.Role),
+		Name:         input.Name,
+		Email:        input.Email,
+		Role:         input.Role.String(),
+		PasswordHash: input.PasswordHash,
 	}).RETURNING(usersTable.AllColumns)
 	query, args := stmt.Sql()
 

@@ -21,8 +21,11 @@ type FindAllPluginsQuery struct {
 }
 
 type findAllPluginsResponse struct {
-	ID   string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name string `json:"name" example:"Plugin Name"`
+	ID          string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name        string `json:"name" example:"Plugin Name"`
+	Type        string `json:"type" example:"scaffolder"`
+	Version     string `json:"version" example:"1.0.0"`
+	Description string `json:"description" example:"Plugin Description"`
 }
 
 // @Summary		List Plugins

@@ -13,16 +13,16 @@ import (
 
 type createProjectRequest struct {
 	Name         string   `json:"name" example:"Project Name" binding:"required"`
-	Description  string   `json:"description" example:"Project Description" binding:"required"`
-	Environments []string `json:"environments" example:"[development, production]" binding:"required"`
+	Description  *string  `json:"description" example:"Project Description"`
+	Environments []string `json:"environments" example:"[dev, prod, staging]" binding:"required"`
 }
 
 type createProjectResponse struct {
 	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name         string   `json:"name" example:"Project Name"`
 	Description  string   `json:"description" example:"Project Description"`
-	Environments []string `json:"environments" example:"[development, production]"`
-	CreatedAt    string   `json:"created_at" example:"2024-01-01T00:00:00Z"`
-	UpdatedAt    string   `json:"updated_at" example:"2024-01-01T00:00:00Z"`
+	Environments []string `json:"environments" example:"[dev, prod, staging]"`
+	CreatedBy    string   `json:"created_by" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
 // @Summary		Create Project
@@ -62,7 +62,7 @@ func (h *projectHandler) CreateProject(c *gin.Context) {
 		Name:         input.Name,
 		Description:  input.Description,
 		Environments: input.Environments,
-		CreatedBy:    userEntity.ID,
+		CreatedBy:    userEntity.ID.String(),
 	})
 
 	if err != nil {
@@ -77,13 +77,16 @@ func (h *projectHandler) newCreateProjectResponse(project *entity.Project) creat
 	if project == nil {
 		return createProjectResponse{}
 	}
+	envs := make([]string, 0, len(project.Environments))
+
+	for _, env := range project.Environments {
+		envs = append(envs, env.String())
+	}
 
 	return createProjectResponse{
 		ID:           project.ID.String(),
 		Name:         project.Name,
 		Description:  project.Description,
-		Environments: project.Environments,
-		CreatedAt:    project.CreatedAt.Format("2006-01-02T15:04:05Z"),
-		UpdatedAt:    project.UpdatedAt.Format("2006-01-02T15:04:05Z"),
+		Environments: envs,
 	}
 }

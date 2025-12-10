@@ -11,14 +11,21 @@ type ScaffoldRequest struct {
 }
 
 func (c *ScaffoldRequest) ToEntity() *entity.ScaffoldRequest {
+	env, err := new(entity.ProjectEnvironment).Parse(c.Environment)
+	if err != nil {
+		return nil
+	}
+	variables, err := new(entity.ScaffoldRequestVariables).Parse(c.Variables)
+	if err != nil {
+		return nil
+	}
+
 	return &entity.ScaffoldRequest{
-		ID:           c.ID,
-		Name:         c.Name,
-		Description:  misc.GetValue(c.Description),
-		Environments: misc.GetValue(c.Environments),
-		CreatedAt:    misc.DerefTime(c.CreatedAt),
-		UpdatedAt:    misc.DerefTime(c.UpdatedAt),
-		DeletedAt:    misc.DerefTime(c.DeletedAt),
+		ID:          c.ID,
+		ProjectID:   c.ProjectID,
+		Template:    c.Template,
+		Environment: env,
+		Variables:   variables,
 	}
 }
 

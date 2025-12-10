@@ -9,9 +9,12 @@ import (
 	repository "devhub-backend/internal/domain/repository"
 	"devhub-backend/internal/util/misc"
 	"devhub-backend/pkg/validator"
+
+	"github.com/google/uuid"
 )
 
 type FindAllDeploymentsInput struct {
+	ProjectID string            `json:"project_id" validate:"required,uuid"`
 	StartDate *time.Time        `json:"start_date" validate:"omitempty"`
 	EndDate   *time.Time        `json:"end_date" validate:"omitempty,gtfield=StartDate"`
 	Venue     *string           `json:"venue" validate:"omitempty,gt=0"`
@@ -47,6 +50,7 @@ func (u *deploymentUsecase) findAllDeployments(ctx context.Context, input FindAl
 	return func() ([]entity.Deployment, entity.PageProvider[entity.Deployment], entity.Pagination, error) {
 		// Fetch all deployments with optional filters
 		deployments, count, err := u.deploymentRepository.FindAll(ctx, repository.FindAllDeploymentsFilter{
+			ProjectID: uuid.MustParse(input.ProjectID),
 			StartDate: input.StartDate,
 			EndDate:   input.EndDate,
 			Limit:     input.Limit,

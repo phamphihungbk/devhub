@@ -14,10 +14,12 @@ import (
 )
 
 type Projects struct {
-	ID           uuid.UUID       `sql:"primary_key" db:"projects.id"`
-	Name         string          `db:"projects.name"`
-	Description  *string         `db:"projects.description"`
-	Environments *pq.StringArray `db:"projects.environments"`
-	CreatedBy    uuid.UUID       `db:"projects.created_by"`
-	DeletedAt    *time.Time      `db:"projects.deleted_at"`
+	ID           uuid.UUID      `sql:"primary_key" db:"projects.id"`
+	Name         string         `db:"projects.name"`
+	Description  *string        `db:"projects.description"`
+	Environments pq.StringArray `db:"projects.environments"`
+	CreatedBy    uuid.UUID      `db:"projects.created_by"`
+	CreatedAt    time.Time      `db:"projects.created_at"`
+	UpdatedAt    time.Time      `db:"projects.updated_at"`
+	DeletedAt    *time.Time     `db:"projects.deleted_at"`
 }

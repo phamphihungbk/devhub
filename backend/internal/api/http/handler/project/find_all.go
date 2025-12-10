@@ -24,8 +24,7 @@ type findAllProjectsResponse struct {
 	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	Description  string   `json:"description" example:"Project Description"`
 	Environments []string `json:"environments" example:"[development, production]"`
-	CreatedAt    string   `json:"created_at" example:"2024-01-01T00:00:00Z"`
-	UpdatedAt    string   `json:"updated_at" example:"2024-01-01T00:00:00Z"`
+	CreatedBy    string   `json:"created_by" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
 // @Summary		List Projects
@@ -97,12 +96,17 @@ func (h *projectHandler) newFindAllProjectsResponse(projects entity.Projects) []
 
 	response := make([]findAllProjectsResponse, 0, len(projects))
 	for _, project := range projects {
+		envs := make([]string, 0, len(project.Environments))
+
+		for _, env := range project.Environments {
+			envs = append(envs, env.String())
+		}
+
 		response = append(response, findAllProjectsResponse{
 			ID:           project.ID.String(),
 			Description:  project.Description,
-			Environments: project.Environments,
-			CreatedAt:    project.CreatedAt.Format("2006-01-02T15:04:05Z"),
-			UpdatedAt:    project.UpdatedAt.Format("2006-01-02T15:04:05Z"),
+			Environments: envs,
+			CreatedBy:    project.CreatedBy.String(),
 		})
 	}
 	return response

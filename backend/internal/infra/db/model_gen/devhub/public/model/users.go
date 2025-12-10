@@ -13,11 +13,12 @@ import (
 )
 
 type Users struct {
-	ID        uuid.UUID  `sql:"primary_key" db:"users.id"`
-	Name      string     `db:"users.name"`
-	Email     string     `db:"users.email"`
-	Role      string     `db:"users.role"`
-	CreatedAt time.Time  `db:"users.created_at"`
-	LastLogin *time.Time `db:"users.last_login"`
-	DeletedAt *time.Time `db:"users.deleted_at"`
+	ID           uuid.UUID  `sql:"primary_key" db:"users.id"`
+	Name         string     `db:"users.name"`
+	Email        string     `db:"users.email"`
+	PasswordHash string     `db:"users.password_hash"`
+	Role         string     `db:"users.role"`
+	CreatedAt    time.Time  `db:"users.created_at"`
+	UpdatedAt    time.Time  `db:"users.updated_at"`
+	DeletedAt    *time.Time `db:"users.deleted_at"`
 }

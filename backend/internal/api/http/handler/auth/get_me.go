@@ -3,16 +3,17 @@ package handler
 import (
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/domain/errs"
+	authUsecase "devhub-backend/internal/usecase/auth"
 	"devhub-backend/internal/util/httpresponse"
 
 	"github.com/gin-gonic/gin"
 )
 
 type getMeResponse struct {
-	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name         string   `json:"name" example:"User Name"`
-	Description  string   `json:"description" example:"Project Description"`
-	Environments []string `json:"environments" example:"[prod,dev,staging]"`
+	ID    string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name  string `json:"name" example:"User Name"`
+	Email string `json:"email" example:"user@example.com"`
+	Role  string `json:"role" example:"admin"`
 }
 
 // @Summary		Return Authenticated User Info
@@ -25,21 +26,23 @@ type getMeResponse struct {
 // @Failure		500	{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
 // @Router			/auth/me [get]
 func (h *authHandler) GetMe(c *gin.Context) {
-	user, exists := c.Get("user")
+	userID, exists := c.Get("user")
 
 	if !exists {
 		httpresponse.Error(c, errs.NewBadRequestError("unauthorized", nil))
 		return
 	}
 
-	userEntity, ok := user.(*entity.User)
+	user, err := h.authUsecase.FindOneUser(c.Request.Context(), authUsecase.FindOneUserInput{
+		ID: userID.(string),
+	})
 
-	if !ok {
-		httpresponse.Error(c, errs.NewBadRequestError("invalid user type", nil))
+	if err != nil {
+		httpresponse.Error(c, err)
 		return
 	}
 
-	httpresponse.Success(c, h.newGetMeResponse(userEntity))
+	httpresponse.Success(c, h.newGetMeResponse(user))
 }
 
 func (h *authHandler) newGetMeResponse(user *entity.User) getMeResponse {
@@ -48,7 +51,9 @@ func (h *authHandler) newGetMeResponse(user *entity.User) getMeResponse {
 	}
 
 	return getMeResponse{
-		ID:   user.ID.String(),
-		Name: user.Name,
+		ID:    user.ID.String(),
+		Name:  user.Name,
+		Email: user.Email,
+		Role:  user.Role.String(),
 	}
 }

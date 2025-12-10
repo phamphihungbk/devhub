@@ -18,12 +18,8 @@ func (r *scaffoldRequestRepositoryImpl) FindAll(ctx context.Context, filter repo
 
 	// Build WHERE conditions for filtering
 	whereClauses := []postgres.BoolExpression{}
-	if filter.StartDate != nil {
-		whereClauses = append(whereClauses, table.ScaffoldRequests.CreatedAt.GT_EQ(postgres.TimestampT(*filter.StartDate)))
-	}
-	if filter.EndDate != nil {
-		whereClauses = append(whereClauses, table.ScaffoldRequests.CreatedAt.LT_EQ(postgres.TimestampT(*filter.EndDate)))
-	}
+
+	whereClauses = append(whereClauses, table.ScaffoldRequests.ProjectID.EQ(postgres.UUID(filter.ProjectID)))
 
 	// Get total count of users matching the filter
 	countStmt := postgres.SELECT(
@@ -63,15 +59,9 @@ func (r *scaffoldRequestRepositoryImpl) FindAll(ctx context.Context, filter repo
 		switch *filter.SortBy {
 		case "name":
 			if *filter.SortOrder == entity.SortOrderDesc {
-				stmt = stmt.ORDER_BY(table.ScaffoldRequests.Name.DESC())
+				stmt = stmt.ORDER_BY(table.ScaffoldRequests.ProjectID.DESC())
 			} else {
-				stmt = stmt.ORDER_BY(table.ScaffoldRequests.Name.ASC())
-			}
-		case "date":
-			if *filter.SortOrder == entity.SortOrderDesc {
-				stmt = stmt.ORDER_BY(table.ScaffoldRequests.CreatedAt.DESC())
-			} else {
-				stmt = stmt.ORDER_BY(table.ScaffoldRequests.CreatedAt.ASC())
+				stmt = stmt.ORDER_BY(table.ScaffoldRequests.ProjectID.ASC())
 			}
 		}
 	}

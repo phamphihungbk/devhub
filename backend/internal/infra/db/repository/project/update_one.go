@@ -24,12 +24,18 @@ func (r *projectRepositoryImpl) UpdateOne(ctx context.Context, input repository.
 
 	// build the update model
 	if input.Name != nil {
-		updateModel.Name = string(*input.Name)
+		updateModel.Name = misc.GetValue(input.Name)
 		columns = append(columns, projectsTable.Name)
 	}
-	if input.Role != nil {
-		updateModel.Role = string(*input.Role)
-		columns = append(columns, projectsTable.Role)
+
+	if input.Description != nil {
+		updateModel.Description = input.Description
+		columns = append(columns, projectsTable.Description)
+	}
+
+	if input.Environments != nil {
+		updateModel.Environments = misc.GetValue(input.Environments)
+		columns = append(columns, projectsTable.Environments)
 	}
 
 	if len(columns) == 0 {

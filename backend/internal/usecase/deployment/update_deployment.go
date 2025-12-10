@@ -14,9 +14,11 @@ import (
 )
 
 type UpdateDeploymentInput struct {
-	ID   string  `json:"id" validate:"required,uuid"`
-	Name *string `json:"name" validate:"required,min=2,max=100"`
-	Role *string `json:"role" validate:"required,oneof=admin user"`
+	ID          string  `json:"id" validate:"required,uuid"`
+	Environment *string `json:"environment" validate:"required,min=2,max=100"`
+	Service     *string `json:"service" validate:"required,min=2,max=100"`
+	Version     *string `json:"version" validate:"required,min=1,max=50"`
+	Status      *string `json:"status" validate:"required,min=2,max=100"`
 }
 
 func (u *deploymentUsecase) UpdateDeployment(ctx context.Context, input UpdateDeploymentInput) (deployment *entity.Deployment, err error) {
@@ -39,9 +41,11 @@ func (u *deploymentUsecase) UpdateDeployment(ctx context.Context, input UpdateDe
 	}
 
 	updated, err := u.deploymentRepository.UpdateOne(ctx, repository.UpdateDeploymentInput{
-		ID:   uuid.MustParse(input.ID),
-		Name: input.Name,
-		Role: (*entity.UserRole)(input.Role),
+		ID:          uuid.MustParse(input.ID),
+		Environment: (*entity.ProjectEnvironment)(input.Environment),
+		Status:      (*entity.DeploymentStatus)(input.Status),
+		Service:     input.Service,
+		Version:     input.Version,
 	})
 
 	if err != nil {

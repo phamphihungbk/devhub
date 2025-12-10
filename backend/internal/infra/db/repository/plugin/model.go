@@ -11,14 +11,18 @@ type Plugin struct {
 }
 
 func (c *Plugin) ToEntity() *entity.Plugin {
+	pluginType, err := new(entity.PluginType).Parse(c.Type)
+	if err != nil {
+		return nil
+	}
+
 	return &entity.Plugin{
-		ID:        c.ID,
-		Email:     c.Email,
-		Name:      c.Name,
-		Role:      entity.UserRole(c.Role),
-		CreatedAt: c.CreatedAt,
-		LastLogin: misc.DerefTime(c.LastLogin),
-		DeletedAt: misc.DerefTime(c.DeletedAt),
+		ID:          c.ID,
+		Type:        pluginType,
+		Name:        c.Name,
+		Version:     c.Version,
+		Description: misc.GetValue(c.Description),
+		InstalledAt: c.InstalledAt,
 	}
 }
 

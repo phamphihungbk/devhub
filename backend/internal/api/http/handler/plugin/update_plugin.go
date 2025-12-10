@@ -12,16 +12,18 @@ import (
 )
 
 type updatePluginRequest struct {
-	Name         *string   `json:"name" example:"Plugin Name" binding:"required"`
-	Description  *string   `json:"description" example:"Plugin Description" binding:"required"`
-	Environments *[]string `json:"environments" example:"[prod,dev,staging]" binding:"required"`
+	Name        *string `json:"name" example:"Plugin Name"`
+	Description *string `json:"description" example:"Plugin Description"`
+	Type        *string `json:"type" example:"scaffolder"`
+	Version     *string `json:"version" example:"1.0.0"`
 }
 
 type updatePluginResponse struct {
-	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name         string   `json:"name" example:"Plugin Name"`
-	Description  string   `json:"description" example:"Plugin Description"`
-	Environments []string `json:"environments" example:"[prod,dev,staging]"`
+	ID          string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name        string `json:"name" example:"Plugin Name"`
+	Type        string `json:"type" example:"scaffolder"`
+	Version     string `json:"version" example:"1.0.0"`
+	Description string `json:"description" example:"Plugin Description"`
 }
 
 // @Summary		Update Plugin
@@ -45,10 +47,11 @@ func (h *pluginHandler) UpdatePlugin(c *gin.Context) {
 	}
 
 	updatedPlugin, err := h.pluginUsecase.UpdatePlugin(c.Request.Context(), pluginUsecase.UpdatePluginInput{
-		ID:           pluginID,
-		Name:         input.Name,
-		Description:  input.Description,
-		Environments: input.Environments,
+		ID:          pluginID,
+		Name:        input.Name,
+		Version:     input.Version,
+		Type:        input.Type,
+		Description: input.Description,
 	})
 
 	if err != nil {
@@ -64,15 +67,11 @@ func (h *pluginHandler) newUpdatePluginResponse(plugin *entity.Plugin) updatePlu
 		return updatePluginResponse{}
 	}
 
-	environments := make([]string, len(plugin.Environments))
-	for i, env := range plugin.Environments {
-		environments[i] = string(env)
-	}
-
 	return updatePluginResponse{
-		ID:           plugin.ID.String(),
-		Name:         plugin.Name,
-		Description:  plugin.Description,
-		Environments: environments,
+		ID:          plugin.ID.String(),
+		Name:        plugin.Name,
+		Description: plugin.Description,
+		Version:     plugin.Version,
+		Type:        plugin.Type.String(),
 	}
 }

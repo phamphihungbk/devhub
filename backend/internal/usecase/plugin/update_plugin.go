@@ -14,9 +14,11 @@ import (
 )
 
 type UpdatePluginInput struct {
-	ID   string  `json:"id" validate:"required,uuid"`
-	Name *string `json:"name" validate:"required,min=2,max=100"`
-	Role *string `json:"role" validate:"required,oneof=admin user"`
+	ID          string  `json:"id" validate:"required,uuid"`
+	Name        *string `json:"name" validate:"required,min=2,max=100"`
+	Type        *string `json:"type" validate:"required,oneof=scaffolder deployer"`
+	Version     *string `json:"version" validate:"required"`
+	Description *string `json:"description" validate:"required"`
 }
 
 func (u *pluginUsecase) UpdatePlugin(ctx context.Context, input UpdatePluginInput) (plugin *entity.Plugin, err error) {
@@ -39,9 +41,11 @@ func (u *pluginUsecase) UpdatePlugin(ctx context.Context, input UpdatePluginInpu
 	}
 
 	updated, err := u.pluginRepository.UpdateOne(ctx, repository.UpdatePluginInput{
-		ID:   uuid.MustParse(input.ID),
-		Name: input.Name,
-		Role: (*entity.UserRole)(input.Role),
+		ID:          uuid.MustParse(input.ID),
+		Name:        input.Name,
+		Type:        (*entity.PluginType)(input.Type),
+		Version:     input.Version,
+		Description: input.Description,
 	})
 
 	if err != nil {
