@@ -7,8 +7,6 @@ import (
 
 	authUsecase "devhub-backend/internal/usecase/auth"
 
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -51,7 +49,7 @@ func (h *authHandler) Login(c *gin.Context) {
 		return
 	}
 
-	httpresponse.SuccessWithStatus(c, http.StatusCreated, loginUserResponse{
+	httpresponse.Success(c, loginUserResponse{
 		AccessToken:  token.AccessToken,
 		RefreshToken: token.RefreshToken,
 	})

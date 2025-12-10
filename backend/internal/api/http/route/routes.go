@@ -116,7 +116,7 @@ func (r *router) applyDeploymentRoutes(router *gin.Engine) {
 	deploymentRoute := router.Group("/deployments")
 	{
 		projectRoute.GET("/deployments", r.DeploymentHandler.FindAllDeployments)
-		projectRoute.POST("/deployments", r.DeploymentHandler.CreateDeployment)
+		projectRoute.POST("/deployments", r.Middleware.Auth(r.tokenCfg.Secret), r.DeploymentHandler.CreateDeployment)
 
 		deploymentRoute.GET("/:deployment", r.DeploymentHandler.FindDeploymentByID)
 		deploymentRoute.DELETE("/:deployment", r.DeploymentHandler.DeleteDeployment)

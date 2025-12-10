@@ -13,13 +13,13 @@ import (
 )
 
 type CreateScaffoldRequestInput struct {
-	ProjectID   string            `json:"project_id" validate:"required,uuid"`
-	Template    string            `json:"template" validate:"required,min=2,max=100"`
-	Environment string            `json:"environment" validate:"required,oneof=dev staging prod"`
-	Variables   ScaffoldVariables `json:"variables" validate:"required,dive"`
+	ProjectID   string                   `json:"project_id" validate:"required,uuid"`
+	Template    string                   `json:"template" validate:"required,min=2,max=100"`
+	Environment string                   `json:"environment" validate:"required,oneof=dev staging prod"`
+	Variables   ScaffoldRequestVariables `json:"variables" validate:"required"`
 }
 
-type ScaffoldVariables struct {
+type ScaffoldRequestVariables struct {
 	ServiceName   string `json:"service_name" validate:"required"`
 	Port          int    `json:"port" validate:"required"`
 	Database      string `json:"database" validate:"required"`

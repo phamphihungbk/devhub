@@ -11,17 +11,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type createScaffoldRequest struct {
-	Template    string                   `json:"template" binding:"required"`
-	Environment string                   `json:"environment" binding:"required"`
-	Variables   scaffoldVariablesRequest `json:"variables" binding:"required"`
-}
-
 type scaffoldVariablesRequest struct {
 	ServiceName   string `json:"service_name" binding:"required"`
 	Port          int    `json:"port" binding:"required"`
 	Database      string `json:"database" binding:"required"`
 	EnableLogging bool   `json:"enable_logging" binding:"required"`
+}
+
+type createScaffoldRequest struct {
+	Template    string                   `json:"template" binding:"required"`
+	Environment string                   `json:"environment" binding:"required"`
+	Variables   scaffoldVariablesRequest `json:"variables" binding:"required"`
 }
 
 type createScaffoldRequestResponse struct {
@@ -56,7 +56,7 @@ func (h *scaffoldRequestHandler) CreateScaffoldRequest(c *gin.Context) {
 		ProjectID:   projectID,
 		Template:    input.Template,
 		Environment: input.Environment,
-		Variables:   scaffoldRequestUsecase.ScaffoldVariables(input.Variables),
+		Variables:   scaffoldRequestUsecase.ScaffoldRequestVariables(input.Variables),
 	})
 
 	if err != nil {

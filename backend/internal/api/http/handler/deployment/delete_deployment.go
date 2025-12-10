@@ -17,9 +17,9 @@ import (
 // @Failure		400	{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
 // @Failure		404	{object}	httpresponse.ErrorResponse{data=nil}									"Deployment not found"
 // @Failure		500	{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
-// @Router			/deployments/{id} [delete]
+// @Router			/deployments/{deployment} [delete]
 func (h *deploymentHandler) DeleteDeployment(c *gin.Context) {
-	deploymentID := c.Param("id")
+	deploymentID := c.Param("deployment")
 	_, err := h.deploymentUsecase.DeleteDeployment(c.Request.Context(), deploymentUsecase.DeleteDeploymentInput{
 		ID: deploymentID,
 	})

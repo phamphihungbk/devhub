@@ -16,7 +16,6 @@ type createDeploymentRequest struct {
 	Service     string `json:"service" example:"Service Name" binding:"required"`
 	Version     string `json:"version" example:"1.0.0" binding:"required"`
 	Status      string `json:"status" example:"Deployment Status" binding:"required"`
-	TriggeredBy string `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000" binding:"required"`
 }
 
 type createDeploymentResponse struct {
@@ -40,6 +39,13 @@ type createDeploymentResponse struct {
 // @Failure		500		{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
 // @Router			/projects/:project/deployments [post]
 func (h *deploymentHandler) CreateDeployment(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+
+	if !exists {
+		httpresponse.Error(c, errs.NewBadRequestError("unauthorized", nil))
+		return
+	}
+
 	projectID := c.Param("project")
 	var input createDeploymentRequest
 
@@ -55,7 +61,7 @@ func (h *deploymentHandler) CreateDeployment(c *gin.Context) {
 		Service:     input.Service,
 		Version:     input.Version,
 		Status:      input.Status,
-		TriggeredBy: input.TriggeredBy,
+		TriggeredBy: userID.(string),
 	})
 
 	if err != nil {

@@ -17,7 +17,7 @@ type CreateDeploymentInput struct {
 	Environment string `json:"environment" example:"prod" validate:"required,oneof=dev staging prod"`
 	Service     string `json:"service" example:"Service Name" validate:"required"`
 	Version     string `json:"version" example:"1.0.0" validate:"required"`
-	Status      string `json:"status" example:"Deployment Status" validate:"required, oneof=pending running success failed"`
+	Status      string `json:"status" example:"Deployment Status" validate:"required,oneof=pending running success failed"`
 	TriggeredBy string `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000" validate:"required,uuid"`
 }
 
