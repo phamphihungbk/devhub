@@ -45,9 +45,9 @@ func (u *projectUsecase) CreateProject(ctx context.Context, input CreateProjectI
 	}
 
 	project = &entity.Project{
-		Environments: envs,
 		Name:         input.Name,
 		Description:  misc.GetValue(input.Description),
+		Environments: envs,
 		CreatedBy:    uuid.MustParse(input.CreatedBy),
 	}
 

@@ -11,6 +11,7 @@ import (
 
 type findOneProjectResponse struct {
 	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name         string   `json:"name" example:"Project Name"`
 	Description  string   `json:"description" example:"Project Description"`
 	Environments []string `json:"environments" example:"[development, production]"`
 	CreatedBy    string   `json:"created_by" example:"123e4567-e89b-12d3-a456-426614174000"`
@@ -51,6 +52,7 @@ func (h *projectHandler) newFindOneProjectResponse(project *entity.Project) find
 
 	return findOneProjectResponse{
 		ID:           project.ID.String(),
+		Name:         project.Name,
 		Description:  project.Description,
 		Environments: envs,
 		CreatedBy:    project.CreatedBy.String(),

@@ -26,7 +26,7 @@ type getMeResponse struct {
 // @Failure		500	{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
 // @Router			/auth/me [get]
 func (h *authHandler) GetMe(c *gin.Context) {
-	userID, exists := c.Get("user")
+	userID, exists := c.Get("user_id")
 
 	if !exists {
 		httpresponse.Error(c, errs.NewBadRequestError("unauthorized", nil))

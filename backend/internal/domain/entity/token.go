@@ -10,17 +10,25 @@ import (
 type AccessToken struct {
 	UserID    uuid.UUID
 	Role      UserRole
+	Issuer    string
 	IssuedAt  time.Time
 	ExpiresAt time.Time
 }
 
-func (t AccessToken) ToJWTClaims() jwt.MapClaims {
-	return jwt.MapClaims{
-		"sub":  t.UserID.String(),
-		"role": t.Role.String(),
-		"exp":  t.ExpiresAt.Unix(),
-		"iat":  t.IssuedAt.Unix(),
-		"iss":  "devhub",
+type AccessTokenClaims struct {
+	Role string
+	jwt.RegisteredClaims
+}
+
+func (t AccessToken) ToJWTClaims() AccessTokenClaims {
+	return AccessTokenClaims{
+		Role: t.Role.String(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    t.Issuer,
+			Subject:   t.UserID.String(),
+			ExpiresAt: jwt.NewNumericDate(t.ExpiresAt),
+			IssuedAt:  jwt.NewNumericDate(t.IssuedAt),
+		},
 	}
 }
 

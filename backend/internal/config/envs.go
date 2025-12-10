@@ -4,6 +4,7 @@ package config
 const (
 	TokenDurationKey = "TOKEN_DURATION"
 	TokenSecretKey   = "TOKEN_SECRET"
+	TokenIssuerKey   = "TOKEN_ISSUER"
 )
 
 // Service configuration environment variable keys
@@ -45,6 +46,7 @@ var configDefaults = map[string]any{
 	DatabaseConnMaxLifetimeKey: "30m",
 	DatabaseConnMaxIdleTimeKey: "5m",
 	// Token configuration
-	TokenDurationKey: 30,
+	TokenDurationKey: 3600,
 	TokenSecretKey:   "your-secret-key",
+	TokenIssuerKey:   "devhub-backend",
 }

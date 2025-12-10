@@ -18,7 +18,8 @@ type Router interface {
 }
 
 type router struct {
-	cfg                    config.AppConfig                              // Configuration for the application
+	appCfg                 config.AppConfig                              // Configuration for the application
+	tokenCfg               config.TokenConfig                            // Configuration for the application
 	Middleware             middleware.Middleware                         // Middleware for handling requests
 	UserHandler            userHandler.UserHandler                       // Handler for user routes
 	AuthHandler            authHandler.AuthHandler                       // Handler for auth routes
@@ -38,9 +39,10 @@ type Dependency struct {
 	ScaffoldRequestHandler scaffoldRequestHandler.ScaffoldRequestHandler
 }
 
-func NewHTTPRoutes(cfg config.AppConfig, dep Dependency) Router {
+func NewHTTPRoutes(appCfg config.AppConfig, tokenCfg config.TokenConfig, dep Dependency) Router {
 	return &router{
-		cfg:                    cfg,
+		appCfg:                 appCfg,
+		tokenCfg:               tokenCfg,
 		Middleware:             dep.Middleware,
 		UserHandler:            dep.UserHandler,
 		AuthHandler:            dep.AuthHandler,
@@ -67,7 +69,7 @@ func (r *router) applyAuthRoutes(router *gin.Engine) {
 	{
 		authRoute.POST("/login", r.AuthHandler.Login)
 		authRoute.POST("/logout", r.AuthHandler.Logout)
-		authRoute.GET("/me", r.AuthHandler.GetMe)
+		authRoute.GET("/me", r.Middleware.Auth(r.tokenCfg.Secret), r.AuthHandler.GetMe)
 	}
 }
 
@@ -88,7 +90,7 @@ func (r *router) applyProjectRoutes(router *gin.Engine) {
 	projectRoute := router.Group("/projects")
 	{
 		projectRoute.GET("/", r.ProjectHandler.FindAllProjects)
-		projectRoute.POST("/", r.ProjectHandler.CreateProject)
+		projectRoute.POST("/", r.Middleware.Auth(r.tokenCfg.Secret), r.ProjectHandler.CreateProject)
 		projectRoute.GET("/:project", r.ProjectHandler.FindProjectByID)
 		projectRoute.DELETE("/:project", r.ProjectHandler.DeleteProject)
 		projectRoute.PATCH("/:project", r.ProjectHandler.UpdateProject)

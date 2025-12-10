@@ -76,7 +76,7 @@ func (s *Server) Start() error {
 		return fmt.Errorf("failed to setup route dependencies: %w", err)
 	}
 	// Register application routes
-	appRoutes := httproute.NewHTTPRoutes(s.cfg.App, deps)
+	appRoutes := httproute.NewHTTPRoutes(s.cfg.App, s.cfg.Token, deps)
 	appRoutes.RegisterRoutes(router)
 
 	// Create http.Server

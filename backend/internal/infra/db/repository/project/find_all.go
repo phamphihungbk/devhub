@@ -19,16 +19,16 @@ func (r *projectRepositoryImpl) FindAll(ctx context.Context, filter repository.F
 	// Build WHERE conditions for filtering
 	whereClauses := []postgres.BoolExpression{}
 	if filter.StartDate != nil {
-		whereClauses = append(whereClauses, table.Users.CreatedAt.GT_EQ(postgres.TimestampT(*filter.StartDate)))
+		whereClauses = append(whereClauses, table.Projects.CreatedAt.GT_EQ(postgres.TimestampT(*filter.StartDate)))
 	}
 	if filter.EndDate != nil {
-		whereClauses = append(whereClauses, table.Users.CreatedAt.LT_EQ(postgres.TimestampT(*filter.EndDate)))
+		whereClauses = append(whereClauses, table.Projects.CreatedAt.LT_EQ(postgres.TimestampT(*filter.EndDate)))
 	}
 
-	// Get total count of users matching the filter
+	// Get total count of projects matching the filter
 	countStmt := postgres.SELECT(
-		postgres.COUNT(table.Users.ID).AS("total"),
-	).FROM(table.Users)
+		postgres.COUNT(table.Projects.ID).AS("total"),
+	).FROM(table.Projects)
 
 	if len(whereClauses) > 0 {
 		countStmt = countStmt.WHERE(postgres.AND(whereClauses...))
@@ -37,13 +37,13 @@ func (r *projectRepositoryImpl) FindAll(ctx context.Context, filter repository.F
 	countQuery, countArgs := countStmt.Sql()
 
 	if err := r.execer.GetContext(ctx, &total, countQuery, countArgs...); err != nil {
-		return nil, 0, misc.WrapError(err, errs.NewDatabaseError("error while counting users", err.Error()))
+		return nil, 0, misc.WrapError(err, errs.NewDatabaseError("error while counting projects", err.Error()))
 	}
 
-	// Get users with the same filter
+	// Get projects with the same filter
 	stmt := postgres.SELECT(
-		table.Users.AllColumns,
-	).FROM(table.Users)
+		table.Projects.AllColumns,
+	).FROM(table.Projects)
 
 	if len(whereClauses) > 0 {
 		stmt = stmt.WHERE(postgres.AND(whereClauses...))
@@ -63,15 +63,15 @@ func (r *projectRepositoryImpl) FindAll(ctx context.Context, filter repository.F
 		switch *filter.SortBy {
 		case "name":
 			if *filter.SortOrder == entity.SortOrderDesc {
-				stmt = stmt.ORDER_BY(table.Users.Name.DESC())
+				stmt = stmt.ORDER_BY(table.Projects.Name.DESC())
 			} else {
-				stmt = stmt.ORDER_BY(table.Users.Name.ASC())
+				stmt = stmt.ORDER_BY(table.Projects.Name.ASC())
 			}
 		case "date":
 			if *filter.SortOrder == entity.SortOrderDesc {
-				stmt = stmt.ORDER_BY(table.Users.CreatedAt.DESC())
+				stmt = stmt.ORDER_BY(table.Projects.CreatedAt.DESC())
 			} else {
-				stmt = stmt.ORDER_BY(table.Users.CreatedAt.ASC())
+				stmt = stmt.ORDER_BY(table.Projects.CreatedAt.ASC())
 			}
 		}
 	}

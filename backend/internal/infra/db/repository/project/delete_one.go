@@ -30,7 +30,7 @@ func (r *projectRepositoryImpl) DeleteOne(ctx context.Context, id uuid.UUID) (pr
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errs.NewNotFoundError("project not found", nil)
 		}
-		return nil, misc.WrapError(err, errs.NewDatabaseError("error while deleting user", err.Error()))
+		return nil, misc.WrapError(err, errs.NewDatabaseError("error while deleting project", err.Error()))
 	}
 
 	project = model.ToEntity()

@@ -56,7 +56,7 @@ func (r *projectRepositoryImpl) UpdateOne(ctx context.Context, input repository.
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errs.NewNotFoundError("project not found", nil)
 		}
-		return nil, misc.WrapError(err, errs.NewDatabaseError("error while updating user", err.Error()))
+		return nil, misc.WrapError(err, errs.NewDatabaseError("error while updating project", err.Error()))
 	}
 
 	project = model.ToEntity()

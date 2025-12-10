@@ -106,7 +106,8 @@ func (u *authUsecase) IssueAccessToken(ctx context.Context, user *entity.User) (
 		UserID:    user.ID,
 		Role:      user.Role,
 		IssuedAt:  now,
-		ExpiresAt: now.Add(time.Duration(u.tokenConfig.Duration)),
+		Issuer:    u.tokenConfig.Issuer,
+		ExpiresAt: now.Add(time.Duration(u.tokenConfig.Duration) * time.Second),
 	}).ToJWTClaims()
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

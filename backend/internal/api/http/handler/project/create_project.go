@@ -36,17 +36,10 @@ type createProjectResponse struct {
 // @Failure		500		{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
 // @Router			/projects [post]
 func (h *projectHandler) CreateProject(c *gin.Context) {
-	user, exists := c.Get("user")
+	userID, exists := c.Get("user_id")
 
 	if !exists {
 		httpresponse.Error(c, errs.NewBadRequestError("unauthorized", nil))
-		return
-	}
-
-	userEntity, ok := user.(*entity.User)
-
-	if !ok {
-		httpresponse.Error(c, errs.NewBadRequestError("invalid user type", nil))
 		return
 	}
 
@@ -62,7 +55,7 @@ func (h *projectHandler) CreateProject(c *gin.Context) {
 		Name:         input.Name,
 		Description:  input.Description,
 		Environments: input.Environments,
-		CreatedBy:    userEntity.ID.String(),
+		CreatedBy:    userID.(string),
 	})
 
 	if err != nil {
@@ -88,5 +81,6 @@ func (h *projectHandler) newCreateProjectResponse(project *entity.Project) creat
 		Name:         project.Name,
 		Description:  project.Description,
 		Environments: envs,
+		CreatedBy:    project.CreatedBy.String(),
 	}
 }

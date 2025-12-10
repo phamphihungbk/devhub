@@ -20,7 +20,7 @@ import (
 // @Failure		500	{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
 // @Router			/auth/logout [post]
 func (h *authHandler) Logout(c *gin.Context) {
-	userID, exists := c.Get("user")
+	userID, exists := c.Get("user_id")
 
 	if !exists {
 		httpresponse.Error(c, errs.NewBadRequestError("unauthorized", nil))
