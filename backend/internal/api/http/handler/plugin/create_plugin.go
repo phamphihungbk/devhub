@@ -67,6 +67,7 @@ func (h *pluginHandler) newCreatePluginResponse(plugin *entity.Plugin) createPlu
 
 	return createPluginResponse{
 		ID:          plugin.ID.String(),
+		Version:     plugin.Version,
 		Name:        plugin.Name,
 		Type:        plugin.Type.String(),
 		Description: plugin.Description,

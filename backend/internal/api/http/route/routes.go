@@ -130,8 +130,8 @@ func (r *router) applyPluginRoutes(router *gin.Engine) {
 	{
 		pluginRoute.GET("/", r.PluginHandler.FindAllPlugins)
 		pluginRoute.POST("/", r.PluginHandler.CreatePlugin)
-		pluginRoute.GET("/:id", r.PluginHandler.FindPluginByID)
-		pluginRoute.DELETE("/:id", r.PluginHandler.DeletePlugin)
-		pluginRoute.PATCH("/:id", r.PluginHandler.UpdatePlugin)
+		pluginRoute.GET("/:plugin", r.PluginHandler.FindPluginByID)
+		pluginRoute.DELETE("/:plugin", r.PluginHandler.DeletePlugin)
+		pluginRoute.PATCH("/:plugin", r.PluginHandler.UpdatePlugin)
 	}
 }
