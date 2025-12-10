@@ -152,3 +152,16 @@ This roadmap outlines the key milestones for DevHub from MVP to full internal pl
 - [ ] Feature flag UI
 
 ---
+
+
+        [users] ─────┐
+                     ▼
+               [projects]
+                     │
+                     ▼
+         [scaffold_requests] ──► Triggers plugin runner
+                     │
+                     ▼
+        ┌────────▶ Generates codebase + repo
+        │
+        └────────▶ Optional deployment entry

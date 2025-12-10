@@ -1,39 +1,88 @@
 services:
-  
   backend:
-    extends:
-      file: docker-compose.yml
-      service: backend
+    image: devhub-backend:dev
+    container_name: devhub-backend
     build:
+      context: .
+      dockerfile: infra/docker/backend.Dockerfile
       args:
         MODE: dev
+    tty: true 
+    env_file:
+    - .env   
+    ports:
+      - "8080:8080"
+    environment:
+      - ENV=development
     volumes:
       - ./backend:/app
-    environment:
-      - ENV=development
-  
+    depends_on:
+      - db
+      - redis
+
   frontend:
-    extends:
-      file: docker-compose.yml
-      service: frontend
+    image: devhub-frontend:dev
+    container_name: devhub-frontend
+    tty: true
     build:
+      context: .
+      dockerfile: infra/docker/frontend.Dockerfile
       args:
         MODE: dev
+    env_file:
+      - .env    
+    ports:
+      - "3030:3000"
+    environment:
+      - ENV=development
     volumes:
       - ./frontend:/app
-    environment:
-      - ENV=development
-    ports:
-      - "3000:3000"
-  
-  plugins:
-    extends:
-      file: docker-compose.yml
-      service: plugins
+
+  db:
     build:
+      context: .
+      dockerfile: infra/docker/db.Dockerfile
+    image: devhub-db:dev
+    container_name: devhub-db
+    environment:
+      POSTGRES_USER: devhub
+      POSTGRES_PASSWORD: devhubpass
+      POSTGRES_DB: devhub
+    env_file:
+      - .env  
+    ports:
+      - "54322:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  redis:
+    build:
+      context: ./infra/docker
+      dockerfile: redis.Dockerfile
+    image: devhub-redis:dev
+    container_name: devhub-redis
+    ports:
+      - "6379:63799"
+    volumes:
+      - redis_data:/data
+
+  plugins:
+    image: devhub-plugins:dev
+    container_name: devhub-plugins
+    build:
+      context: .
+      dockerfile: infra/docker/plugins.Dockerfile
       args:
         MODE: dev
-    volumes:
-      - ./plugins:/app
+    env_file:
+      - .env    
+    ports:
+      - "8888:8000"    
     environment:
       - ENV=development
+    volumes:
+      - ./plugins:/app
+
+volumes:
+  db_data:
+  redis_data:

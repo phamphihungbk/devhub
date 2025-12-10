@@ -1,0 +1,6 @@
+-- 202512062050_init.down.sql
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS projects;
+DROP TABLE IF EXISTS plugins;
+DROP TABLE IF EXISTS deployments;
+DROP TABLE IF EXISTS scaffold_requests;
