@@ -78,7 +78,8 @@ services:
     env_file:
       - .env    
     ports:
-      - "8888:8000"    
+      - "8888:8000"   
+      - "50051:50051"   
     environment:
       - ENV=development
     volumes:

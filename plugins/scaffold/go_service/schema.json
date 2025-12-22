@@ -1,0 +1,9 @@
+{
+  "type": "object",
+  "required": ["service_name", "owner", "output_dir"],
+  "properties": {
+    "service_name": { "type": "string" },
+    "owner": { "type": "string" },
+    "output_dir": { "type": "string" }
+  }
+}
