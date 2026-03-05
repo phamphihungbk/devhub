@@ -1,0 +1,1 @@
+func (w *Worker) setupWorkerDependencies(ctx context.Context, appLogger logger.Logger, dbConn *sqlx.DB) (httproute.Dependency, error) {

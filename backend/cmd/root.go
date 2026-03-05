@@ -27,5 +27,6 @@ func init() {
 		newMigrationCmd,
 		migrateCmd,
 		serveCmd,
+		workerSyncCmd,
 	)
 }
