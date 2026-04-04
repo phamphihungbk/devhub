@@ -26,7 +26,7 @@ type createScaffoldRequest struct {
 
 type createScaffoldRequestResponse struct {
 	ID          string                          `json:"id" example:"ad5b0c1f-762a-4ab3-a3e9-50a9057c49f3"`
-	Template    string                          `json:"template" example:"go-service"`
+	Template    string                          `json:"template" example:"go-http@v2"`
 	ProjectID   string                          `json:"project_id" example:"1a221b2c-abb7-44c0-8a96-8e92638b2422"`
 	Environment string                          `json:"environment" example:"dev"`
 	Variables   entity.ScaffoldRequestVariables `json:"variables" example:"{\"service_name\":\"payment-service\",\"port\":8080,\"database\":\"postgres\",\"enable_logging\":true}"`

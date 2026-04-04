@@ -20,7 +20,7 @@ type Server struct {
 	cfg *config.Config
 }
 
-func New() *Server {
+func NewServer() *Server {
 	return &Server{
 		cfg: config.MustConfigure(),
 	}

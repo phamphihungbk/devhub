@@ -14,5 +14,5 @@ var serveCmd = &cobra.Command{
 }
 
 func runServeCmd(cmd *cobra.Command, args []string) error {
-	return server.New().Start()
+	return server.NewServer().Start()
 }

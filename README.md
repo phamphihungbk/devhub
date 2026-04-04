@@ -52,17 +52,22 @@ docker-compose up --build
 ```markdown
 devhub/
 ├── backend/                # Go backend service
-│   ├── cmd/                # Entry points (e.g. main.go)
-│   ├── internal/           # Internal business logic
+│   ├── cmd/                # Application entry points (e.g. main.go)
+│   ├── internal/           # Private application logic
 │   │   ├── api/            # Route handlers (REST/gRPC)
-│   │   ├── services/       # Core domain services (e.g. deployment, scaffold)
-│   │   ├── db/             # DB access layer
-│   │   └── utils/          # Utility functions
+│   │   ├── config/         # Configuration management
+│   │   ├── domain/         # Core domain models and services
+│   │   ├── infra/          # Infrastructure integrations (DB, external APIs)
+│   │   ├── server/         # Server setup and lifecycle
+│   │   ├── usecase/        # Business use cases
+│   │   └── util/           # Utility functions
+│   ├── migrations/         # Database schema migrations
 │   ├── pkg/                # Shared public packages
-│   ├── config/             # Config files (env, yaml)
-│   └── go.mod              # Go modules
+│   ├── go.mod              # Go module definition
+│   ├── go.sum              # Go module checksums
+│   └── main.go             # Main application entry
 │
-├── frontend/               # Vue 3 + Tailwind dashboard
+├── portal/                 # Vue 3 + Tailwind dashboard
 │   ├── src/
 │   │   ├── components/     # Shared UI components
 │   │   ├── layouts/        # Layout wrappers
@@ -84,17 +89,33 @@ devhub/
 │   └── terraform/          # Optional Terraform infra
 │
 ├── scripts/                # Dev and setup scripts
-│   ├── dev.sh              # Local dev bootstrap
+│   ├── dev.sh              # Start local development environment
+│   ├── bootstrap.sh        # Initial project setup and dependencies
+│   ├── migrate.sh          # Run database migrations
 │   └── generate.sh         # Code scaffolding helper
 │
-├── docs/                   # Markdown docs (API, onboarding, etc)
+├── templates/              # Service templates
+│   ├── go-http/
+│   ├── node-api/
+│   └── python-worker/
+│
+├── workflows/                # CI/CD and automation scripts
+│   ├── deploy.yaml           # Deployment workflow
+│   ├── resource-provision.yaml # Infrastructure provisioning workflow
+│   ├── rollback.yaml         # Rollback workflow
+│   └── service-create.sh     # Service creation helper script
+│
+├── docs/                     # Markdown docs (API, onboarding, etc)
 │   ├── architecture.md
 │   ├── getting-started.md
 │   └── roadmap.md
 │
 ├── .github/                # GitHub Actions CI/CD workflows
 │   └── workflows/
-│       └── deploy.yml
+        ├── portal-ci.yaml
+        ├── control-plane-ci.yaml
+        ├── actions-ci.yaml
+        └── infra-ci.yaml
 │
 ├── docker-compose.yml      # Fullstack local setup
 ├── README.md
