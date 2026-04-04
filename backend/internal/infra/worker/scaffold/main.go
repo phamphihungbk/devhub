@@ -44,7 +44,7 @@ func NewScaffoldPollingRunner(observer infraWorker.Observability, db *sqlx.DB, p
 	// Compose the generic polling runner from queue, state, executor, and observability adapters.
 	return infraWorker.NewPollingRunner[ScaffoldJob, ScaffoldExecutionResult](
 		infraWorker.PollingRunnerConfig{
-			Name:      infraWorker.runnerScaffold,
+			Name:      infraWorker.RunnerScaffold,
 			PollDelay: pollDelay,
 		},
 		NewScaffoldQueueSourceAdapter(db),

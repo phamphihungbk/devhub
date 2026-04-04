@@ -8,24 +8,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type Identifiable interface {
-	GetID() uuid.UUID
-}
-
-type QueueSourceAdapter[T Identifiable] interface {
-	Dequeue(ctx context.Context) (*T, error)
-}
-
-type StatePersistence[R any] interface {
-	MarkRunning(ctx context.Context, id uuid.UUID) error
-	MarkCompleted(ctx context.Context, id uuid.UUID, result R) error
-	MarkFailed(ctx context.Context, id uuid.UUID, reason string) error
-}
-
-type Executor[T any, R any] interface {
-	Execute(ctx context.Context, job *T) (R, error)
-}
-
 type PollingRunnerConfig struct {
 	Name      string
 	PollDelay time.Duration

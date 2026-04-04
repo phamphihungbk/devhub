@@ -9,18 +9,37 @@ import (
 	infraLogger "devhub-backend/internal/infra/logger"
 	scaffoldRunner "devhub-backend/internal/infra/worker/runner/scaffold"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
 const (
 	defaultPollDelay = 3 * time.Second
-	runnerScaffold   = "scaffold"
-	runnerDeployment = "deployment"
+	RunnerScaffold   = "scaffold"
+	RunnerDeployment = "deployment"
 )
 
 type Runner interface {
 	Name() string
 	Run(ctx context.Context) error
+}
+
+type Identifiable interface {
+	GetID() uuid.UUID
+}
+
+type QueueSourceAdapter[T Identifiable] interface {
+	Dequeue(ctx context.Context) (*T, error)
+}
+
+type StatePersistence[R any] interface {
+	MarkRunning(ctx context.Context, id uuid.UUID) error
+	MarkCompleted(ctx context.Context, id uuid.UUID, result R) error
+	MarkFailed(ctx context.Context, id uuid.UUID, reason string) error
+}
+
+type Executor[T any, R any] interface {
+	Execute(ctx context.Context, job *T) (R, error)
 }
 
 type BuildRunnersConfig struct {
@@ -30,7 +49,7 @@ type BuildRunnersConfig struct {
 
 func BuildRunners(logger infraLogger.Logger, db *sqlx.DB) ([]Runner, error) {
 	return BuildRunnersWithConfig(logger, db, BuildRunnersConfig{
-		WorkerTypes: []string{runnerScaffold, runnerDeployment},
+		WorkerTypes: []string{RunnerScaffold, RunnerDeployment},
 		PollDelay:   defaultPollDelay,
 	})
 }
@@ -51,7 +70,7 @@ func BuildRunnersWithConfig(logger infraLogger.Logger, db *sqlx.DB, cfg BuildRun
 
 	for _, kind := range workerTypes {
 		switch kind {
-		case runnerScaffold:
+		case RunnerScaffold:
 			runner, err := scaffoldRunner.NewScaffoldPollingRunner(observer, db, cfg.PollDelay)
 			if err != nil {
 				logger.Warn(context.Background(), "falling back to placeholder scaffold runner", infraLogger.Fields{
@@ -61,7 +80,7 @@ func BuildRunnersWithConfig(logger infraLogger.Logger, db *sqlx.DB, cfg BuildRun
 				continue
 			}
 			runners = append(runners, runner)
-		case runnerDeployment:
+		case RunnerDeployment:
 			runners = append(runners, newPlaceholderRunner(kind, cfg.PollDelay, logger, db))
 		default:
 			return nil, fmt.Errorf("unsupported worker type: %s", kind)
@@ -88,42 +107,4 @@ func normalizeWorkerTypes(types []string) []string {
 	}
 
 	return result
-}
-
-type placeholderRunner struct {
-	name      string
-	pollDelay time.Duration
-	logger    infraLogger.Logger
-	db        *sqlx.DB
-}
-
-func newPlaceholderRunner(name string, pollDelay time.Duration, logger infraLogger.Logger, db *sqlx.DB) *placeholderRunner {
-	return &placeholderRunner{
-		name:      name,
-		pollDelay: pollDelay,
-		logger:    logger,
-		db:        db,
-	}
-}
-
-func (r *placeholderRunner) Name() string {
-	return r.name
-}
-
-func (r *placeholderRunner) Run(ctx context.Context) error {
-	ticker := time.NewTicker(r.pollDelay)
-	defer ticker.Stop()
-
-	r.logger.Warn(ctx, "runner is in placeholder mode; wire queue/executor to enable processing", infraLogger.Fields{
-		"runner": r.name,
-	})
-
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-ticker.C:
-			_ = r.db
-		}
-	}
 }
