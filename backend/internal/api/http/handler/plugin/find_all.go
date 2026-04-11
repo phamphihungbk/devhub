@@ -98,8 +98,11 @@ func (h *pluginHandler) newFindAllPluginsResponse(plugins entity.Plugins) []find
 	response := make([]findAllPluginsResponse, 0, len(plugins))
 	for _, plugin := range plugins {
 		response = append(response, findAllPluginsResponse{
-			ID:   plugin.ID.String(),
-			Name: plugin.Name,
+			ID:          plugin.ID.String(),
+			Name:        plugin.Name,
+			Type:        plugin.Type.String(),
+			Version:     plugin.Version,
+			Description: plugin.Description,
 		})
 	}
 	return response

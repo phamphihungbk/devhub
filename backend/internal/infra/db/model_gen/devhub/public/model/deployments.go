@@ -13,12 +13,16 @@ import (
 )
 
 type Deployments struct {
-	ID          uuid.UUID `sql:"primary_key" db:"deployments.id"`
-	ProjectID   uuid.UUID `db:"deployments.project_id"`
-	Environment string    `db:"deployments.environment"`
-	Service     string    `db:"deployments.service"`
-	Version     string    `db:"deployments.version"`
-	Status      string    `db:"deployments.status"`
-	TriggeredBy uuid.UUID `db:"deployments.triggered_by"`
-	CreatedAt   time.Time `db:"deployments.created_at"`
+	ID          uuid.UUID  `sql:"primary_key" db:"deployments.id"`
+	ProjectID   uuid.UUID  `db:"deployments.project_id"`
+	Environment string     `db:"deployments.environment"`
+	Service     string     `db:"deployments.service"`
+	Version     string     `db:"deployments.version"`
+	Status      string     `db:"deployments.status"`
+	ExternalRef *string    `db:"deployments.external_ref"`
+	CommitSha   *string    `db:"deployments.commit_sha"`
+	TriggeredBy uuid.UUID  `db:"deployments.triggered_by"`
+	CreatedAt   time.Time  `db:"deployments.created_at"`
+	UpdatedAt   time.Time  `db:"deployments.updated_at"`
+	FinishedAt  *time.Time `db:"deployments.finished_at"`
 }

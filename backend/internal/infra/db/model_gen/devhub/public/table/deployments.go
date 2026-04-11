@@ -23,8 +23,12 @@ type deploymentsTable struct {
 	Service     postgres.ColumnString
 	Version     postgres.ColumnString
 	Status      postgres.ColumnString
+	ExternalRef postgres.ColumnString
+	CommitSha   postgres.ColumnString
 	TriggeredBy postgres.ColumnString
 	CreatedAt   postgres.ColumnTimestamp
+	UpdatedAt   postgres.ColumnTimestamp
+	FinishedAt  postgres.ColumnTimestamp
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -72,11 +76,15 @@ func newDeploymentsTableImpl(schemaName, tableName, alias string) deploymentsTab
 		ServiceColumn     = postgres.StringColumn("service")
 		VersionColumn     = postgres.StringColumn("version")
 		StatusColumn      = postgres.StringColumn("status")
+		ExternalRefColumn = postgres.StringColumn("external_ref")
+		CommitShaColumn   = postgres.StringColumn("commit_sha")
 		TriggeredByColumn = postgres.StringColumn("triggered_by")
 		CreatedAtColumn   = postgres.TimestampColumn("created_at")
-		allColumns        = postgres.ColumnList{IDColumn, ProjectIDColumn, EnvironmentColumn, ServiceColumn, VersionColumn, StatusColumn, TriggeredByColumn, CreatedAtColumn}
-		mutableColumns    = postgres.ColumnList{ProjectIDColumn, EnvironmentColumn, ServiceColumn, VersionColumn, StatusColumn, TriggeredByColumn, CreatedAtColumn}
-		defaultColumns    = postgres.ColumnList{IDColumn, CreatedAtColumn}
+		UpdatedAtColumn   = postgres.TimestampColumn("updated_at")
+		FinishedAtColumn  = postgres.TimestampColumn("finished_at")
+		allColumns        = postgres.ColumnList{IDColumn, ProjectIDColumn, EnvironmentColumn, ServiceColumn, VersionColumn, StatusColumn, ExternalRefColumn, CommitShaColumn, TriggeredByColumn, CreatedAtColumn, UpdatedAtColumn, FinishedAtColumn}
+		mutableColumns    = postgres.ColumnList{ProjectIDColumn, EnvironmentColumn, ServiceColumn, VersionColumn, StatusColumn, ExternalRefColumn, CommitShaColumn, TriggeredByColumn, CreatedAtColumn, UpdatedAtColumn, FinishedAtColumn}
+		defaultColumns    = postgres.ColumnList{IDColumn, CreatedAtColumn, UpdatedAtColumn}
 	)
 
 	return deploymentsTable{
@@ -89,8 +97,12 @@ func newDeploymentsTableImpl(schemaName, tableName, alias string) deploymentsTab
 		Service:     ServiceColumn,
 		Version:     VersionColumn,
 		Status:      StatusColumn,
+		ExternalRef: ExternalRefColumn,
+		CommitSha:   CommitShaColumn,
 		TriggeredBy: TriggeredByColumn,
 		CreatedAt:   CreatedAtColumn,
+		UpdatedAt:   UpdatedAtColumn,
+		FinishedAt:  FinishedAtColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

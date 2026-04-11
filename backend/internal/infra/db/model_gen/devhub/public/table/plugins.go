@@ -21,6 +21,9 @@ type pluginsTable struct {
 	Name        postgres.ColumnString
 	Version     postgres.ColumnString
 	Type        postgres.ColumnString
+	Entrypoint  postgres.ColumnString
+	Enabled     postgres.ColumnBool
+	Scope       postgres.ColumnString
 	Description postgres.ColumnString
 	InstalledAt postgres.ColumnTimestamp
 
@@ -68,11 +71,14 @@ func newPluginsTableImpl(schemaName, tableName, alias string) pluginsTable {
 		NameColumn        = postgres.StringColumn("name")
 		VersionColumn     = postgres.StringColumn("version")
 		TypeColumn        = postgres.StringColumn("type")
+		EntrypointColumn  = postgres.StringColumn("entrypoint")
+		EnabledColumn     = postgres.BoolColumn("enabled")
+		ScopeColumn       = postgres.StringColumn("scope")
 		DescriptionColumn = postgres.StringColumn("description")
 		InstalledAtColumn = postgres.TimestampColumn("installed_at")
-		allColumns        = postgres.ColumnList{IDColumn, NameColumn, VersionColumn, TypeColumn, DescriptionColumn, InstalledAtColumn}
-		mutableColumns    = postgres.ColumnList{NameColumn, VersionColumn, TypeColumn, DescriptionColumn, InstalledAtColumn}
-		defaultColumns    = postgres.ColumnList{IDColumn, InstalledAtColumn}
+		allColumns        = postgres.ColumnList{IDColumn, NameColumn, VersionColumn, TypeColumn, EntrypointColumn, EnabledColumn, ScopeColumn, DescriptionColumn, InstalledAtColumn}
+		mutableColumns    = postgres.ColumnList{NameColumn, VersionColumn, TypeColumn, EntrypointColumn, EnabledColumn, ScopeColumn, DescriptionColumn, InstalledAtColumn}
+		defaultColumns    = postgres.ColumnList{IDColumn, EnabledColumn, InstalledAtColumn}
 	)
 
 	return pluginsTable{
@@ -83,6 +89,9 @@ func newPluginsTableImpl(schemaName, tableName, alias string) pluginsTable {
 		Name:        NameColumn,
 		Version:     VersionColumn,
 		Type:        TypeColumn,
+		Entrypoint:  EntrypointColumn,
+		Enabled:     EnabledColumn,
+		Scope:       ScopeColumn,
 		Description: DescriptionColumn,
 		InstalledAt: InstalledAtColumn,
 

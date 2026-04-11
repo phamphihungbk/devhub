@@ -17,13 +17,7 @@ func (r *scaffoldRequestRepositoryImpl) CreateOne(ctx context.Context, input *en
 	scaffoldRequestsTable := table.ScaffoldRequests
 	// SQL statement
 	stmt := scaffoldRequestsTable.INSERT(
-		scaffoldRequestsTable.PluginID,
-		scaffoldRequestsTable.Template,
-		scaffoldRequestsTable.RequestedBy,
-		scaffoldRequestsTable.Status,
-		scaffoldRequestsTable.ProjectID,
-		scaffoldRequestsTable.Environment,
-		scaffoldRequestsTable.Variables,
+		scaffoldRequestsTable.AllColumns.Except(scaffoldRequestsTable.DefaultColumns),
 	).MODEL(model.ScaffoldRequests{
 		PluginID:    input.PluginID,
 		Template:    input.Template,

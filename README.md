@@ -172,17 +172,36 @@ This roadmap outlines the key milestones for DevHub from MVP to full internal pl
 - [ ] Secret manager integration (Vault / SOPS)
 - [ ] Feature flag UI
 
+
 ---
 
 
-        [users] ─────┐
-                     ▼
-               [projects]
-                     │
-                     ▼
-         [scaffold_requests] ──► Triggers plugin runner
-                     │
-                     ▼
-        ┌────────▶ Generates codebase + repo
-        │
-        └────────▶ Optional deployment entry
+        ┌───────────────────────────────────────────────────────────────────┐
+│                           FRONTEND UI                             │
+│     Create Service | Deploy | View Metrics | Manage Plugins      │
+└───────────────────────────────┬───────────────────────────────────┘
+                                │
+                                ▼
+┌───────────────────────────────────────────────────────────────────┐
+│                      GO CONTROL PLANE API                         │
+│                                                                   │
+│  Scaffold API   Deploy API   Metrics API   RBAC   Plugin API      │
+└───────────────┬──────────────┬─────────────┬──────────────────────┘
+                │              │             │
+                ▼              ▼             ▼
+         ┌────────────┐  ┌────────────┐  ┌──────────────┐
+         │ PostgreSQL │  │   Worker   │  │ Plugin Reg.  │
+         │            │  │   System   │  │              │
+         └─────┬──────┘  └─────┬──────┘  └──────┬───────┘
+               │               │                │
+               ▼               ▼                ▼
+     scaffold_requests   ScaffoldWorker     Scaffold Plugins
+     deployments         DeploymentWorker   Deploy Plugins
+     test jobs           TestWorker         Test Plugins
+     audit/history       PluginWorker       Integration Plugins
+               │               │                │
+               └───────────────┴────────────────┘
+                               │
+                               ▼
+                    External Systems / Runtime
+            Git + CI/CD + Kubernetes + Metrics + APIs

@@ -76,7 +76,7 @@ func newUsersTableImpl(schemaName, tableName, alias string) usersTable {
 		DeletedAtColumn    = postgres.TimestampColumn("deleted_at")
 		allColumns         = postgres.ColumnList{IDColumn, NameColumn, EmailColumn, PasswordHashColumn, RoleColumn, CreatedAtColumn, UpdatedAtColumn, DeletedAtColumn}
 		mutableColumns     = postgres.ColumnList{NameColumn, EmailColumn, PasswordHashColumn, RoleColumn, CreatedAtColumn, UpdatedAtColumn, DeletedAtColumn}
-		defaultColumns     = postgres.ColumnList{IDColumn, RoleColumn, CreatedAtColumn, UpdatedAtColumn}
+		defaultColumns     = postgres.ColumnList{IDColumn, CreatedAtColumn, UpdatedAtColumn}
 	)
 
 	return usersTable{
