@@ -12,9 +12,11 @@
       "minLength": 1,
       "description": "Optional base directory for generated files. Defaults to /app/generated/<project_id>."
     },
-    "module_path": {
-      "type": "string",
-      "default": "github.com/acme"
+    "port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535,
+      "default": 3000
     },
     "repo_url": {
       "type": "string",

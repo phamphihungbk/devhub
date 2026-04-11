@@ -1,6 +1,12 @@
 package handler
 
-import "github.com/gin-gonic/gin"
+import (
+	"devhub-backend/internal/util/httpresponse"
+
+	"github.com/gin-gonic/gin"
+)
+
+type healthCheckHandler struct{}
 
 type livenessResponse struct {
 	Status string `json:"status" example:"OK"`

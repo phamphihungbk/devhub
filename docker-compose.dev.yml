@@ -1,73 +1,39 @@
 services:
   backend:
-    image: devhub-backend:dev
-    container_name: devhub-backend
     build:
-      context: .
-      dockerfile: infra/docker/backend.Dockerfile
+      target: dev
       args:
         MODE: dev
-    tty: true 
-    env_file:
-    - .env   
+    command: ["go", "run", ".", "serve"]
     ports:
       - "8080:8080"
     environment:
-      - ENV=development
+      SERVICE_ENV: development
+    tty: true
     volumes:
-      - ./backend:/app
+      - ./backend:/app/backend
       - ./plugins:/app/plugins
       - ./generated:/app/generated
-    depends_on:
-      - db
-      - redis
 
   frontend:
-    image: devhub-frontend:dev
-    container_name: devhub-frontend
-    tty: true
+    profiles: ["frontend"]
     build:
-      context: .
-      dockerfile: infra/docker/frontend.Dockerfile
+      target: dev
       args:
         MODE: dev
-    env_file:
-      - .env    
+    command: ["sh", "-c", "if [ -f package.json ]; then npm install && npm run dev -- --host 0.0.0.0 --port 3000; else echo 'frontend/package.json not found; skipping frontend startup' && sleep infinity; fi"]
     ports:
       - "3030:3000"
     environment:
-      - ENV=development
+      NODE_ENV: development
+    tty: true
     volumes:
       - ./frontend:/app
 
   db:
-    build:
-      context: .
-      dockerfile: infra/docker/db.Dockerfile
-    image: devhub-db:dev
-    container_name: devhub-db
-    environment:
-      POSTGRES_USER: devhub
-      POSTGRES_PASSWORD: devhubpass
-      POSTGRES_DB: devhub
-    env_file:
-      - .env  
     ports:
-      - "54322:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
 
   redis:
-    build:
-      context: ./infra/docker
-      dockerfile: redis.Dockerfile
-    image: devhub-redis:dev
-    container_name: devhub-redis
     ports:
-      - "6379:63799"
-    volumes:
-      - redis_data:/data
-
-volumes:
-  db_data:
-  redis_data:
+      - "6379:6379"

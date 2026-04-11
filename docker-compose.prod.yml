@@ -1,61 +1,33 @@
-version: '3.8'
 services:
   backend:
-    image: devhub-backend:latest
-    container_name: devhub-backend
     build:
-      context: ./backend
-      dockerfile: infra/docker/backend.Dockerfile
+      target: prod
       args:
         MODE: prod
     ports:
       - "8080:8080"
     environment:
-      - ENV=production
-    depends_on:
-      - db
-      - redis
+      SERVICE_ENV: production
+    restart: unless-stopped
 
   frontend:
-    image: devhub-frontend:latest
-    container_name: devhub-frontend
+    profiles: ["frontend"]
     build:
-      context: ./frontend
-      dockerfile: infra/docker/frontend.Dockerfile
+      target: prod
       args:
         MODE: prod
     ports:
       - "80:80"
     environment:
-      - ENV=production
+      NODE_ENV: production
+    restart: unless-stopped
 
   db:
-    build:
-      context: .
-      dockerfile: infra/docker/db.Dockerfile
-    image: devhub-db:latest
-    container_name: devhub-db
-    environment:
-      POSTGRES_USER: devhub
-      POSTGRES_PASSWORD: devhubpass
-      POSTGRES_DB: devhub
+    restart: unless-stopped
     ports:
       - "5432:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
 
   redis:
-    build:
-      context: .
-      dockerfile: infra/docker/redis.Dockerfile
-    image: devhub-redis:latest
-    container_name: devhub-redis
-    restart: always
+    restart: unless-stopped
     ports:
       - "6379:6379"
-    volumes:
-      - redis_data:/data
-
-volumes:
-  db_data:
-  redis_data:

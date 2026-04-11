@@ -1,25 +1,34 @@
-ARG MODE
+ARG MODE=dev
 
-FROM golang:1.23-alpine AS builder
+FROM golang:1.23-alpine AS base
 
 WORKDIR /app
 
-RUN apk add --no-cache python3 py3-pip
+RUN apk add --no-cache bash ca-certificates git python3 py3-pip
 
-COPY backend/ ./
-COPY plugins/ ./plugins/
-
+COPY backend/go.mod backend/go.sum ./backend/
+WORKDIR /app/backend
 RUN go mod download
-# RUN if [ "$MODE" = "prod" ]; then go build -o main ./cmd/main.go; fi
 
-# FROM alpine:latest
+COPY backend/ /app/backend/
+COPY plugins/ /app/plugins/
 
-# WORKDIR /app
+FROM base AS dev
 
-# COPY --from=builder /app/main ./main
+WORKDIR /app/backend
+EXPOSE 8080
+CMD ["go", "run", ".", "serve"]
 
-# COPY --from=builder /app ./src
+FROM base AS prod-builder
+
+WORKDIR /app/backend
+RUN CGO_ENABLED=0 GOOS=linux go build -o /out/devhub .
+
+FROM alpine:3.22 AS prod
+
+WORKDIR /app
+RUN apk add --no-cache ca-certificates
+COPY --from=prod-builder /out/devhub /app/devhub
 
 EXPOSE 8080
-
-# CMD sh -c "if [ '$MODE' = 'dev' ]; then go run ./src/cmd/main.go; else ./main; fi"
+CMD ["/app/devhub", "serve"]
