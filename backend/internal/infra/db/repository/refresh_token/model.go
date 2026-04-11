@@ -1,4 +1,4 @@
-package projectrepo
+package refreshtokenrepo
 
 import (
 	"devhub-backend/internal/domain/entity"

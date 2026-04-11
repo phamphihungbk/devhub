@@ -19,9 +19,6 @@ restart: set-permissions ## Restart the service
 shell: ## Start a shell session
 	@./scripts/docker-build-and-run.sh shell
 
-python-proto-gen: ## Generate Python gRPC code from proto files
-	pipx run grpcio-tools -I./proto --python_out=./plugins/app/proto_gen --grpc_python_out=./plugins/app/proto_gen $(find ./proto -name "*.proto")
-
 ##@ Help
 help: ## Show help
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  \033[36m%-27s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)

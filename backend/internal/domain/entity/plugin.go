@@ -51,8 +51,11 @@ type Plugin struct {
 	ID          uuid.UUID
 	Name        string
 	Version     string
-	Description string
 	Type        PluginType
+	Entrypoint  string
+	Enabled     bool
+	Scope       string
+	Description string
 	InstalledAt time.Time
 }
 

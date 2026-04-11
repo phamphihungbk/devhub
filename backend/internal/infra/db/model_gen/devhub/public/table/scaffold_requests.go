@@ -17,11 +17,19 @@ type scaffoldRequestsTable struct {
 	postgres.Table
 
 	// Columns
-	ID          postgres.ColumnString
-	Template    postgres.ColumnString
-	ProjectID   postgres.ColumnString
-	Environment postgres.ColumnString
-	Variables   postgres.ColumnString
+	ID            postgres.ColumnString
+	PluginID      postgres.ColumnString
+	Template      postgres.ColumnString
+	RequestedBy   postgres.ColumnString
+	Status        postgres.ColumnString
+	ProjectID     postgres.ColumnString
+	Environment   postgres.ColumnString
+	Variables     postgres.ColumnString
+	ApprovedBy    postgres.ColumnString
+	ResultRepoURL postgres.ColumnString
+	ApprovedAt    postgres.ColumnTimestamp
+	CreatedAt     postgres.ColumnTimestamp
+	UpdatedAt     postgres.ColumnTimestamp
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -63,25 +71,41 @@ func newScaffoldRequestsTable(schemaName, tableName, alias string) *ScaffoldRequ
 
 func newScaffoldRequestsTableImpl(schemaName, tableName, alias string) scaffoldRequestsTable {
 	var (
-		IDColumn          = postgres.StringColumn("id")
-		TemplateColumn    = postgres.StringColumn("template")
-		ProjectIDColumn   = postgres.StringColumn("project_id")
-		EnvironmentColumn = postgres.StringColumn("environment")
-		VariablesColumn   = postgres.StringColumn("variables")
-		allColumns        = postgres.ColumnList{IDColumn, TemplateColumn, ProjectIDColumn, EnvironmentColumn, VariablesColumn}
-		mutableColumns    = postgres.ColumnList{TemplateColumn, ProjectIDColumn, EnvironmentColumn, VariablesColumn}
-		defaultColumns    = postgres.ColumnList{IDColumn}
+		IDColumn            = postgres.StringColumn("id")
+		PluginIDColumn      = postgres.StringColumn("plugin_id")
+		TemplateColumn      = postgres.StringColumn("template")
+		RequestedByColumn   = postgres.StringColumn("requested_by")
+		StatusColumn        = postgres.StringColumn("status")
+		ProjectIDColumn     = postgres.StringColumn("project_id")
+		EnvironmentColumn   = postgres.StringColumn("environment")
+		VariablesColumn     = postgres.StringColumn("variables")
+		ApprovedByColumn    = postgres.StringColumn("approved_by")
+		ResultRepoURLColumn = postgres.StringColumn("result_repo_url")
+		ApprovedAtColumn    = postgres.TimestampColumn("approved_at")
+		CreatedAtColumn     = postgres.TimestampColumn("created_at")
+		UpdatedAtColumn     = postgres.TimestampColumn("updated_at")
+		allColumns          = postgres.ColumnList{IDColumn, PluginIDColumn, TemplateColumn, RequestedByColumn, StatusColumn, ProjectIDColumn, EnvironmentColumn, VariablesColumn, ApprovedByColumn, ResultRepoURLColumn, ApprovedAtColumn, CreatedAtColumn, UpdatedAtColumn}
+		mutableColumns      = postgres.ColumnList{PluginIDColumn, TemplateColumn, RequestedByColumn, StatusColumn, ProjectIDColumn, EnvironmentColumn, VariablesColumn, ApprovedByColumn, ResultRepoURLColumn, ApprovedAtColumn, CreatedAtColumn, UpdatedAtColumn}
+		defaultColumns      = postgres.ColumnList{IDColumn, CreatedAtColumn, UpdatedAtColumn}
 	)
 
 	return scaffoldRequestsTable{
 		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
-		ID:          IDColumn,
-		Template:    TemplateColumn,
-		ProjectID:   ProjectIDColumn,
-		Environment: EnvironmentColumn,
-		Variables:   VariablesColumn,
+		ID:            IDColumn,
+		PluginID:      PluginIDColumn,
+		Template:      TemplateColumn,
+		RequestedBy:   RequestedByColumn,
+		Status:        StatusColumn,
+		ProjectID:     ProjectIDColumn,
+		Environment:   EnvironmentColumn,
+		Variables:     VariablesColumn,
+		ApprovedBy:    ApprovedByColumn,
+		ResultRepoURL: ResultRepoURLColumn,
+		ApprovedAt:    ApprovedAtColumn,
+		CreatedAt:     CreatedAtColumn,
+		UpdatedAt:     UpdatedAtColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

@@ -1,4 +1,4 @@
-package scaffold_runner
+package scaffold
 
 import (
 	"bytes"
@@ -7,26 +7,33 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
+
+	"devhub-backend/internal/domain/errs"
+	"devhub-backend/internal/domain/repository"
+	core "devhub-backend/internal/infra/worker/core"
+	"devhub-backend/internal/util/misc"
 )
 
 type PythonScaffoldExecutor struct {
-	PythonBin  string
-	ScriptPath string
-	WorkingDir string
-	Timeout    time.Duration
+	PythonBin        string
+	Timeout          time.Duration
+	pluginRepository repository.PluginRepository
 }
 
 type ScaffoldExecutionResult struct {
 	RepoURL string
 }
 
-func NewPythonScaffoldExecutor(scriptPath string) *PythonScaffoldExecutor {
+var _ core.Executor[ScaffoldJob, ScaffoldExecutionResult] = (*ScaffoldExecutorAdapter)(nil)
+
+func NewPythonScaffoldExecutor(pluginRepository repository.PluginRepository) *PythonScaffoldExecutor {
 	return &PythonScaffoldExecutor{
-		PythonBin:  "python3",
-		ScriptPath: scriptPath,
-		Timeout:    5 * time.Minute,
+		PythonBin:        "python3",
+		pluginRepository: pluginRepository,
+		Timeout:          5 * time.Minute,
 	}
 }
 
@@ -35,7 +42,22 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 		return ScaffoldExecutionResult{}, errors.New("job is nil")
 	}
 
-	if e.ScriptPath == "" {
+	if e.pluginRepository == nil {
+		return ScaffoldExecutionResult{}, errors.New("plugin repository is required")
+	}
+
+	plugin, err := e.pluginRepository.FindOne(ctx, job.PluginID)
+
+	if err != nil {
+		if !errors.As(err, &errs.NotFoundError{}) { // If the error is not a NotFoundError, wrap it as an internal server error
+			return ScaffoldExecutionResult{}, misc.WrapError(err, errs.NewInternalServerError("failed to find plugin by ID", nil))
+		}
+		return ScaffoldExecutionResult{}, err // Return the NotFoundError directly
+	}
+
+	scriptPath := strings.TrimSpace(plugin.Entrypoint)
+
+	if scriptPath == "" {
 		return ScaffoldExecutionResult{}, errors.New("script path is required")
 	}
 
@@ -52,9 +74,9 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 		"environment":         job.Environment,
 	}
 
-	if strings.TrimSpace(job.Variables) != "" {
+	if job.Variables.String() != "" {
 		var vars map[string]any
-		if err := json.Unmarshal([]byte(job.Variables), &vars); err == nil {
+		if err := json.Unmarshal([]byte(job.Variables.String()), &vars); err == nil {
 			for k, v := range vars {
 				payload[k] = v
 			}
@@ -73,10 +95,10 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 		return ScaffoldExecutionResult{}, fmt.Errorf("marshal scaffold input: %w", err)
 	}
 
-	cmd := exec.CommandContext(ctx, e.PythonBin, e.ScriptPath)
+	cmd := exec.CommandContext(ctx, e.PythonBin, scriptPath)
 
-	if e.WorkingDir != "" {
-		cmd.Dir = e.WorkingDir
+	if dir := filepath.Dir(scriptPath); dir != "" && dir != "." {
+		cmd.Dir = dir
 	}
 
 	cmd.Stdin = bytes.NewReader(stdinBytes)

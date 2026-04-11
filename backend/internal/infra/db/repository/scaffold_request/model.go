@@ -1,4 +1,4 @@
-package projectrepo
+package scaffoldrequestrepo
 
 import (
 	"devhub-backend/internal/domain/entity"
@@ -15,17 +15,29 @@ func (c *ScaffoldRequest) ToEntity() *entity.ScaffoldRequest {
 	if err != nil {
 		return nil
 	}
+	status, err := new(entity.ScaffoldRequestStatus).Parse(c.Status)
+	if err != nil {
+		return nil
+	}
 	variables, err := new(entity.ScaffoldRequestVariables).Parse(c.Variables)
 	if err != nil {
 		return nil
 	}
 
 	return &entity.ScaffoldRequest{
-		ID:          c.ID,
-		ProjectID:   c.ProjectID,
-		Template:    c.Template,
-		Environment: env,
-		Variables:   variables,
+		ID:            c.ID,
+		PluginID:      c.PluginID,
+		ProjectID:     c.ProjectID,
+		RequestedBy:   c.RequestedBy,
+		Template:      c.Template,
+		Status:        status,
+		Environment:   env,
+		Variables:     variables,
+		ApprovedBy:    c.ApprovedBy,
+		ResultRepoURL: misc.GetValue(c.ResultRepoURL),
+		ApprovedAt:    c.ApprovedAt,
+		CreatedAt:     c.CreatedAt,
+		UpdatedAt:     c.UpdatedAt,
 	}
 }
 

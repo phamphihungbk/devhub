@@ -8,13 +8,23 @@
 package model
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
 type ScaffoldRequests struct {
-	ID          uuid.UUID `sql:"primary_key" db:"scaffold_requests.id"`
-	Template    string    `db:"scaffold_requests.template"`
-	ProjectID   uuid.UUID `db:"scaffold_requests.project_id"`
-	Environment string    `db:"scaffold_requests.environment"`
-	Variables   string    `db:"scaffold_requests.variables"`
+	ID            uuid.UUID  `sql:"primary_key" db:"scaffold_requests.id"`
+	PluginID      uuid.UUID  `db:"scaffold_requests.plugin_id"`
+	Template      string     `db:"scaffold_requests.template"`
+	RequestedBy   uuid.UUID  `db:"scaffold_requests.requested_by"`
+	Status        string     `db:"scaffold_requests.status"`
+	ProjectID     uuid.UUID  `db:"scaffold_requests.project_id"`
+	Environment   string     `db:"scaffold_requests.environment"`
+	Variables     string     `db:"scaffold_requests.variables"`
+	ApprovedBy    *uuid.UUID `db:"scaffold_requests.approved_by"`
+	ResultRepoURL *string    `db:"scaffold_requests.result_repo_url"`
+	ApprovedAt    *time.Time `db:"scaffold_requests.approved_at"`
+	CreatedAt     time.Time  `db:"scaffold_requests.created_at"`
+	UpdatedAt     time.Time  `db:"scaffold_requests.updated_at"`
 }

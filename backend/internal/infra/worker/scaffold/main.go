@@ -1,16 +1,26 @@
-package scaffold_runner
+package scaffold
 
 import (
 	"context"
 	"errors"
-	"os"
-	"strings"
 	"time"
 
-	infraWorker "devhub-backend/internal/infra/worker"
+	"devhub-backend/internal/domain/entity"
+	"devhub-backend/internal/domain/repository"
+	core "devhub-backend/internal/infra/worker/core"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/google/uuid"
 )
+
+const RunnerName = "scaffold"
+
+type ScaffoldJob struct {
+	entity.ScaffoldRequest
+}
+
+func (j ScaffoldJob) GetID() uuid.UUID {
+	return j.ID
+}
 
 type ScaffoldExecutorAdapter struct {
 	executor *PythonScaffoldExecutor
@@ -27,28 +37,22 @@ func (a *ScaffoldExecutorAdapter) Execute(ctx context.Context, job *ScaffoldJob)
 	return a.executor.Execute(ctx, job)
 }
 
-func NewScaffoldPollingRunner(observer infraWorker.Observability, db *sqlx.DB, pollDelay time.Duration) (infraWorker.Runner, error) {
-	// TODO: resolve the script path from plugin configuration in the database.
-	scriptPath := strings.TrimSpace(os.Getenv("WORKER_SCAFFOLD_SCRIPT"))
-
-	if scriptPath == "" {
-		return nil, errors.New("WORKER_SCAFFOLD_SCRIPT is required for scaffold runner")
-	}
-
-	executor := NewPythonScaffoldExecutor(scriptPath)
-
-	if workDir := strings.TrimSpace(os.Getenv("WORKER_SCAFFOLD_WORKDIR")); workDir != "" {
-		executor.WorkingDir = workDir
-	}
+func NewScaffoldPollingRunner(
+	observer core.Observability,
+	pluginRepository repository.PluginRepository,
+	scaffoldRequestRepository repository.ScaffoldRequestRepository,
+	pollDelay time.Duration,
+) (core.Runner, error) {
+	executor := NewPythonScaffoldExecutor(pluginRepository)
 
 	// Compose the generic polling runner from queue, state, executor, and observability adapters.
-	return infraWorker.NewPollingRunner[ScaffoldJob, ScaffoldExecutionResult](
-		infraWorker.PollingRunnerConfig{
-			Name:      infraWorker.RunnerScaffold,
+	return core.NewPollingRunner[ScaffoldJob, ScaffoldExecutionResult](
+		core.PollingRunnerConfig{
+			Name:      RunnerName,
 			PollDelay: pollDelay,
 		},
-		NewScaffoldQueueSourceAdapter(db),
-		NewScaffoldStatePersistence(db),
+		NewScaffoldQueueSourceAdapter(scaffoldRequestRepository),
+		NewScaffoldStatePersistence(scaffoldRequestRepository),
 		NewScaffoldExecutorAdapter(executor),
 		observer,
 	)

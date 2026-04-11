@@ -8,8 +8,9 @@
 package model
 
 import (
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Plugins struct {
@@ -17,6 +18,9 @@ type Plugins struct {
 	Name        string    `db:"plugins.name"`
 	Version     string    `db:"plugins.version"`
 	Type        string    `db:"plugins.type"`
+	Entrypoint  string    `db:"plugins.entrypoint"`
+	Enabled     bool      `db:"plugins.enabled"`
+	Scope       string    `db:"plugins.scope"`
 	Description *string   `db:"plugins.description"`
 	InstalledAt time.Time `db:"plugins.installed_at"`
 }

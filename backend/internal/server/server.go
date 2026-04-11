@@ -54,7 +54,7 @@ func (s *Server) Start() error {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	// initialize gin
+	// Initialize gin
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 

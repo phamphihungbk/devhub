@@ -1,4 +1,4 @@
-package projectrepo
+package scaffoldrequestrepo
 
 import (
 	"devhub-backend/internal/domain/repository"

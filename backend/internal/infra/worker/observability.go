@@ -5,32 +5,19 @@ import (
 	"time"
 
 	infraLogger "devhub-backend/internal/infra/logger"
+	core "devhub-backend/internal/infra/worker/core"
 
 	"github.com/google/uuid"
 )
 
-type Observability interface {
-	OnRunnerStart(ctx context.Context, runner string, pollDelay time.Duration)
-	OnRunnerStop(ctx context.Context, runner string, reason error)
-	OnJobDequeued(ctx context.Context, runner string, jobID uuid.UUID)
-	OnJobCompleted(ctx context.Context, runner string, jobID uuid.UUID)
-	OnError(ctx context.Context, runner string, phase string, err error, jobID uuid.UUID)
-}
-
-type NoopObservability struct{}
-
-func (NoopObservability) OnRunnerStart(context.Context, string, time.Duration) {}
-func (NoopObservability) OnRunnerStop(context.Context, string, error)          {}
-func (NoopObservability) OnJobDequeued(context.Context, string, uuid.UUID)     {}
-func (NoopObservability) OnJobCompleted(context.Context, string, uuid.UUID)    {}
-func (NoopObservability) OnError(context.Context, string, string, error, uuid.UUID) {
-}
+type Observability = core.Observability
+type NoopObservability = core.NoopObservability
 
 type LoggerObservability struct {
 	logger infraLogger.Logger
 }
 
-func NewLoggerObservability(logger infraLogger.Logger) LoggerObservability {
+func NewLoggerObservability(logger infraLogger.Logger) Observability {
 	return LoggerObservability{logger: logger}
 }
 

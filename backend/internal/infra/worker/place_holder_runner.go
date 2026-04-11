@@ -5,23 +5,19 @@ import (
 	"time"
 
 	infraLogger "devhub-backend/internal/infra/logger"
-
-	"github.com/jmoiron/sqlx"
 )
 
 type placeholderRunner struct {
 	name      string
 	pollDelay time.Duration
 	logger    infraLogger.Logger
-	db        *sqlx.DB
 }
 
-func newPlaceholderRunner(name string, pollDelay time.Duration, logger infraLogger.Logger, db *sqlx.DB) *placeholderRunner {
+func newPlaceholderRunner(name string, pollDelay time.Duration, logger infraLogger.Logger) *placeholderRunner {
 	return &placeholderRunner{
 		name:      name,
 		pollDelay: pollDelay,
 		logger:    logger,
-		db:        db,
 	}
 }
 
@@ -42,7 +38,6 @@ func (r *placeholderRunner) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			_ = r.db
 		}
 	}
 }

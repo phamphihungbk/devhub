@@ -13,7 +13,9 @@ import (
 )
 
 type CreateScaffoldRequestInput struct {
+	PluginID    string                   `json:"plugin_id" validate:"required,uuid"`
 	ProjectID   string                   `json:"project_id" validate:"required,uuid"`
+	RequestedBy string                   `json:"requested_by" validate:"required,uuid"`
 	Template    string                   `json:"template" validate:"required,min=2,max=100"`
 	Environment string                   `json:"environment" validate:"required,oneof=dev staging prod"`
 	Variables   ScaffoldRequestVariables `json:"variables" validate:"required"`
@@ -51,9 +53,22 @@ func (u *scaffoldRequestUsecase) CreateScaffoldRequest(ctx context.Context, inpu
 		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid project ID", nil))
 	}
 
+	pluginID, err := uuid.Parse(input.PluginID)
+	if err != nil {
+		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid plugin ID", nil))
+	}
+
+	requestedBy, err := uuid.Parse(input.RequestedBy)
+	if err != nil {
+		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid requested by user ID", nil))
+	}
+
 	scaffoldRequest = &entity.ScaffoldRequest{
+		PluginID:    pluginID,
 		ProjectID:   projectID,
+		RequestedBy: requestedBy,
 		Template:    input.Template,
+		Status:      entity.ScaffoldRequestPending,
 		Environment: new(entity.ProjectEnvironment).MustParse(input.Environment),
 		Variables:   entity.ScaffoldRequestVariables(input.Variables),
 	}

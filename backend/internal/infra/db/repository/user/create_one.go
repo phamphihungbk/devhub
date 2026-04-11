@@ -29,7 +29,7 @@ func (r *userRepositoryImpl) CreateOne(ctx context.Context, input *entity.User) 
 	var model User
 	err = r.execer.GetContext(ctx, &model, query, args...)
 	if err != nil {
-		return nil, misc.WrapError(err, errs.NewDatabaseError("error while creating concert", err.Error()))
+		return nil, misc.WrapError(err, errs.NewDatabaseError("error while creating user", err.Error()))
 	}
 
 	user = model.ToEntity()

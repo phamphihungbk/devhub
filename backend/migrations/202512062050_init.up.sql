@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    role VARCHAR(32) NOT NULL,  # platform_admin, org_admin, team_lead, developer, viewer
+    role VARCHAR(32) NOT NULL,  -- platform_admin, org_admin, team_lead, developer, viewer
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
     deleted_at TIMESTAMP
@@ -17,10 +17,10 @@ CREATE TABLE IF NOT EXISTS projects (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     environments TEXT[] NOT NULL,
-    status VARCHAR(16) NOT NULL,  # draft, active, archived, deprecated 
+    status VARCHAR(16) NOT NULL,  -- draft, active, archived, deprecated 
     owner_team VARCHAR(255) NOT NULL,
     repo_url TEXT,
-    repo_provider VARCHAR(32)
+    repo_provider VARCHAR(32),
     owner_contact VARCHAR(255),
     created_by UUID NOT NULL REFERENCES users(id),
     created_at TIMESTAMP NOT NULL DEFAULT now(),
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS plugins (
     type VARCHAR(16) NOT NULL,
     entrypoint TEXT NOT NULL,
     enabled BOOLEAN NOT NULL DEFAULT true,
-    scope VARCHAR(16) NOT NULL, # global, project, environment
+    scope VARCHAR(16) NOT NULL, -- global, project, environment
     description TEXT,
     installed_at TIMESTAMP NOT NULL DEFAULT now()
 );
@@ -48,9 +48,9 @@ CREATE TABLE IF NOT EXISTS deployments (
     environment VARCHAR(32) NOT NULL,
     service VARCHAR(255) NOT NULL,
     version VARCHAR(64) NOT NULL,
-    status VARCHAR(16) NOT NULL,  # pending, running, completed, failed, rolled_back
-    external_ref VARCHAR(255),  # ArgoCD sync ID
-    commit_sha VARCHAR(64),  # Git commit SHA
+    status VARCHAR(16) NOT NULL,  -- pending, running, completed, failed, rolled_back
+    external_ref VARCHAR(255),  -- ArgoCD sync ID
+    commit_sha VARCHAR(64),  -- Git commit SHA
     triggered_by UUID NOT NULL REFERENCES users(id),
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
@@ -60,9 +60,10 @@ CREATE TABLE IF NOT EXISTS deployments (
 -- Migration: Create scaffold_requests table
 CREATE TABLE IF NOT EXISTS scaffold_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    plugin_id UUID NOT NULL REFERENCES plugins(id),
     template VARCHAR(255) NOT NULL,
     requested_by UUID NOT NULL REFERENCES users(id),
-    status VARCHAR(16) NOT NULL,  # pending, approved, running, completed, failed, rejected
+    status VARCHAR(16) NOT NULL,  -- pending, approved, running, completed, failed, rejected
     project_id UUID NOT NULL REFERENCES projects(id),
     environment VARCHAR(32) NOT NULL,
     variables JSONB NOT NULL,
@@ -70,7 +71,7 @@ CREATE TABLE IF NOT EXISTS scaffold_requests (
     result_repo_url TEXT,
     approved_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 -- Migration: Create refresh_tokens table

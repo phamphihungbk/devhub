@@ -1,65 +1,33 @@
-package scaffold_runner
+package scaffold
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
+	"devhub-backend/internal/domain/repository"
+	core "devhub-backend/internal/infra/worker/core"
 )
 
-// TODO: consider reusing repository or generated DB models for this job shape.
-type ScaffoldJob struct {
-	ID          uuid.UUID
-	Template    string
-	ProjectID   uuid.UUID
-	Environment string
-	Variables   string
-}
-
-func (j ScaffoldJob) GetID() uuid.UUID {
-	return j.ID
-}
-
 type ScaffoldQueueSourceAdapter struct {
-	db *sqlx.DB
+	scaffoldRequestRepository repository.ScaffoldRequestRepository
 }
 
-func NewScaffoldQueueSourceAdapter(db *sqlx.DB) *ScaffoldQueueSourceAdapter {
-	return &ScaffoldQueueSourceAdapter{db: db}
+var _ core.QueueSourceAdapter[ScaffoldJob] = (*ScaffoldQueueSourceAdapter)(nil)
+
+func NewScaffoldQueueSourceAdapter(scaffoldRequestRepository repository.ScaffoldRequestRepository) *ScaffoldQueueSourceAdapter {
+	return &ScaffoldQueueSourceAdapter{scaffoldRequestRepository: scaffoldRequestRepository}
 }
 
 func (a *ScaffoldQueueSourceAdapter) Dequeue(ctx context.Context) (*ScaffoldJob, error) {
-	var row struct {
-		ID          uuid.UUID `db:"id"`
-		Template    string    `db:"template"`
-		ProjectID   uuid.UUID `db:"project_id"`
-		Environment string    `db:"environment"`
-		Variables   string    `db:"variables"`
-	}
-
-	// TODO: use repository instead of raw SQL here.
-	const query = `
-SELECT id, template, project_id, environment, variables
-FROM scaffold_requests
-WHERE status = 'pending'
-ORDER BY created_at ASC, id ASC
-LIMIT 1`
-
-	if err := a.db.GetContext(ctx, &row, query); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
+	scaffoldRequest, err := a.scaffoldRequestRepository.FindOnePending(ctx)
+	if err != nil {
 		return nil, fmt.Errorf("dequeue scaffold request: %w", err)
+	}
+	if scaffoldRequest == nil {
+		return nil, nil
 	}
 
 	return &ScaffoldJob{
-		ID:          row.ID,
-		Template:    row.Template,
-		ProjectID:   row.ProjectID,
-		Environment: row.Environment,
-		Variables:   row.Variables,
+		ScaffoldRequest: *scaffoldRequest,
 	}, nil
 }

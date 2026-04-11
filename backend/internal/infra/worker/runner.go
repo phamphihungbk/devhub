@@ -6,55 +6,56 @@ import (
 	"strings"
 	"time"
 
+	"devhub-backend/internal/domain/repository"
 	infraLogger "devhub-backend/internal/infra/logger"
-	scaffoldRunner "devhub-backend/internal/infra/worker/runner/scaffold"
-
-	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
+	core "devhub-backend/internal/infra/worker/core"
+	scaffold "devhub-backend/internal/infra/worker/scaffold"
 )
 
 const (
-	defaultPollDelay = 3 * time.Second
+	defaultPollDelay = core.DefaultPollDelay
 	RunnerScaffold   = "scaffold"
 	RunnerDeployment = "deployment"
 )
 
-type Runner interface {
-	Name() string
-	Run(ctx context.Context) error
+type Dependencies struct {
+	logger                    infraLogger.Logger
+	pluginRepository          repository.PluginRepository
+	scaffoldRequestRepository repository.ScaffoldRequestRepository
 }
 
-type Identifiable interface {
-	GetID() uuid.UUID
+func NewDependencies(
+	logger infraLogger.Logger,
+	pluginRepository repository.PluginRepository,
+	scaffoldRequestRepository repository.ScaffoldRequestRepository,
+) *Dependencies {
+	return &Dependencies{
+		logger:                    logger,
+		pluginRepository:          pluginRepository,
+		scaffoldRequestRepository: scaffoldRequestRepository,
+	}
 }
 
-type QueueSourceAdapter[T Identifiable] interface {
-	Dequeue(ctx context.Context) (*T, error)
-}
-
-type StatePersistence[R any] interface {
-	MarkRunning(ctx context.Context, id uuid.UUID) error
-	MarkCompleted(ctx context.Context, id uuid.UUID, result R) error
-	MarkFailed(ctx context.Context, id uuid.UUID, reason string) error
-}
-
-type Executor[T any, R any] interface {
-	Execute(ctx context.Context, job *T) (R, error)
-}
+type Runner = core.Runner
 
 type BuildRunnersConfig struct {
 	WorkerTypes []string
 	PollDelay   time.Duration
 }
 
-func BuildRunners(logger infraLogger.Logger, db *sqlx.DB) ([]Runner, error) {
-	return BuildRunnersWithConfig(logger, db, BuildRunnersConfig{
-		WorkerTypes: []string{RunnerScaffold, RunnerDeployment},
-		PollDelay:   defaultPollDelay,
-	})
+type FactoryConfig struct {
+	PollDelay time.Duration
 }
 
-func BuildRunnersWithConfig(logger infraLogger.Logger, db *sqlx.DB, cfg BuildRunnersConfig) ([]Runner, error) {
+type RunnerFactory func(deps *Dependencies, observer Observability, cfg FactoryConfig) (Runner, error)
+
+func BuildRunnersWithConfig(deps *Dependencies, cfg BuildRunnersConfig) ([]Runner, error) {
+	if deps == nil {
+		return nil, fmt.Errorf("worker dependencies are required")
+	}
+	if deps.logger == nil {
+		return nil, fmt.Errorf("worker logger dependency is required")
+	}
 	if cfg.PollDelay <= 0 {
 		cfg.PollDelay = defaultPollDelay
 	}
@@ -66,28 +67,49 @@ func BuildRunnersWithConfig(logger infraLogger.Logger, db *sqlx.DB, cfg BuildRun
 	}
 
 	runners := make([]Runner, 0, len(workerTypes))
-	observer := NewLoggerObservability(logger)
+	observer := NewLoggerObservability(deps.logger)
+
+	factories := map[string]RunnerFactory{
+		RunnerScaffold:   buildScaffoldRunner,
+		RunnerDeployment: buildDeploymentRunner,
+	}
 
 	for _, kind := range workerTypes {
-		switch kind {
-		case RunnerScaffold:
-			runner, err := scaffoldRunner.NewScaffoldPollingRunner(observer, db, cfg.PollDelay)
-			if err != nil {
-				logger.Warn(context.Background(), "falling back to placeholder scaffold runner", infraLogger.Fields{
-					"reason": err.Error(),
-				})
-				runners = append(runners, newPlaceholderRunner(kind, cfg.PollDelay, logger, db))
-				continue
-			}
-			runners = append(runners, runner)
-		case RunnerDeployment:
-			runners = append(runners, newPlaceholderRunner(kind, cfg.PollDelay, logger, db))
-		default:
+		factory, ok := factories[kind]
+		if !ok {
 			return nil, fmt.Errorf("unsupported worker type: %s", kind)
 		}
+
+		runner, err := factory(deps, observer, FactoryConfig{PollDelay: cfg.PollDelay})
+		if err != nil {
+			deps.logger.Warn(context.Background(), "falling back to placeholder runner", infraLogger.Fields{
+				"runner": kind,
+				"reason": err.Error(),
+			})
+			runners = append(runners, newPlaceholderRunner(kind, cfg.PollDelay, deps.logger))
+			continue
+		}
+
+		runners = append(runners, runner)
 	}
 
 	return runners, nil
+}
+
+func buildScaffoldRunner(deps *Dependencies, observer Observability, cfg FactoryConfig) (Runner, error) {
+	if deps == nil {
+		return nil, fmt.Errorf("worker dependencies are required")
+	}
+
+	return scaffold.NewScaffoldPollingRunner(observer, deps.pluginRepository, deps.scaffoldRequestRepository, cfg.PollDelay)
+}
+
+func buildDeploymentRunner(deps *Dependencies, _ Observability, cfg FactoryConfig) (Runner, error) {
+	if deps == nil || deps.logger == nil {
+		return nil, fmt.Errorf("worker logger dependency is required")
+	}
+
+	return newPlaceholderRunner(RunnerDeployment, cfg.PollDelay, deps.logger), nil
 }
 
 func normalizeWorkerTypes(types []string) []string {
