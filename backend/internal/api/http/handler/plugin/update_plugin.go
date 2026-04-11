@@ -23,6 +23,8 @@ type updatePluginResponse struct {
 	Name        string `json:"name" example:"Plugin Name"`
 	Type        string `json:"type" example:"scaffolder"`
 	Version     string `json:"version" example:"1.0.0"`
+	Entrypoint  string `json:"entrypoint" example:"/app/plugins/scaffolders/go_http_api/action.py"`
+	Scope       string `json:"scope" example:"global"`
 	Description string `json:"description" example:"Plugin Description"`
 }
 
@@ -73,5 +75,7 @@ func (h *pluginHandler) newUpdatePluginResponse(plugin *entity.Plugin) updatePlu
 		Description: plugin.Description,
 		Version:     plugin.Version,
 		Type:        plugin.Type.String(),
+		Entrypoint:  plugin.Entrypoint,
+		Scope:       plugin.Scope,
 	}
 }

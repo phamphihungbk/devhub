@@ -22,6 +22,8 @@ func (r *pluginRepositoryImpl) CreateOne(ctx context.Context, input *entity.Plug
 		Name:        input.Name,
 		Type:        input.Type.String(),
 		Version:     input.Version,
+		Entrypoint:  input.Entrypoint,
+		Scope:       input.Scope,
 		Description: &input.Description,
 	}).RETURNING(pluginsTable.AllColumns)
 	query, args := stmt.Sql()

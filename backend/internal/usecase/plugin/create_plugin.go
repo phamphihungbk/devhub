@@ -14,6 +14,8 @@ type CreatePluginInput struct {
 	Name        string `json:"name" validate:"required,min=2,max=100"`
 	Version     string `json:"version" validate:"required"`
 	Type        string `json:"type" validate:"required,oneof=scaffolder runner"`
+	Entrypoint  string `json:"entrypoint" validate:"required,min=1,max=500"`
+	Scope       string `json:"scope" validate:"required,oneof=global project environment"`
 	Description string `json:"description" validate:"required,min=2,max=100"`
 }
 
@@ -45,6 +47,8 @@ func (u *pluginUsecase) CreatePlugin(ctx context.Context, input CreatePluginInpu
 		Name:        input.Name,
 		Version:     input.Version,
 		Type:        pluginType,
+		Entrypoint:  input.Entrypoint,
+		Scope:       input.Scope,
 		Description: input.Description,
 	}
 

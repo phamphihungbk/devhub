@@ -1,3 +1,4 @@
+import json
 import sys
 from pathlib import Path
 
@@ -11,6 +12,12 @@ from common import (  # noqa: E402
     success,
     validate_service_name,
 )
+
+SCHEMA_PATH = Path(__file__).with_name("schema.json")
+
+
+def load_schema() -> dict:
+    return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
 def write_go_files(service_dir: Path, module_full: str, service_name: str, port: int) -> None:
@@ -97,13 +104,25 @@ CMD ["./server"]
 
 
 def main() -> None:
-    payload = read_payload(required_fields=["service_name", "owner", "output_dir"])
+    schema = load_schema()
+    payload = read_payload(required_fields=schema.get("required", ["service_name"]))
+    properties = schema.get("properties", {})
 
     service_name = read_required_str(payload, "service_name")
-    _owner = read_required_str(payload, "owner")
-    output_dir_raw = read_required_str(payload, "output_dir")
-    module_path = str(payload.get("module_path", "github.com/acme")).strip()
-    port = read_int(payload, "port", default=8080, min_value=1, max_value=65535)
+    project_id = str(payload.get("project_id", "")).strip()
+    output_dir_raw = str(payload.get("output_dir", "")).strip()
+    module_path = str(payload.get("module_path", properties.get("module_path", {}).get("default", "github.com/acme"))).strip()
+    port = read_int(
+        payload,
+        "port",
+        default=properties.get("port", {}).get("default", 8080),
+        min_value=1,
+        max_value=65535,
+    )
+
+    if output_dir_raw == "":
+        base_dir = Path("/app/generated")
+        output_dir_raw = str(base_dir / project_id) if project_id else str(base_dir)
 
     validate_service_name(service_name)
     service_dir = resolve_service_dir(output_dir_raw, service_name)

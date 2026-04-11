@@ -15,6 +15,8 @@ type createPluginRequest struct {
 	Name        string `json:"name" example:"Plugin Name" binding:"required"`
 	Version     string `json:"version" example:"1.0.0" binding:"required"`
 	Type        string `json:"type" example:"scaffolder" binding:"required"`
+	Entrypoint  string `json:"entrypoint" example:"/app/plugins/scaffolders/go_http_api/action.py" binding:"required"`
+	Scope       string `json:"scope" example:"global" binding:"required"`
 	Description string `json:"description" example:"Plugin Description" binding:"required"`
 }
 
@@ -23,6 +25,8 @@ type createPluginResponse struct {
 	Name        string `json:"name" example:"Plugin Name"`
 	Version     string `json:"version" example:"1.0.0"`
 	Type        string `json:"type" example:"scaffolder"`
+	Entrypoint  string `json:"entrypoint" example:"/app/plugins/scaffolders/go_http_api/action.py"`
+	Scope       string `json:"scope" example:"global"`
 	Description string `json:"description" example:"Plugin Description"`
 }
 
@@ -49,6 +53,8 @@ func (h *pluginHandler) CreatePlugin(c *gin.Context) {
 		Name:        input.Name,
 		Version:     input.Version,
 		Type:        input.Type,
+		Entrypoint:  input.Entrypoint,
+		Scope:       input.Scope,
 		Description: input.Description,
 	})
 
@@ -70,6 +76,8 @@ func (h *pluginHandler) newCreatePluginResponse(plugin *entity.Plugin) createPlu
 		Version:     plugin.Version,
 		Name:        plugin.Name,
 		Type:        plugin.Type.String(),
+		Entrypoint:  plugin.Entrypoint,
+		Scope:       plugin.Scope,
 		Description: plugin.Description,
 	}
 }
