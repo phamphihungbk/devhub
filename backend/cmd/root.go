@@ -25,6 +25,7 @@ func init() {
 	rootCmd.AddCommand(
 		generateSQLBuilderCmd,
 		newMigrationCmd,
+		syncWorkerCmd,
 		migrateCmd,
 		serveCmd,
 	)

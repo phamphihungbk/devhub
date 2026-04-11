@@ -1,4 +1,4 @@
-package projectrepo
+package scaffoldrequestrepo
 
 import (
 	"context"
@@ -17,10 +17,13 @@ func (r *scaffoldRequestRepositoryImpl) CreateOne(ctx context.Context, input *en
 	scaffoldRequestsTable := table.ScaffoldRequests
 	// SQL statement
 	stmt := scaffoldRequestsTable.INSERT(
-		scaffoldRequestsTable.AllColumns.Except(scaffoldRequestsTable.DefaultColumns), // Exclude columns with default values
+		scaffoldRequestsTable.AllColumns.Except(scaffoldRequestsTable.DefaultColumns),
 	).MODEL(model.ScaffoldRequests{
-		ProjectID:   input.ProjectID,
+		PluginID:    input.PluginID,
 		Template:    input.Template,
+		RequestedBy: input.RequestedBy,
+		Status:      input.Status.String(),
+		ProjectID:   input.ProjectID,
 		Environment: input.Environment.String(),
 		Variables:   input.Variables.String(),
 	}).RETURNING(scaffoldRequestsTable.AllColumns)
@@ -29,12 +32,12 @@ func (r *scaffoldRequestRepositoryImpl) CreateOne(ctx context.Context, input *en
 	var model ScaffoldRequest
 	err = r.execer.GetContext(ctx, &model, query, args...)
 	if err != nil {
-		return nil, misc.WrapError(err, errs.NewDatabaseError("error while creating concert", err.Error()))
+		return nil, misc.WrapError(err, errs.NewDatabaseError("error while creating scaffold request", err.Error()))
 	}
 
 	scaffoldRequest = model.ToEntity()
 	if scaffoldRequest == nil {
-		return nil, errs.NewInternalServerError("failed to convert scaffoldRequest model to entity", nil)
+		return nil, errs.NewInternalServerError("failed to convert scaffold request model to entity", nil)
 	}
 
 	return scaffoldRequest, nil

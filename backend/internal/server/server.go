@@ -20,7 +20,7 @@ type Server struct {
 	cfg *config.Config
 }
 
-func New() *Server {
+func NewServer() *Server {
 	return &Server{
 		cfg: config.MustConfigure(),
 	}
@@ -54,7 +54,7 @@ func (s *Server) Start() error {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	// initialize gin
+	// Initialize gin
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 

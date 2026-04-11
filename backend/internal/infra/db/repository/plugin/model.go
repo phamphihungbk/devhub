@@ -1,4 +1,4 @@
-package userrepo
+package pluginrepo
 
 import (
 	"devhub-backend/internal/domain/entity"
@@ -18,9 +18,12 @@ func (c *Plugin) ToEntity() *entity.Plugin {
 
 	return &entity.Plugin{
 		ID:          c.ID,
-		Type:        pluginType,
 		Name:        c.Name,
 		Version:     c.Version,
+		Type:        pluginType,
+		Entrypoint:  c.Entrypoint,
+		Enabled:     c.Enabled,
+		Scope:       c.Scope,
 		Description: misc.GetValue(c.Description),
 		InstalledAt: c.InstalledAt,
 	}

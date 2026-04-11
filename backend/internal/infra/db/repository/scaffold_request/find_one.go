@@ -1,4 +1,4 @@
-package projectrepo
+package scaffoldrequestrepo
 
 import (
 	"context"

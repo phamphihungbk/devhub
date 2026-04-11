@@ -41,11 +41,11 @@ func (s DeploymentStatus) IsValid() bool {
 }
 
 // Parse parses a string into a DeploymentStatus. It returns an error if the string is not a valid DeploymentStatus.
-func (s DeploymentStatus) Parse(role string) (DeploymentStatus, error) {
-	deploymentStatus := DeploymentStatus(role)
+func (s DeploymentStatus) Parse(status string) (DeploymentStatus, error) {
+	deploymentStatus := DeploymentStatus(status)
 
 	if !deploymentStatus.IsValid() {
-		return "", fmt.Errorf("%w: %s", ErrInvalidDeploymentStatus, role)
+		return "", fmt.Errorf("%w: %s", ErrInvalidDeploymentStatus, status)
 	}
 	return deploymentStatus, nil
 }

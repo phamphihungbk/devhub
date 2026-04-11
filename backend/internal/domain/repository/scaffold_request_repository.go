@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	entity "devhub-backend/internal/domain/entity"
 
@@ -11,8 +12,10 @@ import (
 type ScaffoldRequestRepository interface {
 	CreateOne(ctx context.Context, scaffoldRequest *entity.ScaffoldRequest) (*entity.ScaffoldRequest, error)
 	FindOne(ctx context.Context, id uuid.UUID) (*entity.ScaffoldRequest, error)
+	FindOnePending(ctx context.Context) (*entity.ScaffoldRequest, error)
 	FindAll(ctx context.Context, filter FindAllScaffoldRequestsFilter) (*entity.ScaffoldRequests, int64, error)
 	DeleteOne(ctx context.Context, id uuid.UUID) (*entity.ScaffoldRequest, error)
+	UpdateOne(ctx context.Context, input UpdateScaffoldRequestInput) (*entity.ScaffoldRequest, error)
 }
 
 type FindAllScaffoldRequestsFilter struct {
@@ -24,8 +27,15 @@ type FindAllScaffoldRequestsFilter struct {
 }
 
 type UpdateScaffoldRequestInput struct {
-	ID           uuid.UUID
-	Name         *string
-	Description  *string
-	Environments *[]string
+	ID            uuid.UUID
+	PluginID      *uuid.UUID
+	ProjectID     *uuid.UUID
+	RequestedBy   *uuid.UUID
+	Template      *string
+	Status        *entity.ScaffoldRequestStatus
+	Environment   *entity.ProjectEnvironment
+	Variables     *entity.ScaffoldRequestVariables
+	ApprovedBy    *uuid.UUID
+	ResultRepoURL *string
+	ApprovedAt    *time.Time
 }

@@ -69,6 +69,7 @@ services:
   plugins:
     image: devhub-plugins:dev
     container_name: devhub-plugins
+    tty: true 
     build:
       context: .
       dockerfile: infra/docker/plugins.Dockerfile
@@ -77,7 +78,8 @@ services:
     env_file:
       - .env    
     ports:
-      - "8888:8000"    
+      - "8888:8000"   
+      - "50051:50051"   
     environment:
       - ENV=development
     volumes:

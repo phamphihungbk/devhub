@@ -1,4 +1,4 @@
-package projectrepo
+package refreshtokenrepo
 
 import (
 	"context"
@@ -29,7 +29,7 @@ func (r *tokenRefreshRepositoryImpl) CreateOne(ctx context.Context, input reposi
 	var model RefreshToken
 	err = r.execer.GetContext(ctx, &model, query, args...)
 	if err != nil {
-		return nil, misc.WrapError(err, errs.NewDatabaseError("error while creating concert", err.Error()))
+		return nil, misc.WrapError(err, errs.NewDatabaseError("error while creating token", err.Error()))
 	}
 
 	token = model.ToEntity()

@@ -10,7 +10,7 @@ import (
 )
 
 type PluginRepository interface {
-	CreateOne(ctx context.Context, project *entity.Plugin) (*entity.Plugin, error)
+	CreateOne(ctx context.Context, plugin *entity.Plugin) (*entity.Plugin, error)
 	FindOne(ctx context.Context, id uuid.UUID) (*entity.Plugin, error)
 	FindAll(ctx context.Context, filter FindAllPluginsFilter) (*entity.Plugins, int64, error)
 	UpdateOne(ctx context.Context, input UpdatePluginInput) (*entity.Plugin, error)

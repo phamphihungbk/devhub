@@ -1,4 +1,4 @@
-package userrepo
+package deploymentrepo
 
 import (
 	"devhub-backend/internal/domain/repository"

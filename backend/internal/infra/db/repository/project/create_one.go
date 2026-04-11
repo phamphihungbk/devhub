@@ -37,7 +37,7 @@ func (r *projectRepositoryImpl) CreateOne(ctx context.Context, input *entity.Pro
 	var model Project
 	err = r.execer.GetContext(ctx, &model, query, args...)
 	if err != nil {
-		return nil, misc.WrapError(err, errs.NewDatabaseError("error while creating concert", err.Error()))
+		return nil, misc.WrapError(err, errs.NewDatabaseError("error while creating project", err.Error()))
 	}
 
 	project = model.ToEntity()
