@@ -1,46 +1,26 @@
-DC="$(which docker) compose -f ./docker-compose.dev.yml"
+#!/usr/bin/env sh
+set -eu
 
-HOST_UID="$(id -u)"
-HOST_GID="$(id -g)"
+ROOT_DIR="$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)"
+ENVIRONMENT="${COMPOSE_ENV:-dev}"
 
-SERVICE="api"
-
-export HOST_UID
-export HOST_GID
-export DOCKER_BUILDKIT=1
-
-RUN="${DC} run --rm"
-
-set -x
-
-case $1 in
-
-"start")
-  ${DC} up -d
-  if [ "$2" == '-f' ]; then
-    ${DC} logs -f
-  fi
-  ;;
-
-"restart")
-  ${DC} down || true
-  exec "$0" start "${@:2}"
-  ;;
-
-"build")
-  ${DC} build
-  ;;
-
-"run")
-  ${RUN} "${@:2}"
-  ;;
-
-"shell")
-  ${DC} run -u 0:0 --rm ${SERVICE} /bin/bash
-  ;;
-
-*)
-  ${DC} "${@:1}"
-  ;;
-
+case "$ENVIRONMENT" in
+  dev)
+    COMPOSE_FILES="-f ${ROOT_DIR}/docker-compose.yml -f ${ROOT_DIR}/docker-compose.dev.yml"
+    ;;
+  prod)
+    COMPOSE_FILES="-f ${ROOT_DIR}/docker-compose.yml -f ${ROOT_DIR}/docker-compose.prod.yml"
+    ;;
+  *)
+    echo "Unsupported COMPOSE_ENV: ${ENVIRONMENT}" >&2
+    exit 1
+    ;;
 esac
+
+PROFILE_ARGS=""
+if [ "${COMPOSE_FRONTEND:-0}" = "1" ]; then
+  PROFILE_ARGS="--profile frontend"
+fi
+
+set -- docker compose ${COMPOSE_FILES} ${PROFILE_ARGS} "$@"
+exec "$@"

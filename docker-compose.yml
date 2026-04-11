@@ -1,0 +1,54 @@
+services:
+  backend:
+    image: devhub-backend:local
+    build:
+      context: .
+      dockerfile: infra/docker/backend.Dockerfile
+    env_file:
+      - .env
+    environment:
+      SERVICE_ENV: ${SERVICE_ENV:-development}
+      DATABASE_URL: ${DATABASE_URL:-postgres://devhub:devhubpass@db:5432/devhub?sslmode=disable}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  frontend:
+    profiles: ["frontend"]
+    image: devhub-frontend:local
+    build:
+      context: .
+      dockerfile: infra/docker/frontend.Dockerfile
+    env_file:
+      - .env
+
+  db:
+    image: devhub-db:local
+    build:
+      context: .
+      dockerfile: infra/docker/db.Dockerfile
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-devhub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devhubpass}
+      POSTGRES_DB: ${POSTGRES_DB:-devhub}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-devhub} -d ${POSTGRES_DB:-devhub}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  redis:
+    image: devhub-redis:local
+    build:
+      context: .
+      dockerfile: infra/docker/redis.Dockerfile
+    volumes:
+      - redis_data:/data
+
+volumes:
+  db_data:
+  redis_data:

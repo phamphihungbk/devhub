@@ -36,14 +36,20 @@
 # Clone the repo
 git clone https://github.com/yourusername/devhub.git && cd devhub
 
-# Install frontend
-cd frontend && npm install && npm run dev
+# Prepare local environment
+./scripts/bootstrap.sh
 
-# Install backend (Go)
-cd ../backend && go run main.go
+# Start backend + database + redis
+./scripts/dev.sh up --build
 
-# Or run with Docker
-docker-compose up --build
+# Optional: include the frontend profile too
+DEV_WITH_FRONTEND=1 ./scripts/dev.sh up --build
+
+# Run database migrations
+./scripts/migrate.sh up
+
+# Postgres is exposed on localhost:5433 by default to avoid
+# colliding with an existing local Postgres on 5432
 ```
 
 
@@ -67,7 +73,7 @@ devhub/
 │   ├── go.sum              # Go module checksums
 │   └── main.go             # Main application entry
 │
-├── portal/                 # Vue 3 + Tailwind dashboard
+├── frontend/               # Vue 3 + Tailwind dashboard
 │   ├── src/
 │   │   ├── components/     # Shared UI components
 │   │   ├── layouts/        # Layout wrappers
@@ -88,11 +94,12 @@ devhub/
 │   ├── docker/             # Dockerfiles, entrypoints
 │   └── terraform/          # Optional Terraform infra
 │
-├── scripts/                # Dev and setup scripts
-│   ├── dev.sh              # Start local development environment
-│   ├── bootstrap.sh        # Initial project setup and dependencies
-│   ├── migrate.sh          # Run database migrations
-│   └── generate.sh         # Code scaffolding helper
+├── scripts/                # Thin wrappers around common docker/go workflows
+│   ├── dev.sh              # Start the local compose stack
+│   ├── bootstrap.sh        # Create local env files for first run
+│   ├── migrate.sh          # Run database migrations inside the backend container
+│   ├── generate.sh         # Run backend code generation commands
+│   └── docker-build-and-run.sh # Shared docker compose wrapper
 │
 ├── templates/              # Service templates
 │   ├── go-http/
@@ -117,7 +124,9 @@ devhub/
         ├── actions-ci.yaml
         └── infra-ci.yaml
 │
-├── docker-compose.yml      # Fullstack local setup
+├── docker-compose.yml      # Shared compose services and defaults
+├── docker-compose.dev.yml  # Development overrides
+├── docker-compose.prod.yml # Production overrides
 ├── README.md
 └── LICENSE
 ```
