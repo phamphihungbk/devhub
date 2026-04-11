@@ -176,9 +176,9 @@ This roadmap outlines the key milestones for DevHub from MVP to full internal pl
 ---
 
 
-        ┌───────────────────────────────────────────────────────────────────┐
+┌───────────────────────────────────────────────────────────────────┐
 │                           FRONTEND UI                             │
-│     Create Service | Deploy | View Metrics | Manage Plugins      │
+│     Create Service | Deploy | View Metrics | Manage Plugins       │
 └───────────────────────────────┬───────────────────────────────────┘
                                 │
                                 ▼

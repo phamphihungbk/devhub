@@ -16,6 +16,8 @@ services:
       - ENV=development
     volumes:
       - ./backend:/app
+      - ./plugins:/app/plugins
+      - ./generated:/app/generated
     depends_on:
       - db
       - redis
@@ -65,25 +67,6 @@ services:
       - "6379:63799"
     volumes:
       - redis_data:/data
-
-  plugins:
-    image: devhub-plugins:dev
-    container_name: devhub-plugins
-    tty: true 
-    build:
-      context: .
-      dockerfile: infra/docker/plugins.Dockerfile
-      args:
-        MODE: dev
-    env_file:
-      - .env    
-    ports:
-      - "8888:8000"   
-      - "50051:50051"   
-    environment:
-      - ENV=development
-    volumes:
-      - ./plugins:/app
 
 volumes:
   db_data:

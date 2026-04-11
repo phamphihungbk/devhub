@@ -56,17 +56,6 @@ services:
     volumes:
       - redis_data:/data
 
-  plugins:
-    image: devhub-plugins:latest
-    container_name: devhub-plugins
-    build:
-      context: ./plugins
-      dockerfile: infra/docker/plugins.Dockerfile
-      args:
-        MODE: prod
-    environment:
-      - ENV=production
-
 volumes:
   db_data:
   redis_data:

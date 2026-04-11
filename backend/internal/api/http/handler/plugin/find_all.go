@@ -25,6 +25,8 @@ type findAllPluginsResponse struct {
 	Name        string `json:"name" example:"Plugin Name"`
 	Type        string `json:"type" example:"scaffolder"`
 	Version     string `json:"version" example:"1.0.0"`
+	Entrypoint  string `json:"entrypoint" example:"/app/plugins/scaffolders/go_http_api/action.py"`
+	Scope       string `json:"scope" example:"global"`
 	Description string `json:"description" example:"Plugin Description"`
 }
 
@@ -102,6 +104,8 @@ func (h *pluginHandler) newFindAllPluginsResponse(plugins entity.Plugins) []find
 			Name:        plugin.Name,
 			Type:        plugin.Type.String(),
 			Version:     plugin.Version,
+			Entrypoint:  plugin.Entrypoint,
+			Scope:       plugin.Scope,
 			Description: plugin.Description,
 		})
 	}

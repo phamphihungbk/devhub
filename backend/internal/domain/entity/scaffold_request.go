@@ -9,10 +9,10 @@ import (
 )
 
 type ScaffoldRequestVariables struct {
-	ServiceName   string
-	Port          int
-	Database      string
-	EnableLogging bool
+	ServiceName   string `json:"service_name"`
+	Port          int    `json:"port"`
+	Database      string `json:"database"`
+	EnableLogging bool   `json:"enable_logging"`
 }
 
 // Parse parses a string into a ProjectEnvironment. It returns an error if the string is not a valid ProjectEnvironment.

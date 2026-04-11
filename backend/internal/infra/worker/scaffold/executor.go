@@ -109,7 +109,12 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		return ScaffoldExecutionResult{}, fmt.Errorf("execute python scaffold: %w; stderr=%s", err, strings.TrimSpace(stderr.String()))
+		return ScaffoldExecutionResult{}, fmt.Errorf(
+			"execute python scaffold: %w; stdout=%s; stderr=%s",
+			err,
+			strings.TrimSpace(stdout.String()),
+			strings.TrimSpace(stderr.String()),
+		)
 	}
 
 	var out struct {
