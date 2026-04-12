@@ -16,13 +16,30 @@ services:
         condition: service_started
 
   frontend:
-    profiles: ["frontend"]
     image: devhub-frontend:local
     build:
       context: .
       dockerfile: infra/docker/frontend.Dockerfile
     env_file:
       - .env
+
+  nginx:
+    image: devhub-nginx:local
+    build:
+      context: .
+      dockerfile: infra/docker/nginx.Dockerfile
+    env_file:
+      - .env
+    environment:
+      DEVHUB_DOMAIN: ${DEVHUB_DOMAIN:-devhub.local}
+      DEVHUB_API_DOMAIN: ${DEVHUB_API_DOMAIN:-api.devhub.local}
+      DEVHUB_SSL_CERT_FILE: ${DEVHUB_SSL_CERT_FILE:-devhub.local.crt}
+      DEVHUB_SSL_KEY_FILE: ${DEVHUB_SSL_KEY_FILE:-devhub.local.key}
+    depends_on:
+      - backend
+      - frontend
+    volumes:
+      - ./infra/certs:/etc/nginx/certs:ro
 
   db:
     image: devhub-db:local

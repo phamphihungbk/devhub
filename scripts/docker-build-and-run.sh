@@ -17,10 +17,5 @@ case "$ENVIRONMENT" in
     ;;
 esac
 
-PROFILE_ARGS=""
-if [ "${COMPOSE_FRONTEND:-0}" = "1" ]; then
-  PROFILE_ARGS="--profile frontend"
-fi
-
-set -- docker compose ${COMPOSE_FILES} ${PROFILE_ARGS} "$@"
+set -- docker compose ${COMPOSE_FILES} "$@"
 exec "$@"

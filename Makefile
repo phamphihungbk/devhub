@@ -1,18 +1,21 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap dev dev-frontend build down restart logs ps shell \
+.PHONY: help bootstrap generate-dev-cert setup-local-https dev build down restart logs ps shell \
 	migrate migrate-down generate sync-worker create-plugin config prod-config
 
 ##@ Setup
 bootstrap: ## Create local env files for first run
 	@./scripts/bootstrap.sh
 
+generate-dev-cert: ## Generate local TLS certs, optionally with DOMAIN=devhub.local API_DOMAIN=api.devhub.local
+	@./scripts/generate-dev-cert.sh $(if $(DOMAIN),$(DOMAIN),) $(if $(API_DOMAIN),$(API_DOMAIN),)
+
+setup-local-https: ## Generate certs, update hosts, and trust local devhub/api certs (macOS)
+	@./scripts/setup-local-https.sh $(if $(DOMAIN),$(DOMAIN),) $(if $(API_DOMAIN),$(API_DOMAIN),)
+
 ##@ Development
 dev: ## Start the dev stack (backend, db, redis)
 	@./scripts/dev.sh up --build
-
-dev-frontend: ## Start the dev stack including the optional frontend profile
-	@DEV_WITH_FRONTEND=1 ./scripts/dev.sh up --build
 
 build: ## Build the dev images
 	@./scripts/dev.sh build

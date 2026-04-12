@@ -4,3 +4,7 @@ __pycache__/
 *.pyc
 generated/
 .env
+infra/certs/
+frontend/node_modules/
+frontend/.nuxt/
+frontend/.output/
