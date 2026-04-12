@@ -7,7 +7,7 @@ import type {
   DashboardUser,
   StatusTone,
 } from '~/types/dashboard'
-import { fetchBackend } from '../utils/backend'
+import { fetchBackend } from '../../utils/backend'
 
 interface BackendProject {
   id: string
