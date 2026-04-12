@@ -218,6 +218,65 @@ make argocd-token
 
 Note: the included Argo CD `Application` manifest points at `git@personal:phamphihungbk/devhub.git`. Make sure your Argo CD instance can reach that Git remote and has credentials configured for it.
 
+## Local Gitea For Multi-Repo Testing
+
+If you want a lightweight local Git server on your MacBook for testing many repositories, tags, and branches, Gitea is now included in the main Docker Compose stack and built from [infra/docker/gitea.Dockerfile](/Users/hungpham/workspace/personal/devhub/infra/docker/gitea.Dockerfile).
+
+Start Gitea:
+
+```bash
+./scripts/dev.sh up -d gitea
+```
+
+Open the UI at [http://localhost:3000](http://localhost:3000).
+
+To expose Gitea on the same local-domain setup as DevHub, run:
+
+```bash
+make setup-local-https
+```
+
+Then open [https://gitea.devhub.local](https://gitea.devhub.local).
+
+Recommended first-run settings:
+
+- database: `SQLite3`
+- instance URL: `https://gitea.devhub.local/`
+- SSH server domain: `gitea.devhub.local`
+- SSH server port: `2222`
+
+The compose file exposes:
+
+- HTTP on `localhost:3000`
+- SSH Git access on `localhost:2222`
+- HTTPS via NGINX on `https://gitea.devhub.local`
+
+Common commands:
+
+```bash
+./scripts/dev.sh ps gitea
+./scripts/dev.sh logs -f gitea
+./scripts/dev.sh stop gitea
+```
+
+To clone over HTTP after creating a repo:
+
+```bash
+git clone https://gitea.devhub.local/<user>/<repo>.git
+```
+
+To clone over SSH, add your SSH key in Gitea and use port `2222`:
+
+```bash
+git clone ssh://git@gitea.devhub.local:2222/<user>/<repo>.git
+```
+
+For Argo CD inside Minikube, prefer the HTTP repo URL using `host.minikube.internal`, for example:
+
+```text
+http://host.minikube.internal:3000/<user>/<repo>.git
+```
+
 To generate a token for the deployment worker after the Argo CD server is reachable locally:
 
 ```bash

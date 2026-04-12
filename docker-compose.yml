@@ -33,11 +33,13 @@ services:
     environment:
       DEVHUB_DOMAIN: ${DEVHUB_DOMAIN:-devhub.local}
       DEVHUB_API_DOMAIN: ${DEVHUB_API_DOMAIN:-api.devhub.local}
+      GITEA_DOMAIN: ${GITEA_DOMAIN:-gitea.devhub.local}
       DEVHUB_SSL_CERT_FILE: ${DEVHUB_SSL_CERT_FILE:-devhub.local.crt}
       DEVHUB_SSL_KEY_FILE: ${DEVHUB_SSL_KEY_FILE:-devhub.local.key}
     depends_on:
       - backend
       - frontend
+      - gitea
     volumes:
       - ./infra/certs:/etc/nginx/certs:ro
 
@@ -66,6 +68,24 @@ services:
     volumes:
       - redis_data:/data
 
+  gitea:
+    image: devhub-gitea:local
+    build:
+      context: .
+      dockerfile: infra/docker/gitea.Dockerfile
+    restart: unless-stopped
+    environment:
+      GITEA__server__DOMAIN: ${GITEA_DOMAIN:-gitea.devhub.local}
+      GITEA__server__ROOT_URL: ${GITEA_ROOT_URL:-https://gitea.devhub.local/}
+      GITEA__server__SSH_DOMAIN: ${GITEA_SSH_DOMAIN:-gitea.devhub.local}
+      GITEA__server__SSH_PORT: ${GITEA_SSH_PORT:-2222}
+      GITEA__database__DB_TYPE: sqlite3
+    volumes:
+      - gitea_data:/data
+      - gitea_config:/etc/gitea
+
 volumes:
   db_data:
   redis_data:
+  gitea_data:
+  gitea_config:
