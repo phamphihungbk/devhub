@@ -4,22 +4,24 @@ services:
       target: prod
       args:
         MODE: prod
-    ports:
-      - "8080:8080"
     environment:
       SERVICE_ENV: production
     restart: unless-stopped
 
   frontend:
-    profiles: ["frontend"]
     build:
       target: prod
       args:
         MODE: prod
-    ports:
-      - "80:80"
     environment:
       NODE_ENV: production
+      NUXT_BACKEND_BASE_URL: http://nginx/api
+    restart: unless-stopped
+
+  nginx:
+    ports:
+      - "80:80"
+      - "443:443"
     restart: unless-stopped
 
   db:

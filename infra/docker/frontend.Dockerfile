@@ -10,10 +10,13 @@ FROM node:20-alpine AS prod-builder
 
 WORKDIR /app
 COPY frontend/ ./
-RUN if [ -f package.json ]; then npm install && npm run build; else mkdir -p dist && printf '%s\n' '<!doctype html><title>Frontend not configured</title><h1>Frontend not configured</h1>' > dist/index.html; fi
+RUN if [ -f package.json ]; then npm install && npm run build; else mkdir -p .output/server .output/public && printf '%s\n' '<!doctype html><title>Frontend not configured</title><h1>Frontend not configured</h1>' > .output/public/index.html && printf '%s\n' 'console.log(\"Frontend not configured\")' > .output/server/index.mjs; fi
 
-FROM nginx:1.27-alpine AS prod
+FROM node:20-alpine AS prod
 
-COPY --from=prod-builder /app/dist /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+WORKDIR /app
+ENV HOST=0.0.0.0
+ENV PORT=3000
+COPY --from=prod-builder /app/.output ./.output
+EXPOSE 3000
+CMD ["node", ".output/server/index.mjs"]

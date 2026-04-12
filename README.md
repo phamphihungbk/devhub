@@ -39,11 +39,8 @@ git clone https://github.com/yourusername/devhub.git && cd devhub
 # Prepare local environment
 ./scripts/bootstrap.sh
 
-# Start backend + database + redis
+# Start the full local stack
 ./scripts/dev.sh up --build
-
-# Optional: include the frontend profile too
-DEV_WITH_FRONTEND=1 ./scripts/dev.sh up --build
 
 # Run database migrations
 ./scripts/migrate.sh up

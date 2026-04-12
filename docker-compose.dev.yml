@@ -5,30 +5,29 @@ services:
       args:
         MODE: dev
     command: ["go", "run", ".", "serve"]
-    ports:
-      - "8080:8080"
     environment:
       SERVICE_ENV: development
-    tty: true
     volumes:
       - ./backend:/app/backend
       - ./plugins:/app/plugins
       - ./generated:/app/generated
 
   frontend:
-    profiles: ["frontend"]
     build:
       target: dev
       args:
         MODE: dev
     command: ["sh", "-c", "if [ -f package.json ]; then npm install && npm run dev -- --host 0.0.0.0 --port 3000; else echo 'frontend/package.json not found; skipping frontend startup' && sleep infinity; fi"]
-    ports:
-      - "3030:3000"
     environment:
       NODE_ENV: development
-    tty: true
+      NUXT_BACKEND_BASE_URL: http://nginx/api
     volumes:
       - ./frontend:/app
+
+  nginx:
+    ports:
+      - "80:80"
+      - "443:443"
 
   db:
     ports:

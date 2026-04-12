@@ -75,7 +75,7 @@ go run .
 
 ## Endpoint
 
-- `GET /healthz`
+- `GET /health`
 """,
         encoding="utf-8",
     )
