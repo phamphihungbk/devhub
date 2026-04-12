@@ -1,6 +1,7 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
   devtools: { enabled: true },
+  modules: ['nuxtjs-naive-ui'],
   css: ['~/assets/css/main.css'],
   app: {
     head: {
@@ -22,6 +23,7 @@ export default defineNuxtConfig({
     backendBaseUrl: process.env.NUXT_BACKEND_BASE_URL || 'http://localhost:8080',
     public: {
       appName: process.env.NUXT_PUBLIC_APP_NAME || 'DevHub',
+      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || '/api',
     },
   },
 })

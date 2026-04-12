@@ -19,6 +19,11 @@ const runtimeConfig = useRuntimeConfig()
           this frontend gives it a clearer voice.
         </p>
       </header>
+      <div class="hero__meta">
+        <span class="hero__pill">Frontend: devhub.local</span>
+        <span class="hero__pill">API: api.devhub.local</span>
+        <span class="hero__pill">Gateway: nginx</span>
+      </div>
       <slot />
     </main>
   </div>
