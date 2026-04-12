@@ -29,6 +29,14 @@ const (
 	DatabaseConnMaxIdleTimeKey = "DATABASE_CONN_MAX_IDLE_TIME" // duration string like "5m"
 )
 
+// Argo CD configuration environment variable keys
+const (
+	ArgoCDServerKey    = "ARGOCD_SERVER"
+	ArgoCDAuthTokenKey = "ARGOCD_AUTH_TOKEN"
+	ArgoCDInsecureKey  = "ARGOCD_INSECURE"
+	ArgoCDTimeoutKey   = "ARGOCD_TIMEOUT"
+)
+
 // Default configuration values
 // These values are used if the environment variables are not set
 var configDefaults = map[string]any{
@@ -45,6 +53,11 @@ var configDefaults = map[string]any{
 	DatabaseMaxIdleConnsKey:    15,
 	DatabaseConnMaxLifetimeKey: "30m",
 	DatabaseConnMaxIdleTimeKey: "5m",
+	// Argo CD configuration
+	ArgoCDServerKey:    "argocd-server.argocd.svc.cluster.local:443",
+	ArgoCDAuthTokenKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJhZG1pbjphcGlLZXkiLCJuYmYiOjE3NzYwMjg1NTIsImlhdCI6MTc3NjAyODU1MiwianRpIjoiYWFlMTQ2NTQtYmRhZS00NzdlLWFlZjAtZGUyYTAxMzMyYjU2In0.2P5A4JDJY5543ajoy-PPJuzuiPQfS5rqKG7_ep4zBkk",
+	ArgoCDInsecureKey:  true,
+	ArgoCDTimeoutKey:   "10m",
 	// Token configuration
 	TokenDurationKey: 3600,
 	TokenSecretKey:   "your-secret-key",

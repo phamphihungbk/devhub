@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 .PHONY: help bootstrap generate-dev-cert setup-local-https dev build down restart logs ps shell \
-	migrate migrate-down generate sync-worker create-plugin config prod-config
+	migrate migrate-down generate sync-worker create-plugin config prod-config argocd-ui argocd-token
 
 ##@ Setup
 bootstrap: ## Create local env files for first run
@@ -48,6 +48,12 @@ generate: ## Run backend DB code generation
 
 sync-worker: ## Run the backend async worker process
 	@./scripts/sync-worker.sh
+
+argocd-ui: ## Install/apply Argo CD resources if needed, then port-forward the UI
+	@./scripts/argocd.sh all
+
+argocd-token: ## Generate and print an ARGOCD_AUTH_TOKEN export line
+	@./scripts/argocd.sh token
 
 create-plugin: ## Scaffold a local plugin folder, e.g. make create-plugin NAME=my-plugin TYPE=scaffolder
 	@./scripts/create-plugin.sh \

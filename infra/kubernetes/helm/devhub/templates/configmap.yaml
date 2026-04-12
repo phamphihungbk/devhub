@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "devhub.fullname" . }}-config
+  labels:
+    {{- include "devhub.labels" . | nindent 4 }}
+data:
+  SERVICE_PORT: {{ .Values.config.servicePort | quote }}
+  SERVICE_ENV: {{ .Values.config.serviceEnv | quote }}
+  SERVICE_ERR_PREFIX: {{ .Values.config.serviceErrorPrefix | quote }}
+  OTEL_COLLECTOR_ENDPOINT: {{ .Values.config.otelCollectorEndpoint | quote }}
+  DATABASE_URL: {{ .Values.config.databaseUrl | quote }}
+  DATABASE_MAX_OPEN_CONNS: {{ .Values.config.databaseMaxOpenConns | quote }}
+  DATABASE_MAX_IDLE_CONNS: {{ .Values.config.databaseMaxIdleConns | quote }}
+  DATABASE_CONN_MAX_LIFETIME: {{ .Values.config.databaseConnMaxLifetime | quote }}
+  DATABASE_CONN_MAX_IDLE_TIME: {{ .Values.config.databaseConnMaxIdleTime | quote }}
+  TOKEN_DURATION: {{ .Values.config.tokenDuration | quote }}
+  TOKEN_ISSUER: {{ .Values.config.tokenIssuer | quote }}
+  APP_TIMEZONE: {{ .Values.config.appTimezone | quote }}
+  SEAT_LOCK_TTL: {{ .Values.config.seatLockTTL | quote }}

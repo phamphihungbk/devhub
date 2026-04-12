@@ -6,6 +6,7 @@ import (
 
 type Config struct {
 	App     AppConfig      // Application-level settings such as API keys or feature flags
+	ArgoCD  ArgoCDConfig   // Argo CD client settings used by deployment workers
 	Service ServiceConfig  // Infrastructure-level service settings like name, port, and environment
 	DB      DatabaseConfig // Database connection and pooling configuration
 	Token   TokenConfig    // Token-related configuration
@@ -27,6 +28,7 @@ func Configure() (*Config, error) {
 
 	return &Config{
 		App:     LoadAppConfig(cfg),
+		ArgoCD:  LoadArgoCDConfig(cfg),
 		Service: LoadServiceConfig(cfg),
 		DB:      LoadDatabaseConfig(cfg),
 		Token:   LoadTokenConfig(cfg),

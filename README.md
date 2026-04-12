@@ -128,6 +128,131 @@ devhub/
 └── LICENSE
 ```
 
+## Helm And Argo CD
+
+The repo now includes a deployable Helm chart at [infra/kubernetes/helm/devhub/values.yaml](/Users/hungpham/workspace/personal/devhub/infra/kubernetes/helm/devhub/values.yaml) and an Argo CD `Application` at [infra/kubernetes/argocd/devhub.yaml](/Users/hungpham/workspace/personal/devhub/infra/kubernetes/argocd/devhub.yaml).
+
+The chart deploys:
+
+- `api`: the Go HTTP server
+- `worker`: a separate `Deployment` that runs `/app/devhub sync-worker`
+
+For the fastest local end-to-end Argo CD smoke test, the included `Application` currently points to the public `argoproj/argocd-example-apps` repository over HTTPS and syncs the `guestbook` example. This avoids SSH repo credential setup while you verify worker-triggered syncs.
+
+The backend worker now includes a real deployment runner that executes an Argo CD sync for each pending deployment. It invokes:
+
+Example:
+
+```bash
+argocd app sync <service> --revision <version> --server <argocd-server> --auth-token <token>
+```
+
+It uses a hardcoded timeout of `10m`. The worker expects `ARGOCD_SERVER` and `ARGOCD_AUTH_TOKEN` in its runtime environment. The Helm chart sets `ARGOCD_SERVER` for the worker by default and exposes `secrets.argocdAuthToken`.
+
+To run only the deployment worker:
+
+```bash
+go run ./backend sync-worker --types deployment
+```
+
+For local Docker Compose runs, the worker reads Argo CD credentials from `.env` via the `backend` service. Set:
+
+```bash
+ARGOCD_AUTH_TOKEN=<token>
+```
+
+After verifying the flow, update `spec.source.repoURL` and `spec.source.path` in [infra/kubernetes/argocd/devhub.yaml](/Users/hungpham/workspace/personal/devhub/infra/kubernetes/argocd/devhub.yaml) back to your real GitOps source.
+
+Example:
+
+```bash
+helm upgrade --install devhub infra/kubernetes/helm/devhub \
+  --namespace devhub \
+  --create-namespace \
+  --set image.repository=ghcr.io/phamphihungbk/devhub-backend \
+  --set image.tag=latest \
+  --set secrets.tokenSecret="$TOKEN_SECRET"
+
+kubectl apply -f infra/kubernetes/argocd/devhub.yaml
+```
+
+### Local Argo CD UI With Minikube
+
+If you want to use the Argo CD web UI locally, the repo now includes [scripts/argocd.sh](/Users/hungpham/workspace/personal/devhub/scripts/argocd.sh).
+
+Typical flow:
+
+```bash
+minikube start
+./scripts/argocd.sh all
+```
+
+That command will:
+
+- install Argo CD into the current cluster
+- apply the DevHub Argo CD `Application`
+- start a local port-forward for the UI on `http://127.0.0.1:8081`
+- print the default `admin` password from `argocd-initial-admin-secret`
+
+The install step uses server-side apply to avoid the Kubernetes annotation-size error that can happen with Argo CD CRDs such as `applicationsets.argoproj.io`.
+
+You can also run the steps individually:
+
+```bash
+./scripts/argocd.sh install
+./scripts/argocd.sh app
+./scripts/argocd.sh ingress
+./scripts/argocd.sh domain
+./scripts/argocd.sh configure
+./scripts/argocd.sh ui
+./scripts/argocd.sh password
+./scripts/argocd.sh token
+```
+
+Or via Make:
+
+```bash
+make argocd-ui
+make argocd-token
+```
+
+Note: the included Argo CD `Application` manifest points at `git@personal:phamphihungbk/devhub.git`. Make sure your Argo CD instance can reach that Git remote and has credentials configured for it.
+
+To generate a token for the deployment worker after the Argo CD server is reachable locally:
+
+```bash
+./scripts/argocd.sh token
+```
+
+The helper ensures the `admin` account has `apiKey, login` enabled and grants local admin RBAC before generating the token. It prints an `export ARGOCD_AUTH_TOKEN=...` line you can paste into your shell or `.env`.
+
+The local HTTPS helper [scripts/setup-local-https.sh](/Users/hungpham/workspace/personal/devhub/scripts/setup-local-https.sh) now also updates `/etc/hosts` for `argocd.devhub.local` when Minikube is running. You can override the detected IP with `DEVHUB_ARGOCD_IP`.
+
+### Domain Access Through NGINX Ingress
+
+For Minikube, the repo also includes [infra/kubernetes/argocd/argocd-ui-ingress.yaml](/Users/hungpham/workspace/personal/devhub/infra/kubernetes/argocd/argocd-ui-ingress.yaml), which exposes the Argo CD UI through the NGINX ingress addon at `argocd.devhub.local`.
+
+Run:
+
+```bash
+./scripts/argocd.sh ingress
+./scripts/argocd.sh domain
+```
+
+Then add the printed `minikube ip` entry to your local `/etc/hosts`, for example:
+
+```text
+192.168.49.2 argocd.devhub.local
+```
+
+After that, open:
+
+```text
+https://argocd.devhub.local
+```
+
+The ingress forwards traffic to the Argo CD server service over HTTPS, while keeping browser access simple for local development.
+
 ## 🛣️ `ROADMAP.md`
 
 ```markdown
