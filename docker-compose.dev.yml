@@ -12,6 +12,19 @@ services:
       - ./plugins:/app/plugins
       - ./generated:/app/generated
 
+  worker:
+    build:
+      target: dev
+      args:
+        MODE: dev
+    command: ["go", "run", ".", "sync-worker"]
+    environment:
+      SERVICE_ENV: development
+    volumes:
+      - ./backend:/app/backend
+      - ./plugins:/app/plugins
+      - ./generated:/app/generated
+
   frontend:
     build:
       target: dev

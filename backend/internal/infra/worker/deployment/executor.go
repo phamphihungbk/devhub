@@ -23,6 +23,10 @@ type CommandExecutor struct {
 	Insecure          bool
 	Timeout           time.Duration
 	RepoBaseURL       string
+	AutoCreateApp     bool
+	AppProject        string
+	AppNamespace      string
+	AppDestServer     string
 	projectRepository repository.ProjectRepository
 }
 
@@ -41,6 +45,10 @@ func NewCommandExecutor(cfg config.ArgoCDConfig, projectRepository repository.Pr
 		Insecure:          cfg.Insecure,
 		Timeout:           cfg.Timeout,
 		RepoBaseURL:       strings.TrimSpace(cfg.RepoBaseURL),
+		AutoCreateApp:     cfg.AutoCreateApp,
+		AppProject:        strings.TrimSpace(cfg.AppProject),
+		AppNamespace:      strings.TrimSpace(cfg.AppNamespace),
+		AppDestServer:     strings.TrimSpace(cfg.AppDestServer),
 		projectRepository: projectRepository,
 	}
 }
@@ -100,6 +108,10 @@ func (e *CommandExecutor) Execute(ctx context.Context, job *DeploymentJob) (Exec
 		args = append(args, "--insecure")
 	}
 
+	if err := e.ensureApplicationExists(ctx, args, job.Service, project.RepoURL, repoURL, revision); err != nil {
+		return ExecutionResult{}, err
+	}
+
 	setArgs := append([]string{}, args...)
 	setStdout, setStderr, err := runSetCommand(ctx, setArgs, job.Service, repoURL, revision)
 	if err != nil {
@@ -121,6 +133,58 @@ func (e *CommandExecutor) Execute(ctx context.Context, job *DeploymentJob) (Exec
 	}
 
 	return result, nil
+}
+
+func (e *CommandExecutor) ensureApplicationExists(
+	ctx context.Context,
+	baseArgs []string,
+	appName string,
+	projectRepoURL string,
+	argoRepoURL string,
+	revision string,
+) error {
+	stdout, stderr, err := runGetCommand(ctx, baseArgs, appName)
+	if err == nil {
+		return nil
+	}
+
+	if !isArgoCDAppNotFound(stderr) {
+		return fmt.Errorf(
+			"check argocd application existence failed: app=%q stdout=%s stderr=%s: %w",
+			appName,
+			strings.TrimSpace(stdout),
+			strings.TrimSpace(stderr),
+			err,
+		)
+	}
+
+	if !e.AutoCreateApp {
+		return fmt.Errorf(
+			"argocd application %q does not exist. Create it first or enable %s to allow automatic creation. project_repo=%q argocd_repo=%q revision=%q stderr=%s",
+			appName,
+			config.ArgoCDAutoCreateAppKey,
+			projectRepoURL,
+			argoRepoURL,
+			revision,
+			strings.TrimSpace(stderr),
+		)
+	}
+
+	createStdout, createStderr, createErr := runCreateCommand(
+		ctx,
+		baseArgs,
+		appName,
+		argoRepoURL,
+		revision,
+		e.AppProject,
+		e.AppNamespace,
+		e.AppDestServer,
+	)
+	if createErr != nil {
+		return formatArgoCDError("create", appName, projectRepoURL, argoRepoURL, revision, createErr, createStdout, createStderr)
+	}
+
+	return nil
 }
 
 func enrichExecutionResultFromApp(ctx context.Context, baseArgs []string, appName string, result *ExecutionResult) error {
@@ -190,6 +254,47 @@ func runSetCommand(ctx context.Context, baseArgs []string, appName string, repoU
 		revision,
 		"--path",
 		defaultArgoCDPath,
+	)
+	return runArgoCDCommand(ctx, args)
+}
+
+func runGetCommand(ctx context.Context, baseArgs []string, appName string) (string, string, error) {
+	args := append([]string{}, baseArgs...)
+	args = append(args,
+		"app",
+		"get",
+		appName,
+	)
+	return runArgoCDCommand(ctx, args)
+}
+
+func runCreateCommand(
+	ctx context.Context,
+	baseArgs []string,
+	appName string,
+	repoURL string,
+	revision string,
+	project string,
+	namespace string,
+	destServer string,
+) (string, string, error) {
+	args := append([]string{}, baseArgs...)
+	args = append(args,
+		"app",
+		"create",
+		appName,
+		"--repo",
+		repoURL,
+		"--revision",
+		revision,
+		"--path",
+		defaultArgoCDPath,
+		"--project",
+		project,
+		"--dest-namespace",
+		namespace,
+		"--dest-server",
+		destServer,
 	)
 	return runArgoCDCommand(ctx, args)
 }
@@ -276,6 +381,13 @@ func formatArgoCDError(
 				stderr,
 			)
 		}
+		if operation == "create" {
+			return fmt.Errorf(
+				"argocd app create was denied. The configured token likely lacks Argo CD RBAC permission to create applications. Typical required permissions: applications,get and applications,create. %s stderr=%s",
+				contextLine,
+				stderr,
+			)
+		}
 		return fmt.Errorf(
 			"argocd app sync was denied. The configured token likely lacks Argo CD RBAC permission to sync applications. Typical required permissions: applications,get and applications,sync. %s stderr=%s",
 			contextLine,
@@ -328,4 +440,9 @@ func formatArgoCDError(
 		stdout,
 		stderr,
 	)
+}
+
+func isArgoCDAppNotFound(stderr string) bool {
+	lower := strings.ToLower(strings.TrimSpace(stderr))
+	return strings.Contains(lower, "not found") || strings.Contains(lower, "does not exist")
 }

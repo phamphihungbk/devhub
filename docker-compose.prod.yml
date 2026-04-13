@@ -8,6 +8,16 @@ services:
       SERVICE_ENV: production
     restart: unless-stopped
 
+  worker:
+    build:
+      target: prod
+      args:
+        MODE: prod
+    command: ["/app/devhub", "sync-worker"]
+    environment:
+      SERVICE_ENV: production
+    restart: unless-stopped
+
   frontend:
     build:
       target: prod

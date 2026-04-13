@@ -15,11 +15,29 @@ services:
       redis:
         condition: service_started
 
+  worker:
+    image: devhub-backend:local
+    build:
+      context: .
+      dockerfile: infra/docker/backend.Dockerfile
+    command: ["/app/devhub", "sync-worker"]
+    env_file:
+      - .env
+    environment:
+      SERVICE_ENV: ${SERVICE_ENV:-development}
+      DATABASE_URL: ${DATABASE_URL:-postgres://devhub:devhubpass@db:5432/devhub?sslmode=disable}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
   frontend:
     image: devhub-frontend:local
     build:
       context: .
       dockerfile: infra/docker/frontend.Dockerfile
+    profiles: ["ui"]
     env_file:
       - .env
 
@@ -28,6 +46,7 @@ services:
     build:
       context: .
       dockerfile: infra/docker/nginx.Dockerfile
+    profiles: ["ui"]
     env_file:
       - .env
     environment:
