@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import urllib.error
@@ -79,6 +80,56 @@ def resolve_service_dir(output_dir_raw: str, service_name: str) -> Path:
     return service_dir
 
 
+def scaffold_from_template(service_dir: Path, template_name: str, replacements: dict[str, str]) -> None:
+    templates_root = Path(__file__).resolve().parents[2] / "templates"
+    template_dir = templates_root / template_name
+    common_chart_dir = templates_root / "charts" / "app"
+
+    if not template_dir.is_dir():
+        fail(f"template directory does not exist: {template_dir}")
+
+    if service_dir.exists():
+        shutil.rmtree(service_dir)
+    service_dir.mkdir(parents=True, exist_ok=True)
+
+    copy_template_tree(template_dir, service_dir, replacements)
+
+    if common_chart_dir.is_dir():
+        chart_target_dir = service_dir / "charts" / "app"
+        chart_target_dir.mkdir(parents=True, exist_ok=True)
+        copy_template_tree(common_chart_dir, chart_target_dir, replacements)
+
+
+def copy_template_tree(source_dir: Path, target_dir: Path, replacements: dict[str, str]) -> None:
+    for path in source_dir.rglob("*"):
+        relative_path = path.relative_to(source_dir)
+        destination = target_dir / relative_path
+
+        if path.is_dir():
+            destination.mkdir(parents=True, exist_ok=True)
+            continue
+
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        copy_template_file(path, destination, replacements)
+
+
+def copy_template_file(source: Path, destination: Path, replacements: dict[str, str]) -> None:
+    try:
+        raw = source.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        shutil.copy2(source, destination)
+        return
+
+    destination.write_text(render_template(raw, replacements), encoding="utf-8")
+
+
+def render_template(content: str, replacements: dict[str, str]) -> str:
+    rendered = content
+    for key, value in replacements.items():
+        rendered = rendered.replace(f"{{{{{key}}}}}", value)
+    return rendered
+
+
 def resolve_container_image(payload: dict[str, Any], service_name: str) -> str:
     explicit_image = str(payload.get("image", "")).strip()
     if explicit_image != "":
@@ -91,6 +142,18 @@ def resolve_container_image(payload: dict[str, Any], service_name: str) -> str:
         return f"{service_name}:{image_tag}"
 
     return f"{image_repository}/{service_name}:{image_tag}"
+
+
+def split_container_image(image: str) -> tuple[str, str]:
+    image = image.strip()
+    if image == "":
+        fail("image must not be empty")
+
+    last_slash = image.rfind("/")
+    last_colon = image.rfind(":")
+    if last_colon > last_slash:
+        return image[:last_colon], image[last_colon + 1 :]
+    return image, "latest"
 
 
 def build_scaffold_output(service_dir: Path, service_name: str, payload: dict[str, Any]) -> dict[str, Any]:

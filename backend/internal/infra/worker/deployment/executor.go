@@ -44,7 +44,7 @@ type ExecutionResult struct {
 	FinishedAt  time.Time
 }
 
-const defaultArgoCDPath = "k8s"
+const defaultArgoCDPath = "charts/app"
 
 func NewCommandExecutor(cfg config.ArgoCDConfig, projectRepository repository.ProjectRepository) *CommandExecutor {
 	return &CommandExecutor{
@@ -158,7 +158,11 @@ func (e *CommandExecutor) Execute(ctx context.Context, job *DeploymentJob) (Exec
 	return result, nil
 }
 
-var imageLinePattern = regexp.MustCompile(`(?m)^\s*image:\s*["']?([^"'\s#]+)["']?`)
+var (
+	imageLinePattern        = regexp.MustCompile(`(?m)^\s*image:\s*["']?([^"'\s#]+)["']?`)
+	imageRepositoryPattern  = regexp.MustCompile(`(?m)^\s*repository:\s*["']?([^"'\s#]+)["']?`)
+	imageTagPattern         = regexp.MustCompile(`(?m)^\s*tag:\s*["']?([^"'\s#]+)["']?`)
+)
 
 func (e *CommandExecutor) ensureImageBuilt(ctx context.Context, projectRepoURL string, revision string) error {
 	if !e.AutoBuildImage {
@@ -172,7 +176,7 @@ func (e *CommandExecutor) ensureImageBuilt(ctx context.Context, projectRepoURL s
 	}
 	defer cleanup()
 
-	image, err := readImageFromManifest(filepath.Join(repoDir, defaultArgoCDPath, "deployment.yaml"))
+	image, err := readImageForBuild(repoDir)
 	if err != nil {
 		return err
 	}
@@ -419,6 +423,41 @@ func checkoutRepository(ctx context.Context, repoURL string, revision string) (s
 	}
 
 	return tmpDir, cleanup, nil
+}
+
+func readImageForBuild(repoDir string) (string, error) {
+	valuesPath := filepath.Join(repoDir, defaultArgoCDPath, "values.yaml")
+	if image, err := readImageFromHelmValues(valuesPath); err == nil {
+		return image, nil
+	}
+
+	manifestPath := filepath.Join(repoDir, "k8s", "deployment.yaml")
+	return readImageFromManifest(manifestPath)
+}
+
+func readImageFromHelmValues(path string) (string, error) {
+	values, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("read helm values for image build failed: path=%q: %w", path, err)
+	}
+
+	repositoryMatch := imageRepositoryPattern.FindSubmatch(values)
+	tagMatch := imageTagPattern.FindSubmatch(values)
+	if len(repositoryMatch) < 2 || len(tagMatch) < 2 {
+		return "", fmt.Errorf("helm values %q do not contain image.repository and image.tag", path)
+	}
+
+	repository := strings.TrimSpace(string(repositoryMatch[1]))
+	tag := strings.TrimSpace(string(tagMatch[1]))
+	if repository == "" {
+		return "", fmt.Errorf("helm values %q contain an empty image.repository", path)
+	}
+
+	if tag == "" {
+		return repository, nil
+	}
+
+	return fmt.Sprintf("%s:%s", repository, tag), nil
 }
 
 func readImageFromManifest(path string) (string, error) {

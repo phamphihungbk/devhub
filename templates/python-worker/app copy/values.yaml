@@ -1,0 +1,30 @@
+nameOverride: "{{SERVICE_NAME}}"
+fullnameOverride: "{{SERVICE_NAME}}"
+
+replicaCount: 1
+
+image:
+  repository: "{{IMAGE_REPOSITORY}}"
+  tag: "{{IMAGE_TAG}}"
+  pullPolicy: IfNotPresent
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: {{PORT}}
+
+containerPort: {{PORT}}
+
+ingress:
+  enabled: false
+  className: ""
+  host: "{{SERVICE_NAME}}.devhub.local"
+  path: /
+
+serviceAccount:
+  create: true
+  name: ""
+
+config:
+  enabled: false
+  values: {}
