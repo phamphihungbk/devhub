@@ -14,13 +14,19 @@ var (
 type UserRole string
 
 const (
-	RoleAdmin UserRole = "admin"
-	RoleUser  UserRole = "user"
+	RolePlatformAdmin UserRole = "platform_admin"
+	RoleOrgAdmin      UserRole = "org_admin"
+	RoleTeamLead      UserRole = "team_lead"
+	RoleDeveloper     UserRole = "developer"
+	RoleViewer        UserRole = "viewer"
 )
 
 var userRoleStringMapper = map[UserRole]string{
-	RoleAdmin: "admin",
-	RoleUser:  "user",
+	RolePlatformAdmin: "platform_admin",
+	RoleOrgAdmin:      "org_admin",
+	RoleTeamLead:      "team_lead",
+	RoleDeveloper:     "developer",
+	RoleViewer:        "viewer",
 }
 
 func (s UserRole) String() string {
@@ -29,7 +35,7 @@ func (s UserRole) String() string {
 
 func (s UserRole) IsValid() bool {
 	switch s {
-	case RoleAdmin, RoleUser:
+	case RolePlatformAdmin, RoleOrgAdmin, RoleTeamLead, RoleDeveloper, RoleViewer:
 		return true
 	default:
 		return false

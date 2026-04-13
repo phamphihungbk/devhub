@@ -14,6 +14,7 @@ func UseSchema(schema string) {
 	Plugins = Plugins.FromSchema(schema)
 	Projects = Projects.FromSchema(schema)
 	RefreshTokens = RefreshTokens.FromSchema(schema)
+	Releases = Releases.FromSchema(schema)
 	ScaffoldRequests = ScaffoldRequests.FromSchema(schema)
 	SchemaMigrations = SchemaMigrations.FromSchema(schema)
 	Users = Users.FromSchema(schema)

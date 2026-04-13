@@ -16,7 +16,7 @@ import (
 type UpdateUserInput struct {
 	ID   string  `json:"id" validate:"required,uuid"`
 	Name *string `json:"name" validate:"min=2,max=100"`
-	Role *string `json:"role" validate:"oneof=admin user"`
+	Role *string `json:"role" validate:"omitempty,oneof=platform_admin org_admin team_lead developer viewer"`
 }
 
 func (u *userUsecase) UpdateUser(ctx context.Context, input UpdateUserInput) (user *entity.User, err error) {

@@ -14,7 +14,7 @@ type CreateUserInput struct {
 	Name     *string `json:"name" validate:"min=0,max=100"`
 	Email    string  `json:"email" validate:"required,email"`
 	Password string  `json:"password" validate:"required,min=8,max=100"`
-	Role     string  `json:"role" validate:"required,oneof=admin user"`
+	Role     string  `json:"role" validate:"required,oneof=platform_admin org_admin team_lead developer viewer"`
 }
 
 func (u *userUsecase) CreateUser(ctx context.Context, input CreateUserInput) (user *entity.User, err error) {

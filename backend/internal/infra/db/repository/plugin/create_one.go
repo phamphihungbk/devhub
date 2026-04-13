@@ -23,6 +23,7 @@ func (r *pluginRepositoryImpl) CreateOne(ctx context.Context, input *entity.Plug
 		Type:        input.Type.String(),
 		Version:     input.Version,
 		Entrypoint:  input.Entrypoint,
+		Enabled:     input.Enabled,
 		Scope:       input.Scope,
 		Description: &input.Description,
 	}).RETURNING(pluginsTable.AllColumns)

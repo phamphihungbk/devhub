@@ -11,7 +11,9 @@ import (
 	"time"
 
 	infraDB "devhub-backend/internal/infra/db"
+	dbDeploymentRepo "devhub-backend/internal/infra/db/repository/deployment"
 	dbPluginRepo "devhub-backend/internal/infra/db/repository/plugin"
+	dbProjectRepo "devhub-backend/internal/infra/db/repository/project"
 	dbScaffoldRequestRepo "devhub-backend/internal/infra/db/repository/scaffold_request"
 	infraLogger "devhub-backend/internal/infra/logger"
 	infraWorker "devhub-backend/internal/infra/worker"
@@ -95,14 +97,19 @@ func (w *Worker) Start() error {
 	}
 
 	// Initialize repository
+	dbDeploymentRepo := dbDeploymentRepo.NewDeploymentRepository(db)
 	dbPluginRepo := dbPluginRepo.NewPluginRepository(db)
+	dbProjectRepo := dbProjectRepo.NewProjectRepository(db)
 	dbScaffoldRequestRepo := dbScaffoldRequestRepo.NewScaffoldRequestRepository(db)
 
 	// Initialize runners
 	deps := infraWorker.NewDependencies(
+		w.cfg,
 		appLogger,
 		dbPluginRepo,
+		dbProjectRepo,
 		dbScaffoldRequestRepo,
+		dbDeploymentRepo,
 	)
 
 	runners, err := infraWorker.BuildRunnersWithConfig(deps, infraWorker.BuildRunnersConfig{

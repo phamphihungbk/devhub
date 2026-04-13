@@ -16,6 +16,11 @@ type CreateProjectInput struct {
 	Name         string   `json:"name" validate:"required,min=2,max=100"`
 	Description  *string  `json:"description" validate:"min=0,max=500"`
 	Environments []string `json:"environments" validate:"required,dive,required,oneof=prod dev staging"`
+	Status       string   `json:"status" validate:"required,oneof=draft active archived deprecated"`
+	OwnerTeam    string   `json:"owner_team" validate:"required,min=1,max=255"`
+	RepoURL      string   `json:"repo_url" validate:"required,max=2048"`
+	RepoProvider string   `json:"repo_provider" validate:"required,min=1,max=32"`
+	OwnerContact string   `json:"owner_contact" validate:"required,min=1,max=255"`
 	CreatedBy    string   `json:"created_by" validate:"required,uuid"`
 }
 
@@ -43,11 +48,20 @@ func (u *projectUsecase) CreateProject(ctx context.Context, input CreateProjectI
 	if err != nil {
 		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid environments", map[string]string{"details": err.Error()}))
 	}
+	status, err := new(entity.ProjectStatus).Parse(input.Status)
+	if err != nil {
+		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid project status", map[string]string{"details": err.Error()}))
+	}
 
 	project = &entity.Project{
 		Name:         input.Name,
 		Description:  misc.GetValue(input.Description),
 		Environments: envs,
+		Status:       status,
+		OwnerTeam:    input.OwnerTeam,
+		RepoURL:      input.RepoURL,
+		RepoProvider: input.RepoProvider,
+		OwnerContact: input.OwnerContact,
 		CreatedBy:    uuid.MustParse(input.CreatedBy),
 	}
 

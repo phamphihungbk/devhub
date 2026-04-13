@@ -31,4 +31,9 @@ type UpdateProjectInput struct {
 	Name         *string
 	Description  *string
 	Environments *[]string
+	Status       *entity.ProjectStatus
+	OwnerTeam    *string
+	RepoURL      *string
+	RepoProvider *string
+	OwnerContact *string
 }

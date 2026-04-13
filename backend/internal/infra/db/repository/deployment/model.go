@@ -27,8 +27,12 @@ func (c *Deployment) ToEntity() *entity.Deployment {
 		Service:     c.Service,
 		Version:     c.Version,
 		Status:      status,
+		ExternalRef: misc.GetValue(c.ExternalRef),
+		CommitSHA:   misc.GetValue(c.CommitSha),
 		TriggeredBy: c.TriggeredBy,
 		CreatedAt:   c.CreatedAt,
+		UpdatedAt:   c.UpdatedAt,
+		FinishedAt:  c.FinishedAt,
 	}
 }
 

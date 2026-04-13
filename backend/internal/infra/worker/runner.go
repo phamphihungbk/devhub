@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"devhub-backend/internal/config"
 	"fmt"
 	"strings"
 	"time"
@@ -9,9 +10,11 @@ import (
 	"devhub-backend/internal/domain/repository"
 	infraLogger "devhub-backend/internal/infra/logger"
 	core "devhub-backend/internal/infra/worker/core"
+	deployment "devhub-backend/internal/infra/worker/deployment"
 	scaffold "devhub-backend/internal/infra/worker/scaffold"
 )
 
+// TODO: move to worker configuration
 const (
 	defaultPollDelay = core.DefaultPollDelay
 	RunnerScaffold   = "scaffold"
@@ -19,20 +22,29 @@ const (
 )
 
 type Dependencies struct {
+	cfg                       *config.Config
 	logger                    infraLogger.Logger
 	pluginRepository          repository.PluginRepository
+	projectRepository         repository.ProjectRepository
 	scaffoldRequestRepository repository.ScaffoldRequestRepository
+	deploymentRepository      repository.DeploymentRepository
 }
 
 func NewDependencies(
+	cfg *config.Config,
 	logger infraLogger.Logger,
 	pluginRepository repository.PluginRepository,
+	projectRepository repository.ProjectRepository,
 	scaffoldRequestRepository repository.ScaffoldRequestRepository,
+	deploymentRepository repository.DeploymentRepository,
 ) *Dependencies {
 	return &Dependencies{
+		cfg:                       cfg,
 		logger:                    logger,
 		pluginRepository:          pluginRepository,
+		projectRepository:         projectRepository,
 		scaffoldRequestRepository: scaffoldRequestRepository,
+		deploymentRepository:      deploymentRepository,
 	}
 }
 
@@ -101,15 +113,15 @@ func buildScaffoldRunner(deps *Dependencies, observer Observability, cfg Factory
 		return nil, fmt.Errorf("worker dependencies are required")
 	}
 
-	return scaffold.NewScaffoldPollingRunner(observer, deps.pluginRepository, deps.scaffoldRequestRepository, cfg.PollDelay)
+	return scaffold.NewScaffoldPollingRunner(observer, deps.pluginRepository, deps.projectRepository, deps.scaffoldRequestRepository, cfg.PollDelay)
 }
 
-func buildDeploymentRunner(deps *Dependencies, _ Observability, cfg FactoryConfig) (Runner, error) {
-	if deps == nil || deps.logger == nil {
-		return nil, fmt.Errorf("worker logger dependency is required")
+func buildDeploymentRunner(deps *Dependencies, observer Observability, cfg FactoryConfig) (Runner, error) {
+	if deps == nil || deps.deploymentRepository == nil {
+		return nil, fmt.Errorf("deployment repository is required")
 	}
 
-	return newPlaceholderRunner(RunnerDeployment, cfg.PollDelay, deps.logger), nil
+	return deployment.NewDeploymentPollingRunner(observer, deps.cfg.ArgoCD, deps.cfg.Gitea, deps.projectRepository, deps.deploymentRepository, cfg.PollDelay)
 }
 
 func normalizeWorkerTypes(types []string) []string {

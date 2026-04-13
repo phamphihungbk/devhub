@@ -9,6 +9,7 @@ import (
 
 var (
 	ErrInvalidProjectEnvironment = fmt.Errorf("invalid project environment")
+	ErrInvalidProjectStatus      = fmt.Errorf("invalid project status")
 )
 
 type ProjectEnvironment string
@@ -72,11 +73,63 @@ func (s ProjectEnvironment) ParseList(envs []string) ([]ProjectEnvironment, erro
 	return result, nil
 }
 
+type ProjectStatus string
+
+const (
+	ProjectStatusDraft      ProjectStatus = "draft"
+	ProjectStatusActive     ProjectStatus = "active"
+	ProjectStatusArchived   ProjectStatus = "archived"
+	ProjectStatusDeprecated ProjectStatus = "deprecated"
+)
+
+var projectStatusStringMapper = map[ProjectStatus]string{
+	ProjectStatusDraft:      "draft",
+	ProjectStatusActive:     "active",
+	ProjectStatusArchived:   "archived",
+	ProjectStatusDeprecated: "deprecated",
+}
+
+func (s ProjectStatus) String() string {
+	return projectStatusStringMapper[s]
+}
+
+func (s ProjectStatus) IsValid() bool {
+	switch s {
+	case ProjectStatusDraft, ProjectStatusActive, ProjectStatusArchived, ProjectStatusDeprecated:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s ProjectStatus) Parse(status string) (ProjectStatus, error) {
+	projectStatus := ProjectStatus(status)
+
+	if !projectStatus.IsValid() {
+		return "", fmt.Errorf("%w: %s", ErrInvalidProjectStatus, status)
+	}
+	return projectStatus, nil
+}
+
+func (s ProjectStatus) MustParse(status string) ProjectStatus {
+	projectStatus := ProjectStatus(status)
+
+	if !projectStatus.IsValid() {
+		panic(`project status: Parse(` + s + `): `)
+	}
+	return projectStatus
+}
+
 type Project struct {
 	ID           uuid.UUID
 	Name         string
 	Description  string
 	Environments []ProjectEnvironment
+	Status       ProjectStatus
+	OwnerTeam    string
+	RepoURL      string
+	RepoProvider string
+	OwnerContact string
 	CreatedBy    uuid.UUID
 	CreatedAt    time.Time
 	UpdatedAt    time.Time

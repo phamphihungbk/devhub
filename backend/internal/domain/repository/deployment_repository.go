@@ -12,6 +12,7 @@ import (
 type DeploymentRepository interface {
 	CreateOne(ctx context.Context, deployment *entity.Deployment) (*entity.Deployment, error)
 	FindOne(ctx context.Context, id uuid.UUID) (*entity.Deployment, error)
+	FindOnePending(ctx context.Context) (*entity.Deployment, error)
 	FindAll(ctx context.Context, filter FindAllDeploymentsFilter) (*entity.Deployments, int64, error)
 	UpdateOne(ctx context.Context, input UpdateDeploymentInput) (*entity.Deployment, error)
 	DeleteOne(ctx context.Context, id uuid.UUID) (*entity.Deployment, error)
@@ -33,4 +34,7 @@ type UpdateDeploymentInput struct {
 	Status      *entity.DeploymentStatus
 	Version     *string
 	Service     *string
+	ExternalRef *string
+	CommitSHA   *string
+	FinishedAt  *time.Time
 }

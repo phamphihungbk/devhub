@@ -4,9 +4,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from common import (  # noqa: E402
+    build_scaffold_output,
     read_int,
     read_payload,
     read_required_str,
+    resolve_container_image,
     resolve_service_dir,
     success,
     validate_service_name,
@@ -19,7 +21,7 @@ def load_schema() -> dict:
     return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
-def write_files(service_dir: Path, service_name: str, port: int) -> None:
+def write_files(service_dir: Path, service_name: str, port: int, image: str) -> None:
     (service_dir / "package.json").write_text(
         json.dumps(
             {
@@ -99,6 +101,60 @@ CMD ["npm", "run", "start"]
         encoding="utf-8",
     )
 
+    k8s_dir = service_dir / "k8s"
+    k8s_dir.mkdir(parents=True, exist_ok=True)
+    (k8s_dir / "deployment.yaml").write_text(
+        f"""apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {service_name}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {service_name}
+  template:
+    metadata:
+      labels:
+        app: {service_name}
+    spec:
+      containers:
+        - name: {service_name}
+          image: {image}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: {port}
+          env:
+            - name: PORT
+              value: "{port}"
+""",
+        encoding="utf-8",
+    )
+    (k8s_dir / "service.yaml").write_text(
+        f"""apiVersion: v1
+kind: Service
+metadata:
+  name: {service_name}
+spec:
+  selector:
+    app: {service_name}
+  ports:
+    - name: http
+      port: {port}
+      targetPort: {port}
+""",
+        encoding="utf-8",
+    )
+    (k8s_dir / "kustomization.yaml").write_text(
+        """apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+  - service.yaml
+""",
+        encoding="utf-8",
+    )
+
 
 def main() -> None:
     schema = load_schema()
@@ -122,10 +178,10 @@ def main() -> None:
 
     validate_service_name(service_name)
     service_dir = resolve_service_dir(output_dir_raw, service_name)
-    write_files(service_dir, service_name, port)
+    image = resolve_container_image(payload, service_name)
+    write_files(service_dir, service_name, port, image)
 
-    repo_url = str(payload.get("repo_url") or f"file://{service_dir}")
-    success({"repo_url": repo_url, "path": str(service_dir)})
+    success(build_scaffold_output(service_dir, service_name, payload))
 
 
 if __name__ == "__main__":

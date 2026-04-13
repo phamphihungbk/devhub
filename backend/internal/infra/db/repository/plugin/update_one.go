@@ -39,6 +39,18 @@ func (r *pluginRepositoryImpl) UpdateOne(ctx context.Context, input repository.U
 		updateModel.Version = misc.GetValue(input.Version)
 		columns = append(columns, pluginsTable.Version)
 	}
+	if input.Entrypoint != nil {
+		updateModel.Entrypoint = misc.GetValue(input.Entrypoint)
+		columns = append(columns, pluginsTable.Entrypoint)
+	}
+	if input.Scope != nil {
+		updateModel.Scope = misc.GetValue(input.Scope)
+		columns = append(columns, pluginsTable.Scope)
+	}
+	if input.Enabled != nil {
+		updateModel.Enabled = misc.GetValue(input.Enabled)
+		columns = append(columns, pluginsTable.Enabled)
+	}
 
 	if len(columns) == 0 {
 		return nil, errs.NewBadRequestError("no fields provided to update", nil)

@@ -18,9 +18,10 @@ import (
 )
 
 type PythonScaffoldExecutor struct {
-	PythonBin        string
-	Timeout          time.Duration
-	pluginRepository repository.PluginRepository
+	PythonBin         string
+	Timeout           time.Duration
+	pluginRepository  repository.PluginRepository
+	projectRepository repository.ProjectRepository
 }
 
 type ScaffoldExecutionResult struct {
@@ -29,11 +30,15 @@ type ScaffoldExecutionResult struct {
 
 var _ core.Executor[ScaffoldJob, ScaffoldExecutionResult] = (*ScaffoldExecutorAdapter)(nil)
 
-func NewPythonScaffoldExecutor(pluginRepository repository.PluginRepository) *PythonScaffoldExecutor {
+func NewPythonScaffoldExecutor(
+	pluginRepository repository.PluginRepository,
+	projectRepository repository.ProjectRepository,
+) *PythonScaffoldExecutor {
 	return &PythonScaffoldExecutor{
-		PythonBin:        "python3",
-		pluginRepository: pluginRepository,
-		Timeout:          5 * time.Minute,
+		PythonBin:         "python3",
+		pluginRepository:  pluginRepository,
+		projectRepository: projectRepository,
+		Timeout:           5 * time.Minute,
 	}
 }
 
@@ -46,6 +51,10 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 		return ScaffoldExecutionResult{}, errors.New("plugin repository is required")
 	}
 
+	if e.projectRepository == nil {
+		return ScaffoldExecutionResult{}, errors.New("project repository is required")
+	}
+
 	plugin, err := e.pluginRepository.FindOne(ctx, job.PluginID)
 
 	if err != nil {
@@ -53,6 +62,17 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 			return ScaffoldExecutionResult{}, misc.WrapError(err, errs.NewInternalServerError("failed to find plugin by ID", nil))
 		}
 		return ScaffoldExecutionResult{}, err // Return the NotFoundError directly
+	}
+
+	project, err := e.projectRepository.FindOne(ctx, job.ProjectID)
+	if err != nil {
+		if !errors.As(err, &errs.NotFoundError{}) {
+			return ScaffoldExecutionResult{}, misc.WrapError(err, errs.NewInternalServerError("failed to find project by ID", nil))
+		}
+		return ScaffoldExecutionResult{}, err
+	}
+	if project == nil {
+		return ScaffoldExecutionResult{}, errors.New("project is required")
 	}
 
 	scriptPath := strings.TrimSpace(plugin.Entrypoint)
@@ -70,6 +90,7 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 	payload := map[string]any{
 		"scaffold_request_id": job.ID.String(),
 		"project_id":          job.ProjectID.String(),
+		"repo_url":            project.RepoURL,
 		"template":            job.Template,
 		"environment":         job.Environment,
 	}

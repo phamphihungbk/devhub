@@ -1,7 +1,9 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap generate-dev-cert setup-local-https dev build down restart logs ps shell \
-	migrate migrate-down generate sync-worker create-plugin config prod-config
+.PHONY: help bootstrap generate-dev-cert setup-local-https dev dev-ui build build-ui down restart logs logs-worker ps shell \
+	worker-up worker-down migrate migrate-down generate sync-worker create-plugin config prod-config argocd-ui argocd-token
+
+CORE_SERVICES := backend worker nginx db redis gitea
 
 ##@ Setup
 bootstrap: ## Create local env files for first run
@@ -14,27 +16,42 @@ setup-local-https: ## Generate certs, update hosts, and trust local devhub/api c
 	@./scripts/setup-local-https.sh $(if $(DOMAIN),$(DOMAIN),) $(if $(API_DOMAIN),$(API_DOMAIN),)
 
 ##@ Development
-dev: ## Start the dev stack (backend, db, redis)
-	@./scripts/dev.sh up --build
+dev: ## Start the dev stack without UI (backend, worker, db, redis, gitea)
+	@./scripts/dev.sh up --build $(CORE_SERVICES)
 
-build: ## Build the dev images
-	@./scripts/dev.sh build
+dev-ui: ## Start the full dev stack including frontend and nginx
+	@COMPOSE_PROFILES=ui ./scripts/dev.sh up --build
+
+build: ## Build the dev images without UI services
+	@./scripts/dev.sh build $(CORE_SERVICES)
+
+build-ui: ## Build the full dev stack including frontend and nginx
+	@COMPOSE_PROFILES=ui ./scripts/dev.sh build
 
 down: ## Stop and remove the dev stack
 	@./scripts/dev.sh down
 
 restart: ## Restart the dev stack
 	@./scripts/dev.sh down
-	@./scripts/dev.sh up --build
+	@./scripts/dev.sh up --build $(CORE_SERVICES)
 
 logs: ## Follow logs for the dev stack
 	@./scripts/dev.sh logs -f
+
+logs-worker: ## Follow logs for the worker service
+	@./scripts/dev.sh logs -f worker
 
 ps: ## List dev stack containers
 	@./scripts/dev.sh ps
 
 shell: ## Open a shell in the backend container
 	@./scripts/dev.sh run --rm backend sh
+
+worker-up: ## Start only the worker service and its dependencies
+	@./scripts/dev.sh up -d worker
+
+worker-down: ## Stop the worker service
+	@./scripts/dev.sh stop worker
 
 ##@ Backend
 migrate: ## Run database migrations up
@@ -46,8 +63,14 @@ migrate-down: ## Roll back one database migration
 generate: ## Run backend DB code generation
 	@./scripts/generate.sh
 
-sync-worker: ## Run the backend async worker process
+sync-worker: ## Run the backend async worker process in a one-off worker container
 	@./scripts/sync-worker.sh
+
+argocd-ui: ## Install/apply Argo CD resources if needed, then port-forward the UI
+	@./scripts/argocd.sh all
+
+argocd-token: ## Generate and print an ARGOCD_AUTH_TOKEN export line
+	@./scripts/argocd.sh token
 
 create-plugin: ## Scaffold a local plugin folder, e.g. make create-plugin NAME=my-plugin TYPE=scaffolder
 	@./scripts/create-plugin.sh \

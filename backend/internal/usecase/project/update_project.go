@@ -18,6 +18,11 @@ type UpdateProjectInput struct {
 	Name         *string   `json:"name" validate:"min=0,max=100"`
 	Description  *string   `json:"description" validate:"min=0,max=100"`
 	Environments *[]string `json:"environments" validate:"dive,required"`
+	Status       *string   `json:"status" validate:"required,oneof=draft active archived deprecated"`
+	OwnerTeam    *string   `json:"owner_team" validate:"required,min=1,max=255"`
+	RepoURL      *string   `json:"repo_url" validate:"required,max=2048"`
+	RepoProvider *string   `json:"repo_provider" validate:"required,min=1,max=32"`
+	OwnerContact *string   `json:"owner_contact" validate:"required,min=1,max=255"`
 }
 
 func (u *projectUsecase) UpdateProject(ctx context.Context, input UpdateProjectInput) (project *entity.Project, err error) {
@@ -39,11 +44,25 @@ func (u *projectUsecase) UpdateProject(ctx context.Context, input UpdateProjectI
 		return nil, misc.WrapError(err, errs.NewBadRequestError("the request is invalid", map[string]string{"details": err.Error()}))
 	}
 
+	var status *entity.ProjectStatus
+	if input.Status != nil {
+		parsedStatus, parseErr := new(entity.ProjectStatus).Parse(*input.Status)
+		if parseErr != nil {
+			return nil, misc.WrapError(parseErr, errs.NewBadRequestError("invalid project status", map[string]string{"details": parseErr.Error()}))
+		}
+		status = &parsedStatus
+	}
+
 	updated, err := u.projectRepository.UpdateOne(ctx, repository.UpdateProjectInput{
 		ID:           uuid.MustParse(input.ID),
 		Name:         input.Name,
 		Description:  input.Description,
 		Environments: input.Environments,
+		Status:       status,
+		OwnerTeam:    input.OwnerTeam,
+		RepoURL:      input.RepoURL,
+		RepoProvider: input.RepoProvider,
+		OwnerContact: input.OwnerContact,
 	})
 
 	if err != nil {

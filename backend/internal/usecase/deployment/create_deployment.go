@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+
 	"devhub-backend/internal/domain/entity"
 
 	"devhub-backend/internal/domain/errs"
@@ -16,8 +17,7 @@ type CreateDeploymentInput struct {
 	ProjectID   string `json:"project_id" example:"123e4567-e89b-12d3-a456-426614174000" validate:"required,uuid"`
 	Environment string `json:"environment" example:"prod" validate:"required,oneof=dev staging prod"`
 	Service     string `json:"service" example:"Service Name" validate:"required"`
-	Version     string `json:"version" example:"1.0.0" validate:"required"`
-	Status      string `json:"status" example:"Deployment Status" validate:"required,oneof=pending running success failed"`
+	Version     string `json:"version" example:"v1.0.0" validate:"required,git_revision"`
 	TriggeredBy string `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000" validate:"required,uuid"`
 }
 
@@ -28,6 +28,7 @@ func (u *deploymentUsecase) CreateDeployment(ctx context.Context, input CreateDe
 	// Create a new validator instance
 	vInstance, err := validator.NewValidator(
 		validator.WithTagNameFunc(validator.JSONTagNameFunc),
+		validator.WithCustomValidator(validator.GitRevisionValidator{}),
 	)
 
 	if err != nil {
@@ -45,17 +46,12 @@ func (u *deploymentUsecase) CreateDeployment(ctx context.Context, input CreateDe
 		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid environment", nil))
 	}
 
-	deploymentStatus, err := new(entity.DeploymentStatus).Parse(input.Status)
-	if err != nil {
-		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid deployment status", nil))
-	}
-
 	deployment = &entity.Deployment{
 		ProjectID:   uuid.MustParse(input.ProjectID),
 		Environment: env,
 		Service:     input.Service,
 		Version:     input.Version,
-		Status:      deploymentStatus,
+		Status:      entity.StatusPending,
 		TriggeredBy: uuid.MustParse(input.TriggeredBy),
 	}
 

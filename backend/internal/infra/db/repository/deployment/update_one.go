@@ -39,6 +39,18 @@ func (r *deploymentRepositoryImpl) UpdateOne(ctx context.Context, input reposito
 		updateModel.Service = string(*input.Service)
 		columns = append(columns, deploymentsTable.Service)
 	}
+	if input.ExternalRef != nil {
+		updateModel.ExternalRef = input.ExternalRef
+		columns = append(columns, deploymentsTable.ExternalRef)
+	}
+	if input.CommitSHA != nil {
+		updateModel.CommitSha = input.CommitSHA
+		columns = append(columns, deploymentsTable.CommitSha)
+	}
+	if input.FinishedAt != nil {
+		updateModel.FinishedAt = input.FinishedAt
+		columns = append(columns, deploymentsTable.FinishedAt)
+	}
 
 	if len(columns) == 0 {
 		return nil, errs.NewBadRequestError("no fields provided to update", nil)

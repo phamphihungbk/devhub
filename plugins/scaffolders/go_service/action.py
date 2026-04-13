@@ -4,9 +4,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from common import (  # noqa: E402
+    build_scaffold_output,
     normalize_module_path,
     read_payload,
     read_required_str,
+    resolve_container_image,
     resolve_service_dir,
     success,
     validate_service_name,
@@ -19,7 +21,7 @@ def load_schema() -> dict:
     return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
-def write_files(service_dir: Path, module_full: str, service_name: str) -> None:
+def write_files(service_dir: Path, module_full: str, service_name: str, image: str) -> None:
     (service_dir / "go.mod").write_text(
         f"""module {module_full}
 
@@ -74,7 +76,39 @@ CMD ["./service"]
 """,
         encoding="utf-8",
     )
-    
+
+    k8s_dir = service_dir / "k8s"
+    k8s_dir.mkdir(parents=True, exist_ok=True)
+    (k8s_dir / "deployment.yaml").write_text(
+        f"""apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {service_name}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {service_name}
+  template:
+    metadata:
+      labels:
+        app: {service_name}
+    spec:
+      containers:
+        - name: {service_name}
+          image: {image}
+          imagePullPolicy: IfNotPresent
+""",
+        encoding="utf-8",
+    )
+    (k8s_dir / "kustomization.yaml").write_text(
+        """apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+""",
+        encoding="utf-8",
+    )
 
 def main() -> None:
     schema = load_schema()
@@ -94,10 +128,10 @@ def main() -> None:
     service_dir = resolve_service_dir(output_dir_raw, service_name)
     module_full = normalize_module_path(module_path, service_name)
 
-    write_files(service_dir, module_full, service_name)
+    image = resolve_container_image(payload, service_name)
+    write_files(service_dir, module_full, service_name, image)
 
-    repo_url = str(payload.get("repo_url") or f"file://{service_dir}")
-    success({"repo_url": repo_url, "path": str(service_dir)})
+    success(build_scaffold_output(service_dir, service_name, payload))
 
 
 if __name__ == "__main__":

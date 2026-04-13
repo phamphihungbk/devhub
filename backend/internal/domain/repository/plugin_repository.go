@@ -32,4 +32,7 @@ type UpdatePluginInput struct {
 	Description *string
 	Type        *entity.PluginType
 	Version     *string
+	Entrypoint  *string
+	Scope       *string
+	Enabled     *bool
 }
