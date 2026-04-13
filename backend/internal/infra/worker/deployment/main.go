@@ -41,11 +41,12 @@ func (a *DeploymentExecutorAdapter) Execute(ctx context.Context, job *Deployment
 func NewDeploymentPollingRunner(
 	observer core.Observability,
 	argoCDCfg config.ArgoCDConfig,
+	giteaCfg config.GiteaConfig,
 	projectRepository repository.ProjectRepository,
 	deploymentRepository repository.DeploymentRepository,
 	pollDelay time.Duration,
 ) (core.Runner, error) {
-	executor := NewCommandExecutor(argoCDCfg, projectRepository)
+	executor := NewCommandExecutorWithGitProvider(argoCDCfg, giteaCfg, projectRepository)
 
 	return core.NewPollingRunner[DeploymentJob, ExecutionResult](
 		core.PollingRunnerConfig{

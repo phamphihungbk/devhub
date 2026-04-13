@@ -79,6 +79,20 @@ def resolve_service_dir(output_dir_raw: str, service_name: str) -> Path:
     return service_dir
 
 
+def resolve_container_image(payload: dict[str, Any], service_name: str) -> str:
+    explicit_image = str(payload.get("image", "")).strip()
+    if explicit_image != "":
+        return explicit_image
+
+    image_repository = str(payload.get("image_repository", "")).strip().rstrip("/")
+    image_tag = str(payload.get("image_tag", "")).strip() or "latest"
+
+    if image_repository == "":
+        return f"{service_name}:{image_tag}"
+
+    return f"{image_repository}/{service_name}:{image_tag}"
+
+
 def build_scaffold_output(service_dir: Path, service_name: str, payload: dict[str, Any]) -> dict[str, Any]:
     repo_url = read_required_str(payload, "repo_url")
     push_service_to_repo(service_dir, repo_url)

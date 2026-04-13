@@ -8,7 +8,10 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -27,6 +30,11 @@ type CommandExecutor struct {
 	AppProject        string
 	AppNamespace      string
 	AppDestServer     string
+	AutoBuildImage    bool
+	ImageBuilder      string
+	MinikubeProfile   string
+	GiteaURL          string
+	GiteaExternalURL  string
 	projectRepository repository.ProjectRepository
 }
 
@@ -49,8 +57,18 @@ func NewCommandExecutor(cfg config.ArgoCDConfig, projectRepository repository.Pr
 		AppProject:        strings.TrimSpace(cfg.AppProject),
 		AppNamespace:      strings.TrimSpace(cfg.AppNamespace),
 		AppDestServer:     strings.TrimSpace(cfg.AppDestServer),
+		AutoBuildImage:    cfg.AutoBuildImage,
+		ImageBuilder:      strings.TrimSpace(cfg.ImageBuilder),
+		MinikubeProfile:   strings.TrimSpace(cfg.MinikubeProfile),
 		projectRepository: projectRepository,
 	}
+}
+
+func NewCommandExecutorWithGitProvider(cfg config.ArgoCDConfig, giteaCfg config.GiteaConfig, projectRepository repository.ProjectRepository) *CommandExecutor {
+	executor := NewCommandExecutor(cfg, projectRepository)
+	executor.GiteaURL = strings.TrimSpace(giteaCfg.URL)
+	executor.GiteaExternalURL = strings.TrimSpace(giteaCfg.ExternalURL)
+	return executor
 }
 
 func (e *CommandExecutor) Execute(ctx context.Context, job *DeploymentJob) (ExecutionResult, error) {
@@ -97,6 +115,11 @@ func (e *CommandExecutor) Execute(ctx context.Context, job *DeploymentJob) (Exec
 	if revision == "" {
 		return ExecutionResult{}, errors.New("deployment revision is required")
 	}
+
+	if err := e.ensureImageBuilt(ctx, project.RepoURL, revision); err != nil {
+		return ExecutionResult{}, err
+	}
+
 	args := []string{
 		"--server",
 		e.Server,
@@ -133,6 +156,32 @@ func (e *CommandExecutor) Execute(ctx context.Context, job *DeploymentJob) (Exec
 	}
 
 	return result, nil
+}
+
+var imageLinePattern = regexp.MustCompile(`(?m)^\s*image:\s*["']?([^"'\s#]+)["']?`)
+
+func (e *CommandExecutor) ensureImageBuilt(ctx context.Context, projectRepoURL string, revision string) error {
+	if !e.AutoBuildImage {
+		return nil
+	}
+
+	cloneURL := rewriteRepoURLForWorker(projectRepoURL, e.GiteaURL, e.GiteaExternalURL)
+	repoDir, cleanup, err := checkoutRepository(ctx, cloneURL, revision)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	image, err := readImageFromManifest(filepath.Join(repoDir, defaultArgoCDPath, "deployment.yaml"))
+	if err != nil {
+		return err
+	}
+
+	if err := buildContainerImage(ctx, e.ImageBuilder, e.MinikubeProfile, repoDir, image); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (e *CommandExecutor) ensureApplicationExists(
@@ -323,6 +372,130 @@ func runArgoCDCommand(ctx context.Context, args []string) (string, string, error
 	return stdout.String(), stderr.String(), err
 }
 
+func checkoutRepository(ctx context.Context, repoURL string, revision string) (string, func(), error) {
+	tmpDir, err := os.MkdirTemp("", "devhub-deploy-*")
+	if err != nil {
+		return "", nil, fmt.Errorf("create temporary repository directory failed: %w", err)
+	}
+
+	cleanup := func() {
+		_ = os.RemoveAll(tmpDir)
+	}
+
+	cloneCmd := exec.CommandContext(ctx, "git", "clone", repoURL, tmpDir)
+	var cloneStdout bytes.Buffer
+	var cloneStderr bytes.Buffer
+	cloneCmd.Stdout = &cloneStdout
+	cloneCmd.Stderr = &cloneStderr
+
+	if err := cloneCmd.Run(); err != nil {
+		cleanup()
+		return "", nil, fmt.Errorf(
+			"clone deployment repository failed: repo=%q revision=%q stdout=%s stderr=%s: %w",
+			repoURL,
+			revision,
+			strings.TrimSpace(cloneStdout.String()),
+			strings.TrimSpace(cloneStderr.String()),
+			err,
+		)
+	}
+
+	checkoutCmd := exec.CommandContext(ctx, "git", "-C", tmpDir, "checkout", revision)
+	var checkoutStdout bytes.Buffer
+	var checkoutStderr bytes.Buffer
+	checkoutCmd.Stdout = &checkoutStdout
+	checkoutCmd.Stderr = &checkoutStderr
+
+	if err := checkoutCmd.Run(); err != nil {
+		cleanup()
+		return "", nil, fmt.Errorf(
+			"checkout deployment revision failed: repo=%q revision=%q stdout=%s stderr=%s: %w",
+			repoURL,
+			revision,
+			strings.TrimSpace(checkoutStdout.String()),
+			strings.TrimSpace(checkoutStderr.String()),
+			err,
+		)
+	}
+
+	return tmpDir, cleanup, nil
+}
+
+func readImageFromManifest(path string) (string, error) {
+	manifest, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("read deployment manifest for image build failed: path=%q: %w", path, err)
+	}
+
+	match := imageLinePattern.FindSubmatch(manifest)
+	if len(match) < 2 {
+		return "", fmt.Errorf("deployment manifest %q does not contain a container image", path)
+	}
+
+	image := strings.TrimSpace(string(match[1]))
+	if image == "" {
+		return "", fmt.Errorf("deployment manifest %q contains an empty container image", path)
+	}
+
+	return image, nil
+}
+
+func buildContainerImage(ctx context.Context, builder string, minikubeProfile string, repoDir string, image string) error {
+	builder = strings.ToLower(strings.TrimSpace(builder))
+	if builder == "" {
+		builder = "minikube"
+	}
+
+	var args []string
+	command := ""
+
+	switch builder {
+	case "docker":
+		command = "docker"
+		args = []string{"build", "-t", image, "."}
+	case "minikube":
+		command = "minikube"
+		args = []string{"image", "build"}
+		if strings.TrimSpace(minikubeProfile) != "" {
+			args = append(args, "-p", strings.TrimSpace(minikubeProfile))
+		}
+		args = append(args, "-t", image, ".")
+	default:
+		return fmt.Errorf("unsupported image builder %q; supported values are \"docker\" and \"minikube\"", builder)
+	}
+
+	cmd := exec.CommandContext(ctx, command, args...)
+	cmd.Dir = repoDir
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		if errors.Is(err, exec.ErrNotFound) {
+			return fmt.Errorf(
+				"deployment image build requires %q, but it is not available in PATH. builder=%q repo_dir=%q image=%q",
+				command,
+				builder,
+				repoDir,
+				image,
+			)
+		}
+		return fmt.Errorf(
+			"build deployment image failed: builder=%q repo_dir=%q image=%q stdout=%s stderr=%s: %w",
+			builder,
+			repoDir,
+			image,
+			strings.TrimSpace(stdout.String()),
+			strings.TrimSpace(stderr.String()),
+			err,
+		)
+	}
+
+	return nil
+}
+
 func rewriteRepoURLForArgoCD(repoURL string, repoBaseURL string) string {
 	repoURL = strings.TrimSpace(repoURL)
 	repoBaseURL = strings.TrimSpace(repoBaseURL)
@@ -348,6 +521,45 @@ func rewriteRepoURLForArgoCD(repoURL string, repoBaseURL string) string {
 		RawQuery: repoParsed.RawQuery,
 		Fragment: repoParsed.Fragment,
 	}
+	return rewritten.String()
+}
+
+func rewriteRepoURLForWorker(repoURL string, internalBaseURL string, externalBaseURL string) string {
+	repoURL = strings.TrimSpace(repoURL)
+	internalBaseURL = strings.TrimSpace(internalBaseURL)
+	externalBaseURL = strings.TrimSpace(externalBaseURL)
+
+	if repoURL == "" || internalBaseURL == "" || externalBaseURL == "" {
+		return repoURL
+	}
+
+	repoParsed, err := url.Parse(repoURL)
+	if err != nil || repoParsed.Path == "" {
+		return repoURL
+	}
+
+	externalParsed, err := url.Parse(externalBaseURL)
+	if err != nil || externalParsed.Scheme == "" || externalParsed.Host == "" {
+		return repoURL
+	}
+
+	if !strings.EqualFold(repoParsed.Host, externalParsed.Host) {
+		return repoURL
+	}
+
+	internalParsed, err := url.Parse(internalBaseURL)
+	if err != nil || internalParsed.Scheme == "" || internalParsed.Host == "" {
+		return repoURL
+	}
+
+	rewritten := url.URL{
+		Scheme:   internalParsed.Scheme,
+		Host:     internalParsed.Host,
+		Path:     repoParsed.Path,
+		RawQuery: repoParsed.RawQuery,
+		Fragment: repoParsed.Fragment,
+	}
+
 	return rewritten.String()
 }
 

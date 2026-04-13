@@ -31,15 +31,18 @@ const (
 
 // Argo CD configuration environment variable keys
 const (
-	ArgoCDServerKey        = "ARGOCD_SERVER"
-	ArgoCDAuthTokenKey     = "ARGOCD_AUTH_TOKEN"
-	ArgoCDInsecureKey      = "ARGOCD_INSECURE"
-	ArgoCDTimeoutKey       = "ARGOCD_TIMEOUT"
-	ArgoCDRepoBaseURLKey   = "ARGOCD_REPO_BASE_URL"
-	ArgoCDAutoCreateAppKey = "ARGOCD_AUTO_CREATE_APP"
-	ArgoCDAppProjectKey    = "ARGOCD_APP_PROJECT"
-	ArgoCDAppNamespaceKey  = "ARGOCD_APP_NAMESPACE"
-	ArgoCDAppDestServerKey = "ARGOCD_APP_DEST_SERVER"
+	ArgoCDServerKey          = "ARGOCD_SERVER"
+	ArgoCDAuthTokenKey       = "ARGOCD_AUTH_TOKEN"
+	ArgoCDInsecureKey        = "ARGOCD_INSECURE"
+	ArgoCDTimeoutKey         = "ARGOCD_TIMEOUT"
+	ArgoCDRepoBaseURLKey     = "ARGOCD_REPO_BASE_URL"
+	ArgoCDAutoCreateAppKey   = "ARGOCD_AUTO_CREATE_APP"
+	ArgoCDAppProjectKey      = "ARGOCD_APP_PROJECT"
+	ArgoCDAppNamespaceKey    = "ARGOCD_APP_NAMESPACE"
+	ArgoCDAppDestServerKey   = "ARGOCD_APP_DEST_SERVER"
+	ArgoCDAutoBuildImageKey  = "ARGOCD_AUTO_BUILD_IMAGE"
+	ArgoCDImageBuilderKey    = "ARGOCD_IMAGE_BUILDER"
+	ArgoCDMinikubeProfileKey = "ARGOCD_MINIKUBE_PROFILE"
 )
 
 // Gitea configuration environment variable keys
@@ -67,15 +70,18 @@ var configDefaults = map[string]any{
 	DatabaseConnMaxLifetimeKey: "30m",
 	DatabaseConnMaxIdleTimeKey: "5m",
 	// Argo CD configuration
-	ArgoCDServerKey:        "argocd-server.argocd.svc.cluster.local:443",
-	ArgoCDAuthTokenKey:     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJhZG1pbjphcGlLZXkiLCJuYmYiOjE3NzYwMjg1NTIsImlhdCI6MTc3NjAyODU1MiwianRpIjoiYWFlMTQ2NTQtYmRhZS00NzdlLWFlZjAtZGUyYTAxMzMyYjU2In0.2P5A4JDJY5543ajoy-PPJuzuiPQfS5rqKG7_ep4zBkk",
-	ArgoCDInsecureKey:      true,
-	ArgoCDTimeoutKey:       "10m",
-	ArgoCDRepoBaseURLKey:   "http://host.minikube.internal:3000",
-	ArgoCDAutoCreateAppKey: false,
-	ArgoCDAppProjectKey:    "default",
-	ArgoCDAppNamespaceKey:  "devhub",
-	ArgoCDAppDestServerKey: "https://kubernetes.default.svc",
+	ArgoCDServerKey:          "argocd-server.argocd.svc.cluster.local:443",
+	ArgoCDAuthTokenKey:       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJhZG1pbjphcGlLZXkiLCJuYmYiOjE3NzYwMjg1NTIsImlhdCI6MTc3NjAyODU1MiwianRpIjoiYWFlMTQ2NTQtYmRhZS00NzdlLWFlZjAtZGUyYTAxMzMyYjU2In0.2P5A4JDJY5543ajoy-PPJuzuiPQfS5rqKG7_ep4zBkk",
+	ArgoCDInsecureKey:        true,
+	ArgoCDTimeoutKey:         "10m",
+	ArgoCDRepoBaseURLKey:     "http://host.minikube.internal:3000",
+	ArgoCDAutoCreateAppKey:   false,
+	ArgoCDAppProjectKey:      "default",
+	ArgoCDAppNamespaceKey:    "devhub",
+	ArgoCDAppDestServerKey:   "https://kubernetes.default.svc",
+	ArgoCDAutoBuildImageKey:  false,
+	ArgoCDImageBuilderKey:    "minikube",
+	ArgoCDMinikubeProfileKey: "minikube",
 	// Gitea configuration
 	GiteaURLKey:         "http://gitea:3000",
 	GiteaExternalURLKey: "https://gitea.devhub.local",

@@ -8,6 +8,7 @@ from common import (  # noqa: E402
     read_int,
     read_payload,
     read_required_str,
+    resolve_container_image,
     resolve_service_dir,
     success,
     validate_service_name,
@@ -20,7 +21,7 @@ def load_schema() -> dict:
     return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
-def write_files(service_dir: Path, service_name: str, port: int) -> None:
+def write_files(service_dir: Path, service_name: str, port: int, image: str) -> None:
     (service_dir / "package.json").write_text(
         json.dumps(
             {
@@ -119,7 +120,7 @@ spec:
     spec:
       containers:
         - name: {service_name}
-          image: {service_name}:latest
+          image: {image}
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: {port}
@@ -177,7 +178,8 @@ def main() -> None:
 
     validate_service_name(service_name)
     service_dir = resolve_service_dir(output_dir_raw, service_name)
-    write_files(service_dir, service_name, port)
+    image = resolve_container_image(payload, service_name)
+    write_files(service_dir, service_name, port, image)
 
     success(build_scaffold_output(service_dir, service_name, payload))
 

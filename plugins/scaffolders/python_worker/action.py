@@ -7,6 +7,7 @@ from common import (  # noqa: E402
     build_scaffold_output,
     read_payload,
     read_required_str,
+    resolve_container_image,
     resolve_service_dir,
     success,
     validate_service_name,
@@ -19,7 +20,7 @@ def load_schema() -> dict:
     return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
-def write_files(service_dir: Path, service_name: str, queue_name: str) -> None:
+def write_files(service_dir: Path, service_name: str, queue_name: str, image: str) -> None:
     (service_dir / "requirements.txt").write_text(
         "redis==6.0.0\n",
         encoding="utf-8",
@@ -101,7 +102,7 @@ spec:
     spec:
       containers:
         - name: {service_name}
-          image: {service_name}:latest
+          image: {image}
           imagePullPolicy: IfNotPresent
           env:
             - name: QUEUE_NAME
@@ -134,7 +135,8 @@ def main() -> None:
 
     validate_service_name(service_name)
     service_dir = resolve_service_dir(output_dir_raw, service_name)
-    write_files(service_dir, service_name, queue_name)
+    image = resolve_container_image(payload, service_name)
+    write_files(service_dir, service_name, queue_name, image)
 
     success(build_scaffold_output(service_dir, service_name, payload))
 

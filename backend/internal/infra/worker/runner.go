@@ -121,7 +121,7 @@ func buildDeploymentRunner(deps *Dependencies, observer Observability, cfg Facto
 		return nil, fmt.Errorf("deployment repository is required")
 	}
 
-	return deployment.NewDeploymentPollingRunner(observer, deps.cfg.ArgoCD, deps.projectRepository, deps.deploymentRepository, cfg.PollDelay)
+	return deployment.NewDeploymentPollingRunner(observer, deps.cfg.ArgoCD, deps.cfg.Gitea, deps.projectRepository, deps.deploymentRepository, cfg.PollDelay)
 }
 
 func normalizeWorkerTypes(types []string) []string {

@@ -3,7 +3,7 @@
 .PHONY: help bootstrap generate-dev-cert setup-local-https dev dev-ui build build-ui down restart logs logs-worker ps shell \
 	worker-up worker-down migrate migrate-down generate sync-worker create-plugin config prod-config argocd-ui argocd-token
 
-CORE_SERVICES := backend worker db redis gitea
+CORE_SERVICES := backend worker nginx db redis gitea
 
 ##@ Setup
 bootstrap: ## Create local env files for first run

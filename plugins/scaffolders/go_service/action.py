@@ -8,6 +8,7 @@ from common import (  # noqa: E402
     normalize_module_path,
     read_payload,
     read_required_str,
+    resolve_container_image,
     resolve_service_dir,
     success,
     validate_service_name,
@@ -20,7 +21,7 @@ def load_schema() -> dict:
     return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
-def write_files(service_dir: Path, module_full: str, service_name: str) -> None:
+def write_files(service_dir: Path, module_full: str, service_name: str, image: str) -> None:
     (service_dir / "go.mod").write_text(
         f"""module {module_full}
 
@@ -95,7 +96,7 @@ spec:
     spec:
       containers:
         - name: {service_name}
-          image: {service_name}:latest
+          image: {image}
           imagePullPolicy: IfNotPresent
 """,
         encoding="utf-8",
@@ -127,7 +128,8 @@ def main() -> None:
     service_dir = resolve_service_dir(output_dir_raw, service_name)
     module_full = normalize_module_path(module_path, service_name)
 
-    write_files(service_dir, module_full, service_name)
+    image = resolve_container_image(payload, service_name)
+    write_files(service_dir, module_full, service_name, image)
 
     success(build_scaffold_output(service_dir, service_name, payload))
 
