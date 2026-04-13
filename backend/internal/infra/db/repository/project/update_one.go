@@ -38,6 +38,31 @@ func (r *projectRepositoryImpl) UpdateOne(ctx context.Context, input repository.
 		columns = append(columns, projectsTable.Environments)
 	}
 
+	if input.Status != nil {
+		updateModel.Status = input.Status.String()
+		columns = append(columns, projectsTable.Status)
+	}
+
+	if input.OwnerTeam != nil {
+		updateModel.OwnerTeam = misc.GetValue(input.OwnerTeam)
+		columns = append(columns, projectsTable.OwnerTeam)
+	}
+
+	if input.RepoURL != nil {
+		updateModel.RepoURL = misc.GetValue(input.RepoURL)
+		columns = append(columns, projectsTable.RepoURL)
+	}
+
+	if input.RepoProvider != nil {
+		updateModel.RepoProvider = misc.GetValue(input.RepoProvider)
+		columns = append(columns, projectsTable.RepoProvider)
+	}
+
+	if input.OwnerContact != nil {
+		updateModel.OwnerContact = misc.GetValue(input.OwnerContact)
+		columns = append(columns, projectsTable.OwnerContact)
+	}
+
 	if len(columns) == 0 {
 		return nil, errs.NewBadRequestError("no fields provided to update", nil)
 	}

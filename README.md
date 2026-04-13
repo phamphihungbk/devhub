@@ -277,6 +277,24 @@ For Argo CD inside Minikube, prefer the HTTP repo URL using `host.minikube.inter
 http://host.minikube.internal:3000/<user>/<repo>.git
 ```
 
+To make scaffold requests publish directly into Gitea instead of returning a local `file://` path, set these values in [.env.example](/Users/hungpham/workspace/personal/devhub/.env.example) / `.env`:
+
+```bash
+GITEA_URL=http://gitea:3000
+GITEA_EXTERNAL_URL=https://gitea.devhub.local
+GITEA_USERNAME=<your-gitea-user>
+GITEA_TOKEN=<your-gitea-token>
+GITEA_OWNER=<optional-org-or-user>
+```
+
+When `GITEA_USERNAME` and `GITEA_TOKEN` are present, scaffold plugins will:
+
+- generate the service locally
+- create a repository in Gitea
+- commit the generated files
+- push the initial `main` branch
+- store the Gitea clone URL as the scaffold result
+
 To generate a token for the deployment worker after the Argo CD server is reachable locally:
 
 ```bash

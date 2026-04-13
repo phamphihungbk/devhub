@@ -14,17 +14,19 @@ var (
 type DeploymentStatus string
 
 const (
-	StatusPending DeploymentStatus = "pending"
-	StatusRunning DeploymentStatus = "running"
-	StatusSuccess DeploymentStatus = "success"
-	StatusFailed  DeploymentStatus = "failed"
+	StatusPending    DeploymentStatus = "pending"
+	StatusRunning    DeploymentStatus = "running"
+	StatusCompleted  DeploymentStatus = "completed"
+	StatusFailed     DeploymentStatus = "failed"
+	StatusRolledBack DeploymentStatus = "rolled_back"
 )
 
 var deploymentStatusStringMapper = map[DeploymentStatus]string{
-	StatusPending: "pending",
-	StatusRunning: "running",
-	StatusSuccess: "success",
-	StatusFailed:  "failed",
+	StatusPending:    "pending",
+	StatusRunning:    "running",
+	StatusCompleted:  "completed",
+	StatusFailed:     "failed",
+	StatusRolledBack: "rolled_back",
 }
 
 func (s DeploymentStatus) String() string {
@@ -33,7 +35,7 @@ func (s DeploymentStatus) String() string {
 
 func (s DeploymentStatus) IsValid() bool {
 	switch s {
-	case StatusPending, StatusRunning, StatusSuccess, StatusFailed:
+	case StatusPending, StatusRunning, StatusCompleted, StatusFailed, StatusRolledBack:
 		return true
 	default:
 		return false
@@ -57,8 +59,12 @@ type Deployment struct {
 	Service     string
 	Version     string
 	Status      DeploymentStatus
+	ExternalRef string
+	CommitSHA   string
 	TriggeredBy uuid.UUID
 	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	FinishedAt  *time.Time
 }
 
 type Deployments []Deployment

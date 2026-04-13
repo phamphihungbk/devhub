@@ -14,8 +14,7 @@ import (
 type createDeploymentRequest struct {
 	Environment string `json:"environment" example:"prod" binding:"required"`
 	Service     string `json:"service" example:"Service Name" binding:"required"`
-	Version     string `json:"version" example:"1.0.0" binding:"required"`
-	Status      string `json:"status" example:"Deployment Status" binding:"required"`
+	Version     string `json:"version" example:"v1.0.0" binding:"required"`
 }
 
 type createDeploymentResponse struct {
@@ -25,6 +24,8 @@ type createDeploymentResponse struct {
 	Service     string `json:"service" example:"Service Name"`
 	Version     string `json:"version" example:"1.0.0"`
 	Status      string `json:"status" example:"Deployment Status"`
+	ExternalRef string `json:"external_ref" example:"argocd-sync-123"`
+	CommitSHA   string `json:"commit_sha" example:"abc123def456"`
 	TriggeredBy string `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
@@ -60,7 +61,6 @@ func (h *deploymentHandler) CreateDeployment(c *gin.Context) {
 		Environment: input.Environment,
 		Service:     input.Service,
 		Version:     input.Version,
-		Status:      input.Status,
 		TriggeredBy: userID.(string),
 	})
 
@@ -84,6 +84,8 @@ func (h *deploymentHandler) newCreateDeploymentResponse(deployment *entity.Deplo
 		Service:     deployment.Service,
 		Version:     deployment.Version,
 		Status:      deployment.Status.String(),
+		ExternalRef: deployment.ExternalRef,
+		CommitSHA:   deployment.CommitSHA,
 		TriggeredBy: deployment.TriggeredBy.String(),
 	}
 }

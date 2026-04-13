@@ -4,6 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from common import (  # noqa: E402
+    build_scaffold_output,
     normalize_module_path,
     read_payload,
     read_required_str,
@@ -74,7 +75,39 @@ CMD ["./service"]
 """,
         encoding="utf-8",
     )
-    
+
+    k8s_dir = service_dir / "k8s"
+    k8s_dir.mkdir(parents=True, exist_ok=True)
+    (k8s_dir / "deployment.yaml").write_text(
+        f"""apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {service_name}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {service_name}
+  template:
+    metadata:
+      labels:
+        app: {service_name}
+    spec:
+      containers:
+        - name: {service_name}
+          image: {service_name}:latest
+          imagePullPolicy: IfNotPresent
+""",
+        encoding="utf-8",
+    )
+    (k8s_dir / "kustomization.yaml").write_text(
+        """apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+""",
+        encoding="utf-8",
+    )
 
 def main() -> None:
     schema = load_schema()
@@ -96,8 +129,7 @@ def main() -> None:
 
     write_files(service_dir, module_full, service_name)
 
-    repo_url = str(payload.get("repo_url") or f"file://{service_dir}")
-    success({"repo_url": repo_url, "path": str(service_dir)})
+    success(build_scaffold_output(service_dir, service_name, payload))
 
 
 if __name__ == "__main__":

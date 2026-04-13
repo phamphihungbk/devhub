@@ -19,9 +19,9 @@ CREATE TABLE IF NOT EXISTS projects (
     environments TEXT[] NOT NULL,
     status VARCHAR(16) NOT NULL,  -- draft, active, archived, deprecated 
     owner_team VARCHAR(255) NOT NULL,
-    repo_url TEXT,
-    repo_provider VARCHAR(32),
-    owner_contact VARCHAR(255),
+    repo_url TEXT NOT NULL,
+    repo_provider VARCHAR(32) NOT NULL,
+    owner_contact VARCHAR(255) NOT NULL,
     created_by UUID NOT NULL REFERENCES users(id),
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
@@ -82,4 +82,19 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     expires_at TIMESTAMP NOT NULL,
     deleted_at TIMESTAMP
+);
+
+-- Migration: Create releases table
+CREATE TABLE IF NOT EXISTS releases (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID NOT NULL REFERENCES projects(id),
+    tag VARCHAR(64) NOT NULL,
+    target VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    notes TEXT NOT NULL DEFAULT '',
+    html_url TEXT NOT NULL,
+    external_ref VARCHAR(255) NOT NULL,
+    triggered_by UUID NOT NULL REFERENCES users(id),
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    UNIQUE (project_id, tag)
 );

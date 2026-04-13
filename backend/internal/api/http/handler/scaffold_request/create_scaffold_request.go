@@ -20,7 +20,6 @@ type scaffoldVariablesRequest struct {
 
 type createScaffoldRequest struct {
 	PluginID    string                   `json:"plugin_id" binding:"required"`
-	RequestedBy string                   `json:"requested_by" binding:"required"`
 	Template    string                   `json:"template" binding:"required"`
 	Environment string                   `json:"environment" binding:"required"`
 	Variables   scaffoldVariablesRequest `json:"variables" binding:"required"`
@@ -48,6 +47,13 @@ type createScaffoldRequestResponse struct {
 // @Failure		500		{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
 // @Router			/projects/{project}/scaffold_requests [post]
 func (h *scaffoldRequestHandler) CreateScaffoldRequest(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+
+	if !exists {
+		httpresponse.Error(c, errs.NewBadRequestError("unauthorized", nil))
+		return
+	}
+
 	projectID := c.Param("project")
 	var input createScaffoldRequest
 
@@ -60,7 +66,7 @@ func (h *scaffoldRequestHandler) CreateScaffoldRequest(c *gin.Context) {
 	createdScaffoldRequest, err := h.scaffoldRequestUsecase.CreateScaffoldRequest(c.Request.Context(), scaffoldRequestUsecase.CreateScaffoldRequestInput{
 		PluginID:    input.PluginID,
 		ProjectID:   projectID,
-		RequestedBy: input.RequestedBy,
+		RequestedBy: userID.(string),
 		Template:    input.Template,
 		Environment: input.Environment,
 		Variables:   scaffoldRequestUsecase.ScaffoldRequestVariables(input.Variables),

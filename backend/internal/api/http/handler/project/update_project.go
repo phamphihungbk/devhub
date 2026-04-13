@@ -15,12 +15,23 @@ type updateProjectRequest struct {
 	Name         *string   `json:"name" example:"Project Name"`
 	Description  *string   `json:"description" example:"Project Description"`
 	Environments *[]string `json:"environments" example:"[development, production]"`
+	Status       *string   `json:"status" example:"active" binding:"required"`
+	OwnerTeam    *string   `json:"owner_team" example:"platform" binding:"required"`
+	RepoURL      *string   `json:"repo_url" example:"https://git.example.com/acme/project.git" binding:"required"`
+	RepoProvider *string   `json:"repo_provider" example:"gitea" binding:"required"`
+	OwnerContact *string   `json:"owner_contact" example:"team@example.com" binding:"required"`
 }
 
 type updateProjectResponse struct {
 	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name         string   `json:"name" example:"Project Name"`
 	Description  string   `json:"description" example:"Project Description"`
 	Environments []string `json:"environments" example:"[development, production]"`
+	Status       string   `json:"status" example:"active"`
+	OwnerTeam    string   `json:"owner_team" example:"platform"`
+	RepoURL      string   `json:"repo_url" example:"https://git.example.com/acme/project.git"`
+	RepoProvider string   `json:"repo_provider" example:"gitea"`
+	OwnerContact string   `json:"owner_contact" example:"team@example.com"`
 	CreatedBy    string   `json:"created_by" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
@@ -49,6 +60,11 @@ func (h *projectHandler) UpdateProject(c *gin.Context) {
 		Name:         input.Name,
 		Description:  input.Description,
 		Environments: input.Environments,
+		Status:       input.Status,
+		OwnerTeam:    input.OwnerTeam,
+		RepoURL:      input.RepoURL,
+		RepoProvider: input.RepoProvider,
+		OwnerContact: input.OwnerContact,
 	})
 
 	if err != nil {
@@ -71,8 +87,14 @@ func (h *projectHandler) newUpdateProjectResponse(project *entity.Project) updat
 
 	return updateProjectResponse{
 		ID:           project.ID.String(),
+		Name:         project.Name,
 		Description:  project.Description,
 		Environments: envs,
+		Status:       project.Status.String(),
+		OwnerTeam:    project.OwnerTeam,
+		RepoURL:      project.RepoURL,
+		RepoProvider: project.RepoProvider,
+		OwnerContact: project.OwnerContact,
 		CreatedBy:    project.CreatedBy.String(),
 	}
 }

@@ -4,6 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from common import (  # noqa: E402
+    build_scaffold_output,
     normalize_module_path,
     read_int,
     read_payload,
@@ -102,6 +103,60 @@ CMD ["./server"]
         encoding="utf-8",
     )
 
+    k8s_dir = service_dir / "k8s"
+    k8s_dir.mkdir(parents=True, exist_ok=True)
+    (k8s_dir / "deployment.yaml").write_text(
+        f"""apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {service_name}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {service_name}
+  template:
+    metadata:
+      labels:
+        app: {service_name}
+    spec:
+      containers:
+        - name: {service_name}
+          image: {service_name}:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: {port}
+          env:
+            - name: PORT
+              value: "{port}"
+""",
+        encoding="utf-8",
+    )
+    (k8s_dir / "service.yaml").write_text(
+        f"""apiVersion: v1
+kind: Service
+metadata:
+  name: {service_name}
+spec:
+  selector:
+    app: {service_name}
+  ports:
+    - name: http
+      port: {port}
+      targetPort: {port}
+""",
+        encoding="utf-8",
+    )
+    (k8s_dir / "kustomization.yaml").write_text(
+        """apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+  - service.yaml
+""",
+        encoding="utf-8",
+    )
+
 
 def main() -> None:
     schema = load_schema()
@@ -130,8 +185,7 @@ def main() -> None:
     module_full = normalize_module_path(module_path, service_name)
     write_go_files(service_dir, module_full, service_name, port)
 
-    repo_url = str(payload.get("repo_url") or f"file://{service_dir}")
-    success({"repo_url": repo_url, "path": str(service_dir)})
+    success(build_scaffold_output(service_dir, service_name, payload))
 
 
 if __name__ == "__main__":

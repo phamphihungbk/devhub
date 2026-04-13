@@ -16,6 +16,9 @@ type updateDeploymentRequest struct {
 	Service     *string `json:"service" example:"Service Name"`
 	Version     *string `json:"version" example:"1.0.0"`
 	Status      *string `json:"status" example:"Deployment Status"`
+	ExternalRef *string `json:"external_ref" example:"argocd-sync-123"`
+	CommitSHA   *string `json:"commit_sha" example:"abc123def456"`
+	FinishedAt  *string `json:"finished_at" example:"2026-04-13T12:34:56Z"`
 }
 
 type updateDeploymentResponse struct {
@@ -25,6 +28,9 @@ type updateDeploymentResponse struct {
 	Service     string `json:"service" example:"Service Name"`
 	Version     string `json:"version" example:"1.0.0"`
 	Status      string `json:"status" example:"Deployment Status"`
+	ExternalRef string `json:"external_ref" example:"argocd-sync-123"`
+	CommitSHA   string `json:"commit_sha" example:"abc123def456"`
+	FinishedAt  string `json:"finished_at,omitempty" example:"2026-04-13T12:34:56Z"`
 	TriggeredBy string `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
@@ -54,6 +60,9 @@ func (h *deploymentHandler) UpdateDeployment(c *gin.Context) {
 		Service:     input.Service,
 		Version:     input.Version,
 		Status:      input.Status,
+		ExternalRef: input.ExternalRef,
+		CommitSHA:   input.CommitSHA,
+		FinishedAt:  input.FinishedAt,
 	})
 
 	if err != nil {
@@ -76,6 +85,14 @@ func (h *deploymentHandler) newUpdateDeploymentResponse(deployment *entity.Deplo
 		Service:     deployment.Service,
 		Version:     deployment.Version,
 		Status:      deployment.Status.String(),
+		ExternalRef: deployment.ExternalRef,
+		CommitSHA:   deployment.CommitSHA,
+		FinishedAt: func() string {
+			if deployment.FinishedAt == nil {
+				return ""
+			}
+			return deployment.FinishedAt.Format("2006-01-02T15:04:05Z07:00")
+		}(),
 		TriggeredBy: deployment.TriggeredBy.String(),
 	}
 }

@@ -31,10 +31,19 @@ const (
 
 // Argo CD configuration environment variable keys
 const (
-	ArgoCDServerKey    = "ARGOCD_SERVER"
-	ArgoCDAuthTokenKey = "ARGOCD_AUTH_TOKEN"
-	ArgoCDInsecureKey  = "ARGOCD_INSECURE"
-	ArgoCDTimeoutKey   = "ARGOCD_TIMEOUT"
+	ArgoCDServerKey      = "ARGOCD_SERVER"
+	ArgoCDAuthTokenKey   = "ARGOCD_AUTH_TOKEN"
+	ArgoCDInsecureKey    = "ARGOCD_INSECURE"
+	ArgoCDTimeoutKey     = "ARGOCD_TIMEOUT"
+	ArgoCDRepoBaseURLKey = "ARGOCD_REPO_BASE_URL"
+)
+
+// Gitea configuration environment variable keys
+const (
+	GiteaURLKey         = "GITEA_URL"
+	GiteaExternalURLKey = "GITEA_EXTERNAL_URL"
+	GiteaTokenKey       = "GITEA_TOKEN"
+	GiteaTimeoutKey     = "GITEA_TIMEOUT"
 )
 
 // Default configuration values
@@ -54,10 +63,15 @@ var configDefaults = map[string]any{
 	DatabaseConnMaxLifetimeKey: "30m",
 	DatabaseConnMaxIdleTimeKey: "5m",
 	// Argo CD configuration
-	ArgoCDServerKey:    "argocd-server.argocd.svc.cluster.local:443",
-	ArgoCDAuthTokenKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJhZG1pbjphcGlLZXkiLCJuYmYiOjE3NzYwMjg1NTIsImlhdCI6MTc3NjAyODU1MiwianRpIjoiYWFlMTQ2NTQtYmRhZS00NzdlLWFlZjAtZGUyYTAxMzMyYjU2In0.2P5A4JDJY5543ajoy-PPJuzuiPQfS5rqKG7_ep4zBkk",
-	ArgoCDInsecureKey:  true,
-	ArgoCDTimeoutKey:   "10m",
+	ArgoCDServerKey:      "argocd-server.argocd.svc.cluster.local:443",
+	ArgoCDAuthTokenKey:   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJhZG1pbjphcGlLZXkiLCJuYmYiOjE3NzYwMjg1NTIsImlhdCI6MTc3NjAyODU1MiwianRpIjoiYWFlMTQ2NTQtYmRhZS00NzdlLWFlZjAtZGUyYTAxMzMyYjU2In0.2P5A4JDJY5543ajoy-PPJuzuiPQfS5rqKG7_ep4zBkk",
+	ArgoCDInsecureKey:    true,
+	ArgoCDTimeoutKey:     "10m",
+	ArgoCDRepoBaseURLKey: "http://host.minikube.internal:3000",
+	// Gitea configuration
+	GiteaURLKey:         "http://gitea:3000",
+	GiteaExternalURLKey: "https://gitea.devhub.local",
+	GiteaTimeoutKey:     "30s",
 	// Token configuration
 	TokenDurationKey: 3600,
 	TokenSecretKey:   "your-secret-key",

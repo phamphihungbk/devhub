@@ -5,6 +5,7 @@ import (
 	deploymentHandler "devhub-backend/internal/api/http/handler/deployment"
 	pluginHandler "devhub-backend/internal/api/http/handler/plugin"
 	projectHandler "devhub-backend/internal/api/http/handler/project"
+	releaseHandler "devhub-backend/internal/api/http/handler/release"
 	scaffoldRequestHandler "devhub-backend/internal/api/http/handler/scaffold_request"
 	userHandler "devhub-backend/internal/api/http/handler/user"
 	"devhub-backend/internal/api/http/middleware"
@@ -26,6 +27,7 @@ type router struct {
 	PluginHandler          pluginHandler.PluginHandler                   // Handler for plugin request routes
 	DeploymentHandler      deploymentHandler.DeploymentHandler           // Handler for deployment routes
 	ProjectHandler         projectHandler.ProjectHandler                 // Handler for project routes
+	ReleaseHandler         releaseHandler.ReleaseHandler                 // Handler for release routes
 	ScaffoldRequestHandler scaffoldRequestHandler.ScaffoldRequestHandler // Handler for scaffold request routes
 }
 
@@ -36,6 +38,7 @@ type Dependency struct {
 	PluginHandler          pluginHandler.PluginHandler
 	DeploymentHandler      deploymentHandler.DeploymentHandler
 	ProjectHandler         projectHandler.ProjectHandler
+	ReleaseHandler         releaseHandler.ReleaseHandler
 	ScaffoldRequestHandler scaffoldRequestHandler.ScaffoldRequestHandler
 }
 
@@ -50,6 +53,7 @@ func NewHTTPRoutes(appCfg config.AppConfig, tokenCfg config.TokenConfig, dep Dep
 		PluginHandler:          dep.PluginHandler,
 		DeploymentHandler:      dep.DeploymentHandler,
 		ProjectHandler:         dep.ProjectHandler,
+		ReleaseHandler:         dep.ReleaseHandler,
 	}
 }
 
@@ -94,6 +98,7 @@ func (r *router) applyProjectRoutes(router *gin.Engine) {
 		projectRoute.GET("/:project", r.ProjectHandler.FindProjectByID)
 		projectRoute.DELETE("/:project", r.ProjectHandler.DeleteProject)
 		projectRoute.PATCH("/:project", r.ProjectHandler.UpdateProject)
+		projectRoute.POST("/:project/releases", r.Middleware.Auth(r.tokenCfg.Secret), r.ReleaseHandler.CreateRelease)
 	}
 }
 
@@ -103,7 +108,7 @@ func (r *router) applyScaffoldRequestRoutes(router *gin.Engine) {
 	projectRoute := router.Group("/projects/:project")
 	{
 		projectRoute.GET("/scaffold-requests", r.ScaffoldRequestHandler.FindAllScaffoldRequests)
-		projectRoute.POST("/scaffold-requests", r.ScaffoldRequestHandler.CreateScaffoldRequest)
+		projectRoute.POST("/scaffold-requests", r.Middleware.Auth(r.tokenCfg.Secret), r.ScaffoldRequestHandler.CreateScaffoldRequest)
 
 		scaffoldRequestRoute.GET("/:scaffold-request", r.ScaffoldRequestHandler.FindScaffoldRequestByID)
 		scaffoldRequestRoute.DELETE("/:scaffold-request", r.ScaffoldRequestHandler.DeleteScaffoldRequest)

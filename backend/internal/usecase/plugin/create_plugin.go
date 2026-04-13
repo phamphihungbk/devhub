@@ -17,6 +17,7 @@ type CreatePluginInput struct {
 	Entrypoint  string `json:"entrypoint" validate:"required,min=1,max=500"`
 	Scope       string `json:"scope" validate:"required,oneof=global project environment"`
 	Description string `json:"description" validate:"required,min=2,max=100"`
+	Enabled     *bool  `json:"enabled"`
 }
 
 func (u *pluginUsecase) CreatePlugin(ctx context.Context, input CreatePluginInput) (plugin *entity.Plugin, err error) {
@@ -50,6 +51,12 @@ func (u *pluginUsecase) CreatePlugin(ctx context.Context, input CreatePluginInpu
 		Entrypoint:  input.Entrypoint,
 		Scope:       input.Scope,
 		Description: input.Description,
+		Enabled: func() bool {
+			if input.Enabled == nil {
+				return true
+			}
+			return *input.Enabled
+		}(),
 	}
 
 	created, err := u.pluginRepository.CreateOne(ctx, plugin)

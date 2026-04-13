@@ -9,6 +9,7 @@ import (
 	deploymentHandler "devhub-backend/internal/api/http/handler/deployment"
 	pluginHandler "devhub-backend/internal/api/http/handler/plugin"
 	projectHandler "devhub-backend/internal/api/http/handler/project"
+	releaseHandler "devhub-backend/internal/api/http/handler/release"
 	scaffoldRequestHandler "devhub-backend/internal/api/http/handler/scaffold_request"
 	userHandler "devhub-backend/internal/api/http/handler/user"
 	"devhub-backend/internal/api/http/middleware"
@@ -17,6 +18,7 @@ import (
 	dbPluginRepo "devhub-backend/internal/infra/db/repository/plugin"
 	dbProjectRepo "devhub-backend/internal/infra/db/repository/project"
 	dbRefreshTokenRepo "devhub-backend/internal/infra/db/repository/refresh_token"
+	dbReleaseRepo "devhub-backend/internal/infra/db/repository/release"
 	dbScaffoldRequestRepo "devhub-backend/internal/infra/db/repository/scaffold_request"
 	dbUserRepo "devhub-backend/internal/infra/db/repository/user"
 	"devhub-backend/internal/infra/logger"
@@ -24,6 +26,7 @@ import (
 	deploymentUsecase "devhub-backend/internal/usecase/deployment"
 	pluginUsecase "devhub-backend/internal/usecase/plugin"
 	projectUsecase "devhub-backend/internal/usecase/project"
+	releaseUsecase "devhub-backend/internal/usecase/release"
 	scaffoldRequestUsecase "devhub-backend/internal/usecase/scaffold_request"
 	userUsecase "devhub-backend/internal/usecase/user"
 )
@@ -39,6 +42,7 @@ func (s *Server) setupRouteDependencies(ctx context.Context, appLogger logger.Lo
 	dbDeploymentRepo := dbDeploymentRepo.NewDeploymentRepository(dbConn)
 	dbPluginRepo := dbPluginRepo.NewPluginRepository(dbConn)
 	dbScaffoldRequestRepo := dbScaffoldRequestRepo.NewScaffoldRequestRepository(dbConn)
+	dbReleaseRepo := dbReleaseRepo.NewReleaseRepository(dbConn)
 	dbRefreshTokenRepo := dbRefreshTokenRepo.NewRefreshTokenRepository(dbConn)
 
 	// Query retrier
@@ -52,6 +56,7 @@ func (s *Server) setupRouteDependencies(ctx context.Context, appLogger logger.Lo
 	userUsecase := userUsecase.NewUserUsecase(s.cfg.App, dbUserRepo)
 	projectUsecase := projectUsecase.NewProjectUsecase(s.cfg.App, dbProjectRepo)
 	deploymentUsecase := deploymentUsecase.NewDeploymentUsecase(s.cfg.App, dbDeploymentRepo)
+	releaseUsecase := releaseUsecase.NewReleaseUsecase(s.cfg.App, dbProjectRepo, dbReleaseRepo, s.cfg.Gitea)
 	pluginUsecase := pluginUsecase.NewPluginUsecase(s.cfg.App, dbPluginRepo)
 	scaffoldRequestUsecase := scaffoldRequestUsecase.NewScaffoldRequestUsecase(s.cfg.App, dbScaffoldRequestRepo)
 	authUsecase := authUsecase.NewAuthUsecase(s.cfg.Token, dbUserRepo, dbRefreshTokenRepo)
@@ -63,6 +68,7 @@ func (s *Server) setupRouteDependencies(ctx context.Context, appLogger logger.Lo
 	userHandler := userHandler.NewUserHandler(s.cfg.App, userUsecase)
 	projectHandler := projectHandler.NewProjectHandler(s.cfg.App, projectUsecase)
 	deploymentHandler := deploymentHandler.NewDeploymentHandler(s.cfg.App, deploymentUsecase)
+	releaseHandler := releaseHandler.NewReleaseHandler(s.cfg.App, releaseUsecase)
 	pluginHandler := pluginHandler.NewPluginHandler(s.cfg.App, pluginUsecase)
 	scaffoldRequestHandler := scaffoldRequestHandler.NewScaffoldRequestHandler(s.cfg.App, scaffoldRequestUsecase)
 	authHandler := authHandler.NewAuthHandler(s.cfg.App, authUsecase)
@@ -72,6 +78,7 @@ func (s *Server) setupRouteDependencies(ctx context.Context, appLogger logger.Lo
 		UserHandler:            userHandler,
 		ProjectHandler:         projectHandler,
 		DeploymentHandler:      deploymentHandler,
+		ReleaseHandler:         releaseHandler,
 		PluginHandler:          pluginHandler,
 		AuthHandler:            authHandler,
 		ScaffoldRequestHandler: scaffoldRequestHandler,

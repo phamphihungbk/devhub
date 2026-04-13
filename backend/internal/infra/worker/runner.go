@@ -25,6 +25,7 @@ type Dependencies struct {
 	cfg                       *config.Config
 	logger                    infraLogger.Logger
 	pluginRepository          repository.PluginRepository
+	projectRepository         repository.ProjectRepository
 	scaffoldRequestRepository repository.ScaffoldRequestRepository
 	deploymentRepository      repository.DeploymentRepository
 }
@@ -33,6 +34,7 @@ func NewDependencies(
 	cfg *config.Config,
 	logger infraLogger.Logger,
 	pluginRepository repository.PluginRepository,
+	projectRepository repository.ProjectRepository,
 	scaffoldRequestRepository repository.ScaffoldRequestRepository,
 	deploymentRepository repository.DeploymentRepository,
 ) *Dependencies {
@@ -40,6 +42,7 @@ func NewDependencies(
 		cfg:                       cfg,
 		logger:                    logger,
 		pluginRepository:          pluginRepository,
+		projectRepository:         projectRepository,
 		scaffoldRequestRepository: scaffoldRequestRepository,
 		deploymentRepository:      deploymentRepository,
 	}
@@ -110,7 +113,7 @@ func buildScaffoldRunner(deps *Dependencies, observer Observability, cfg Factory
 		return nil, fmt.Errorf("worker dependencies are required")
 	}
 
-	return scaffold.NewScaffoldPollingRunner(observer, deps.pluginRepository, deps.scaffoldRequestRepository, cfg.PollDelay)
+	return scaffold.NewScaffoldPollingRunner(observer, deps.pluginRepository, deps.projectRepository, deps.scaffoldRequestRepository, cfg.PollDelay)
 }
 
 func buildDeploymentRunner(deps *Dependencies, observer Observability, cfg FactoryConfig) (Runner, error) {
@@ -118,7 +121,7 @@ func buildDeploymentRunner(deps *Dependencies, observer Observability, cfg Facto
 		return nil, fmt.Errorf("deployment repository is required")
 	}
 
-	return deployment.NewDeploymentPollingRunner(observer, deps.cfg.ArgoCD, deps.deploymentRepository, cfg.PollDelay)
+	return deployment.NewDeploymentPollingRunner(observer, deps.cfg.ArgoCD, deps.projectRepository, deps.deploymentRepository, cfg.PollDelay)
 }
 
 func normalizeWorkerTypes(types []string) []string {

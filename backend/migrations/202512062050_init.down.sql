@@ -4,3 +4,4 @@ DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS plugins;
 DROP TABLE IF EXISTS deployments;
 DROP TABLE IF EXISTS scaffold_requests;
+DROP TABLE IF EXISTS releases;

@@ -57,7 +57,7 @@ func (p *StatePersistence) MarkCompleted(ctx context.Context, id uuid.UUID, resu
 		return fmt.Errorf("deployment %s is not running", id)
 	}
 
-	status := entity.StatusSuccess
+	status := entity.StatusCompleted
 	finishedAt := result.FinishedAt
 	if finishedAt.IsZero() {
 		finishedAt = time.Now().UTC()

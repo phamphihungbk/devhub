@@ -15,10 +15,13 @@ import (
 
 type UpdatePluginInput struct {
 	ID          string  `json:"id" validate:"required,uuid"`
-	Name        *string `json:"name" validate:"required,min=2,max=100"`
-	Type        *string `json:"type" validate:"required,oneof=scaffolder deployer"`
-	Version     *string `json:"version" validate:"required"`
-	Description *string `json:"description" validate:"required"`
+	Name        *string `json:"name" validate:"omitempty,min=2,max=100"`
+	Type        *string `json:"type" validate:"omitempty,oneof=scaffolder runner"`
+	Version     *string `json:"version" validate:"omitempty"`
+	Description *string `json:"description" validate:"omitempty"`
+	Entrypoint  *string `json:"entrypoint" validate:"omitempty,min=1,max=500"`
+	Scope       *string `json:"scope" validate:"omitempty,oneof=global project environment"`
+	Enabled     *bool   `json:"enabled"`
 }
 
 func (u *pluginUsecase) UpdatePlugin(ctx context.Context, input UpdatePluginInput) (plugin *entity.Plugin, err error) {
@@ -46,6 +49,9 @@ func (u *pluginUsecase) UpdatePlugin(ctx context.Context, input UpdatePluginInpu
 		Type:        (*entity.PluginType)(input.Type),
 		Version:     input.Version,
 		Description: input.Description,
+		Entrypoint:  input.Entrypoint,
+		Scope:       input.Scope,
+		Enabled:     input.Enabled,
 	})
 
 	if err != nil {

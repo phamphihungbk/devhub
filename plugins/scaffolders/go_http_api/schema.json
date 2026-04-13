@@ -1,6 +1,6 @@
 {
   "type": "object",
-  "required": ["service_name"],
+  "required": ["service_name", "repo_url"],
   "properties": {
     "service_name": {
       "type": "string",
@@ -24,7 +24,8 @@
     },
     "repo_url": {
       "type": "string",
-      "description": "Optional output repo URL; defaults to local file:// path."
+      "minLength": 1,
+      "description": "Required output repo URL returned by the scaffolder."
     }
   },
   "additionalProperties": true

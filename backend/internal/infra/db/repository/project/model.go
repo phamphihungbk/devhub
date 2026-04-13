@@ -16,12 +16,21 @@ func (c *Project) ToEntity() *entity.Project {
 	if err != nil {
 		return nil
 	}
+	status, err := new(entity.ProjectStatus).Parse(c.Status)
+	if err != nil {
+		return nil
+	}
 
 	return &entity.Project{
 		ID:           c.ID,
 		Name:         c.Name,
 		Description:  misc.GetValue(c.Description),
 		Environments: envs,
+		Status:       status,
+		OwnerTeam:    c.OwnerTeam,
+		RepoURL:      c.RepoURL,
+		RepoProvider: c.RepoProvider,
+		OwnerContact: c.OwnerContact,
 		CreatedBy:    c.CreatedBy,
 		CreatedAt:    c.CreatedAt,
 		UpdatedAt:    c.UpdatedAt,
