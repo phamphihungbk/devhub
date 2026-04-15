@@ -1,24 +1,24 @@
-nameOverride: "{{SERVICE_NAME}}"
-fullnameOverride: "{{SERVICE_NAME}}"
+nameOverride: "[[ SERVICE_NAME ]]"
+fullnameOverride: "[[ SERVICE_NAME ]]"
 
 replicaCount: 1
 
 image:
-  repository: "{{IMAGE_REPOSITORY}}"
-  tag: "{{IMAGE_TAG}}"
+  repository: "[[ IMAGE_REPOSITORY ]]"
+  tag: "[[ IMAGE_TAG ]]"
   pullPolicy: IfNotPresent
 
 service:
   enabled: true
   type: ClusterIP
-  port: {{PORT}}
+  port: [[ PORT ]]
 
-containerPort: {{PORT}}
+containerPort: [[ PORT ]]
 
 ingress:
   enabled: false
   className: ""
-  host: "{{SERVICE_NAME}}.devhub.local"
+  host: "[[ SERVICE_NAME ]].devhub.local"
   path: /
 
 serviceAccount:

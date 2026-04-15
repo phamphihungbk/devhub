@@ -86,7 +86,8 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 		ctx, cancel = context.WithTimeout(ctx, e.Timeout)
 		defer cancel()
 	}
-
+	// TODO: refactor just expose needed fields to payload when sending to plugin
+	// TODO: auto scan plugin based on plugin.yml
 	payload := map[string]any{
 		"scaffold_request_id": job.ID.String(),
 		"project_id":          job.ProjectID.String(),

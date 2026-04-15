@@ -1,3 +1,3 @@
 package config
 
-const ServiceName = "{{SERVICE_NAME}}"
+const ServiceName = "[[ SERVICE_NAME ]]"

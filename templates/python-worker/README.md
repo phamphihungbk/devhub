@@ -1,3 +1,3 @@
-# {{SERVICE_NAME}}
+# [[ SERVICE_NAME ]]
 
 Generated Python worker scaffold.

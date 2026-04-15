@@ -1,0 +1,6 @@
+name: go_http_api
+type: scaffolder
+version: 1.0.0
+runtime: python
+entrypoint: run.py
+timeout_seconds: 300

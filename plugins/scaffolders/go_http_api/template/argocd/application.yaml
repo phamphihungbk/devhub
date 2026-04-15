@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: [[ SERVICE_NAME ]]-[[ TARGET_REVISION ]]
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: [[ REPO_URL ]]
+    targetRevision: main
+    path: charts/app
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: [[ NAMESPACE ]]
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
