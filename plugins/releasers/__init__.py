@@ -1,4 +1,4 @@
-from ..utils import (
+from utils import (
     build_scaffold_output,
     fail,
     infer_module_base_from_repo_url,

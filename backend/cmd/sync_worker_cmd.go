@@ -11,12 +11,12 @@ import (
 
 var syncWorkerCmd = &cobra.Command{
 	Use:   "sync-worker",
-	Short: "Run background worker(s) for async requests (scaffold/deployment).",
+	Short: "Run background worker(s) for async requests (scaffold/deployment/release).",
 	Long: `Run generic background workers for async request processing.
 
 Examples:
 	sync-worker
-	sync-worker --concurrency 3 --poll-interval 5s --types scaffold,deployment
+	sync-worker --concurrency 3 --poll-interval 5s --types scaffold,deployment,release
 `,
 	RunE: runNewSyncWorkerCmd,
 }
@@ -54,5 +54,5 @@ func runNewSyncWorkerCmd(cmd *cobra.Command, args []string) error {
 func init() {
 	syncWorkerCmd.Flags().Int("concurrency", 1, "number of worker goroutines per request type")
 	syncWorkerCmd.Flags().Duration("poll-interval", 3*time.Second, "poll interval for each worker")
-	syncWorkerCmd.Flags().String("types", "scaffold,deployment", "comma-separated worker types to run")
+	syncWorkerCmd.Flags().String("types", "scaffold,deployment,release", "comma-separated worker types to run")
 }

@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 import urllib.error
@@ -117,10 +118,7 @@ def push_service_to_gitea(
     git_author_name = os.getenv("GIT_AUTHOR_NAME", "DevHub Scaffold Bot").strip() or "DevHub Scaffold Bot"
     git_author_email = os.getenv("GIT_AUTHOR_EMAIL", "devhub@example.local").strip() or "devhub@example.local"
 
-    initialize_repo(service_dir, git_author_name, git_author_email, default_branch)
-    run_git(service_dir, "remote", "remove", "origin", check=False)
-    run_git(service_dir, "remote", "add", "origin", auth_remote)
-    run_git(service_dir, "push", "-u", "origin", default_branch)
+    push_directory_to_remote(service_dir, auth_remote, default_branch, git_author_name, git_author_email)
 
 
 def push_service_to_repo(service_dir: Path, repo_url: str) -> None:
@@ -129,10 +127,7 @@ def push_service_to_repo(service_dir: Path, repo_url: str) -> None:
     git_author_email = os.getenv("GIT_AUTHOR_EMAIL", "devhub@example.local").strip() or "devhub@example.local"
     remote_url = build_push_remote_url(repo_url)
 
-    initialize_repo(service_dir, git_author_name, git_author_email, default_branch)
-    run_git(service_dir, "remote", "remove", "origin", check=False)
-    run_git(service_dir, "remote", "add", "origin", remote_url)
-    run_git(service_dir, "push", "-u", "origin", default_branch)
+    push_directory_to_remote(service_dir, remote_url, default_branch, git_author_name, git_author_email)
 
 
 def push_tag_to_repo(repo_url: str, tag: str, target: str, message: str = "") -> None:
@@ -156,6 +151,52 @@ def push_tag_to_repo(repo_url: str, tag: str, target: str, message: str = "") ->
             run_git(repo_dir, "tag", tag, target_ref)
 
         run_git(repo_dir, "push", "origin", f"refs/tags/{tag}")
+
+
+def push_directory_to_remote(
+    source_dir: Path,
+    remote_url: str,
+    default_branch: str,
+    git_author_name: str,
+    git_author_email: str,
+) -> None:
+    with tempfile.TemporaryDirectory(prefix="repo-push-") as temp_dir:
+        temp_path = Path(temp_dir)
+        repo_dir = temp_path / "repo"
+
+        run_git(temp_path, "clone", remote_url, repo_dir.name)
+        run_git(repo_dir, "config", "user.name", git_author_name)
+        run_git(repo_dir, "config", "user.email", git_author_email)
+        run_git(repo_dir, "checkout", "-B", default_branch, check=False)
+
+        sync_directory_contents(source_dir, repo_dir)
+
+        has_changes = stage_and_detect_changes(repo_dir)
+        if has_changes:
+            run_git(repo_dir, "commit", "-m", "Initial scaffold from DevHub")
+            run_git(repo_dir, "push", "-u", "origin", default_branch)
+
+
+def sync_directory_contents(source_dir: Path, destination_dir: Path) -> None:
+    clear_directory_contents(destination_dir, preserve={".git"})
+
+    for path in source_dir.iterdir():
+        destination = destination_dir / path.name
+        if path.is_dir():
+            shutil.copytree(path, destination, dirs_exist_ok=True)
+        else:
+            shutil.copy2(path, destination)
+
+
+def clear_directory_contents(directory: Path, preserve: set[str] | None = None) -> None:
+    protected = preserve or set()
+    for path in directory.iterdir():
+        if path.name in protected:
+            continue
+        if path.is_dir():
+            shutil.rmtree(path)
+        else:
+            path.unlink()
 
 
 def initialize_repo(service_dir: Path, git_author_name: str, git_author_email: str, default_branch: str) -> None:
@@ -186,8 +227,11 @@ def build_push_remote_url(repo_url: str) -> str:
     if parsed.username or parsed.password:
         return repo_url
 
-    username = os.getenv("GITEA_USERNAME", "").strip()
-    token = os.getenv("GITEA_TOKEN", "").strip()
+    username = resolve_git_username(repo_url)
+    token = first_non_empty(
+        os.getenv("GITEA_TOKEN", "").strip(),
+        os.getenv("SCM_TOKEN", "").strip(),
+    )
     if username == "" or token == "":
         return repo_url
 
@@ -200,20 +244,21 @@ def build_push_remote_url(repo_url: str) -> str:
 
 
 def rewrite_repo_url_for_container_access(repo_url: str) -> str:
-    external_base_url = os.getenv("GITEA_EXTERNAL_URL", "").strip().rstrip("/")
-    internal_base_url = os.getenv("GITEA_URL", "").strip().rstrip("/")
-
-    if external_base_url == "" or internal_base_url == "":
-        return repo_url
-
-    external = urllib.parse.urlparse(external_base_url)
-    internal = urllib.parse.urlparse(internal_base_url)
     repo = urllib.parse.urlparse(repo_url)
-
-    if not external.netloc or not internal.netloc:
+    if repo.scheme not in {"http", "https"} or repo.netloc == "":
         return repo_url
 
-    if repo.netloc != external.netloc:
+    internal_base_url = first_non_empty(
+        os.getenv("GITEA_URL", "").strip().rstrip("/"),
+        "http://gitea:3000",
+        derive_base_url_from_api(os.getenv("SCM_API_URL", "").strip()),
+    )
+    internal = urllib.parse.urlparse(internal_base_url)
+    if not internal.netloc:
+        return repo_url
+
+    external_candidates = collect_external_repo_hosts()
+    if repo.netloc not in external_candidates:
         return repo_url
 
     return urllib.parse.urlunparse(
@@ -226,6 +271,65 @@ def rewrite_repo_url_for_container_access(repo_url: str) -> str:
             repo.fragment,
         )
     )
+
+
+def derive_base_url_from_api(api_url: str) -> str:
+    api_url = api_url.strip()
+    if api_url == "":
+        return ""
+
+    parsed = urllib.parse.urlparse(api_url)
+    if not parsed.scheme or not parsed.netloc:
+        return ""
+
+    return urllib.parse.urlunparse((parsed.scheme, parsed.netloc, "", "", "", ""))
+
+
+def collect_external_repo_hosts() -> set[str]:
+    candidates = set()
+
+    for raw in (
+        os.getenv("GITEA_EXTERNAL_URL", "").strip().rstrip("/"),
+        os.getenv("SCM_EXTERNAL_URL", "").strip().rstrip("/"),
+        "https://gitea.devhub.local",
+        "http://gitea.devhub.local",
+        "http://localhost:3000",
+        "https://localhost:3000",
+    ):
+        if raw == "":
+            continue
+        parsed = urllib.parse.urlparse(raw)
+        if parsed.netloc:
+            candidates.add(parsed.netloc)
+
+    gitea_domain = os.getenv("GITEA_DOMAIN", "").strip()
+    if gitea_domain != "":
+        candidates.add(gitea_domain)
+
+    return candidates
+
+
+def resolve_git_username(repo_url: str) -> str:
+    explicit = first_non_empty(
+        os.getenv("GITEA_USERNAME", "").strip(),
+        os.getenv("SCM_USERNAME", "").strip(),
+    )
+    if explicit:
+        return explicit
+
+    parsed = urllib.parse.urlparse(repo_url)
+    path_segments = [segment for segment in parsed.path.split("/") if segment]
+    if len(path_segments) >= 2:
+        return path_segments[0]
+
+    return ""
+
+
+def first_non_empty(*values: str) -> str:
+    for value in values:
+        if value:
+            return value
+    return ""
 
 
 def run_git(service_dir: Path, *args: str, check: bool = True) -> None:
