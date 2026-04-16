@@ -11,6 +11,7 @@ import (
 	infraLogger "devhub-backend/internal/infra/logger"
 	core "devhub-backend/internal/infra/worker/core"
 	deployment "devhub-backend/internal/infra/worker/deployment"
+	"devhub-backend/internal/infra/worker/release"
 	scaffold "devhub-backend/internal/infra/worker/scaffold"
 )
 
@@ -19,6 +20,7 @@ const (
 	defaultPollDelay = core.DefaultPollDelay
 	RunnerScaffold   = "scaffold"
 	RunnerDeployment = "deployment"
+	RunnerRelease    = "release"
 )
 
 type Dependencies struct {
@@ -28,6 +30,7 @@ type Dependencies struct {
 	projectRepository         repository.ProjectRepository
 	scaffoldRequestRepository repository.ScaffoldRequestRepository
 	deploymentRepository      repository.DeploymentRepository
+	releaseRepository         repository.ReleaseRepository
 }
 
 func NewDependencies(
@@ -37,6 +40,7 @@ func NewDependencies(
 	projectRepository repository.ProjectRepository,
 	scaffoldRequestRepository repository.ScaffoldRequestRepository,
 	deploymentRepository repository.DeploymentRepository,
+	releaseRepository repository.ReleaseRepository,
 ) *Dependencies {
 	return &Dependencies{
 		cfg:                       cfg,
@@ -45,6 +49,7 @@ func NewDependencies(
 		projectRepository:         projectRepository,
 		scaffoldRequestRepository: scaffoldRequestRepository,
 		deploymentRepository:      deploymentRepository,
+		releaseRepository:         releaseRepository,
 	}
 }
 
@@ -84,6 +89,7 @@ func BuildRunnersWithConfig(deps *Dependencies, cfg BuildRunnersConfig) ([]Runne
 	factories := map[string]RunnerFactory{
 		RunnerScaffold:   buildScaffoldRunner,
 		RunnerDeployment: buildDeploymentRunner,
+		RunnerRelease:    buildReleaseRunner,
 	}
 
 	for _, kind := range workerTypes {
@@ -113,7 +119,13 @@ func buildScaffoldRunner(deps *Dependencies, observer Observability, cfg Factory
 		return nil, fmt.Errorf("worker dependencies are required")
 	}
 
-	return scaffold.NewScaffoldPollingRunner(observer, deps.pluginRepository, deps.projectRepository, deps.scaffoldRequestRepository, cfg.PollDelay)
+	return scaffold.NewScaffoldPollingRunner(
+		observer,
+		deps.pluginRepository,
+		deps.projectRepository,
+		deps.scaffoldRequestRepository,
+		cfg.PollDelay,
+	)
 }
 
 func buildDeploymentRunner(deps *Dependencies, observer Observability, cfg FactoryConfig) (Runner, error) {
@@ -121,7 +133,27 @@ func buildDeploymentRunner(deps *Dependencies, observer Observability, cfg Facto
 		return nil, fmt.Errorf("deployment repository is required")
 	}
 
-	return deployment.NewDeploymentPollingRunner(observer, deps.cfg.ArgoCD, deps.cfg.Gitea, deps.projectRepository, deps.deploymentRepository, cfg.PollDelay)
+	return deployment.NewDeploymentPollingRunner(
+		observer,
+		deps.pluginRepository,
+		deps.projectRepository,
+		deps.deploymentRepository,
+		cfg.PollDelay,
+	)
+}
+
+func buildReleaseRunner(deps *Dependencies, observer Observability, cfg FactoryConfig) (Runner, error) {
+	if deps == nil || deps.releaseRepository == nil {
+		return nil, fmt.Errorf("release repository is required")
+	}
+
+	return release.NewReleasePollingRunner(
+		observer,
+		deps.pluginRepository,
+		deps.projectRepository,
+		deps.releaseRepository,
+		cfg.PollDelay,
+	)
 }
 
 func normalizeWorkerTypes(types []string) []string {

@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS plugins (
 CREATE TABLE IF NOT EXISTS deployments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES projects(id),
+    plugin_id UUID NOT NULL REFERENCES plugins(id),
     environment VARCHAR(32) NOT NULL,
     service VARCHAR(255) NOT NULL,
     version VARCHAR(64) NOT NULL,
@@ -88,9 +89,11 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 CREATE TABLE IF NOT EXISTS releases (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES projects(id),
+    plugin_id UUID NOT NULL REFERENCES plugins(id),
     tag VARCHAR(64) NOT NULL,
     target VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
+    status VARCHAR(16) NOT NULL,  -- pending, running, completed, failed
     notes TEXT NOT NULL DEFAULT '',
     html_url TEXT NOT NULL,
     external_ref VARCHAR(255) NOT NULL,

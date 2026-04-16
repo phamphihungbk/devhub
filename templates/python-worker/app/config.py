@@ -1,1 +1,0 @@
-QUEUE_NAME = "[[ QUEUE_NAME ]]"

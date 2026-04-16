@@ -5,7 +5,7 @@ import (
 
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/domain/errs"
-	genmodel "devhub-backend/internal/infra/db/model_gen/devhub/public/model"
+	"devhub-backend/internal/infra/db/model_gen/devhub/public/model"
 	table "devhub-backend/internal/infra/db/model_gen/devhub/public/table"
 	"devhub-backend/internal/util/misc"
 )
@@ -17,11 +17,13 @@ func (r *releaseRepositoryImpl) CreateOne(ctx context.Context, input *entity.Rel
 	releasesTable := table.Releases
 	stmt := releasesTable.INSERT(
 		releasesTable.AllColumns.Except(releasesTable.DefaultColumns),
-	).MODEL(genmodel.Releases{
+	).MODEL(model.Releases{
 		ProjectID:   input.ProjectID,
+		PluginID:    input.PluginID,
 		Tag:         input.Tag,
 		Target:      input.Target,
 		Name:        input.Name,
+		Status:      input.Status.String(),
 		Notes:       input.Notes,
 		HTMLURL:     input.HTMLURL,
 		ExternalRef: input.ExternalRef,

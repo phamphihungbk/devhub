@@ -19,6 +19,7 @@ type deploymentsTable struct {
 	// Columns
 	ID          postgres.ColumnString
 	ProjectID   postgres.ColumnString
+	PluginID    postgres.ColumnString
 	Environment postgres.ColumnString
 	Service     postgres.ColumnString
 	Version     postgres.ColumnString
@@ -72,6 +73,7 @@ func newDeploymentsTableImpl(schemaName, tableName, alias string) deploymentsTab
 	var (
 		IDColumn          = postgres.StringColumn("id")
 		ProjectIDColumn   = postgres.StringColumn("project_id")
+		PluginIDColumn    = postgres.StringColumn("plugin_id")
 		EnvironmentColumn = postgres.StringColumn("environment")
 		ServiceColumn     = postgres.StringColumn("service")
 		VersionColumn     = postgres.StringColumn("version")
@@ -82,8 +84,8 @@ func newDeploymentsTableImpl(schemaName, tableName, alias string) deploymentsTab
 		CreatedAtColumn   = postgres.TimestampColumn("created_at")
 		UpdatedAtColumn   = postgres.TimestampColumn("updated_at")
 		FinishedAtColumn  = postgres.TimestampColumn("finished_at")
-		allColumns        = postgres.ColumnList{IDColumn, ProjectIDColumn, EnvironmentColumn, ServiceColumn, VersionColumn, StatusColumn, ExternalRefColumn, CommitShaColumn, TriggeredByColumn, CreatedAtColumn, UpdatedAtColumn, FinishedAtColumn}
-		mutableColumns    = postgres.ColumnList{ProjectIDColumn, EnvironmentColumn, ServiceColumn, VersionColumn, StatusColumn, ExternalRefColumn, CommitShaColumn, TriggeredByColumn, CreatedAtColumn, UpdatedAtColumn, FinishedAtColumn}
+		allColumns        = postgres.ColumnList{IDColumn, ProjectIDColumn, PluginIDColumn, EnvironmentColumn, ServiceColumn, VersionColumn, StatusColumn, ExternalRefColumn, CommitShaColumn, TriggeredByColumn, CreatedAtColumn, UpdatedAtColumn, FinishedAtColumn}
+		mutableColumns    = postgres.ColumnList{ProjectIDColumn, PluginIDColumn, EnvironmentColumn, ServiceColumn, VersionColumn, StatusColumn, ExternalRefColumn, CommitShaColumn, TriggeredByColumn, CreatedAtColumn, UpdatedAtColumn, FinishedAtColumn}
 		defaultColumns    = postgres.ColumnList{IDColumn, CreatedAtColumn, UpdatedAtColumn}
 	)
 
@@ -93,6 +95,7 @@ func newDeploymentsTableImpl(schemaName, tableName, alias string) deploymentsTab
 		//Columns
 		ID:          IDColumn,
 		ProjectID:   ProjectIDColumn,
+		PluginID:    PluginIDColumn,
 		Environment: EnvironmentColumn,
 		Service:     ServiceColumn,
 		Version:     VersionColumn,

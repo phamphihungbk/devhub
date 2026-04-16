@@ -45,12 +45,23 @@ const (
 	ArgoCDMinikubeProfileKey = "ARGOCD_MINIKUBE_PROFILE"
 )
 
-// Gitea configuration environment variable keys
+// SCM configuration environment variable keys
 const (
-	GiteaURLKey         = "GITEA_URL"
-	GiteaExternalURLKey = "GITEA_EXTERNAL_URL"
-	GiteaTokenKey       = "GITEA_TOKEN"
-	GiteaTimeoutKey     = "GITEA_TIMEOUT"
+	SCMAPIURLKey      = "SCM_API_URL"
+	SCMExternalURLKey = "SCM_EXTERNAL_URL"
+	SCMTokenKey       = "SCM_TOKEN"
+	SCMTimeoutKey     = "SCM_TIMEOUT"
+)
+
+// GitOps configuration environment variable keys
+const (
+	GitOpsRepoOwnerKey       = "GITOPS_REPO_OWNER"
+	GitOpsRepoNameKey        = "GITOPS_REPO_NAME"
+	GitOpsBranchKey          = "GITOPS_BRANCH"
+	GitOpsBasePathKey        = "GITOPS_BASE_PATH"
+	GitOpsCommitUserNameKey  = "GITOPS_COMMIT_USER_NAME"
+	GitOpsCommitUserEmailKey = "GITOPS_COMMIT_USER_EMAIL"
+	GitOpsTimeoutKey         = "GITOPS_TIMEOUT"
 )
 
 // Default configuration values
@@ -63,15 +74,17 @@ var configDefaults = map[string]any{
 	AppTimezoneKey:      "Asia/Hanoi",
 	ServiceErrPrefixKey: "TR",
 	SeatLockTTLKey:      "300s",
+
 	// Database configuration
 	DatabaseURLKey:             "postgres://devhub:devhubpass@devhub-db:5432/devhub?sslmode=disable",
 	DatabaseMaxOpenConnsKey:    30,
 	DatabaseMaxIdleConnsKey:    15,
 	DatabaseConnMaxLifetimeKey: "30m",
 	DatabaseConnMaxIdleTimeKey: "5m",
+
 	// Argo CD configuration
 	ArgoCDServerKey:          "argocd-server.argocd.svc.cluster.local:443",
-	ArgoCDAuthTokenKey:       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJhZG1pbjphcGlLZXkiLCJuYmYiOjE3NzYwMjg1NTIsImlhdCI6MTc3NjAyODU1MiwianRpIjoiYWFlMTQ2NTQtYmRhZS00NzdlLWFlZjAtZGUyYTAxMzMyYjU2In0.2P5A4JDJY5543ajoy-PPJuzuiPQfS5rqKG7_ep4zBkk",
+	ArgoCDAuthTokenKey:       "your-token",
 	ArgoCDInsecureKey:        true,
 	ArgoCDTimeoutKey:         "10m",
 	ArgoCDRepoBaseURLKey:     "http://host.minikube.internal:3000",
@@ -82,10 +95,21 @@ var configDefaults = map[string]any{
 	ArgoCDAutoBuildImageKey:  false,
 	ArgoCDImageBuilderKey:    "minikube",
 	ArgoCDMinikubeProfileKey: "minikube",
-	// Gitea configuration
-	GiteaURLKey:         "http://gitea:3000",
-	GiteaExternalURLKey: "https://gitea.devhub.local",
-	GiteaTimeoutKey:     "30s",
+
+	// SCM configuration
+	SCMAPIURLKey:      "http://gitea:3000/api/v1",
+	SCMExternalURLKey: "https://gitea.devhub.local",
+	SCMTimeoutKey:     "30s",
+
+	// GitOps configuration
+	GitOpsRepoOwnerKey:       "platform",
+	GitOpsRepoNameKey:        "gitops-repo",
+	GitOpsBranchKey:          "main",
+	GitOpsBasePathKey:        "envs",
+	GitOpsCommitUserNameKey:  "devhub-bot",
+	GitOpsCommitUserEmailKey: "devhub-bot@local",
+	GitOpsTimeoutKey:         "30s",
+
 	// Token configuration
 	TokenDurationKey: 3600,
 	TokenSecretKey:   "your-secret-key",

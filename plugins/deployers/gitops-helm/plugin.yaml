@@ -1,9 +1,9 @@
-name: go_http_api
-type: scaffolder
+name: deploy-gitops-helm
+type: deployer
 version: 1.0.0
 runtime: python
 entrypoint: run.py
-description: Create go_http_api tempate and push to repository
+description: Update GitOps values and sync ArgoCD
 timeout_seconds: 600
 permissions:
   - deployment:create

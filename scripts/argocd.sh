@@ -95,7 +95,6 @@ login_cli() {
 
 print_auth_token() {
   require_cmd argocd
-  configure_admin_access
   login_cli >/dev/null
   token="$(argocd account generate-token)"
   printf 'export ARGOCD_AUTH_TOKEN=%s\n' "${token}"

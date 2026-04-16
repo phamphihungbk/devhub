@@ -1,4 +1,4 @@
-package deployment
+package release
 
 import (
 	"bytes"
@@ -17,26 +17,26 @@ import (
 	"devhub-backend/internal/util/misc"
 )
 
-type PythonDeploymentExecutor struct {
+type PythonReleaseExecutor struct {
 	PythonBin         string
 	Timeout           time.Duration
 	pluginRepository  repository.PluginRepository
 	projectRepository repository.ProjectRepository
 }
 
-type DeploymentExecutionResult struct {
+type ReleaseExecutionResult struct {
 	ExternalRef string
 	CommitSHA   string
 	FinishedAt  time.Time
 }
 
-var _ core.Executor[DeploymentJob, DeploymentExecutionResult] = (*DeploymentExecutorAdapter)(nil)
+var _ core.Executor[ReleaseJob, ReleaseExecutionResult] = (*ReleaseExecutorAdapter)(nil)
 
-func NewPythonDeploymentExecutor(
+func NewPythonReleaseExecutor(
 	pluginRepository repository.PluginRepository,
 	projectRepository repository.ProjectRepository,
-) *PythonDeploymentExecutor {
-	return &PythonDeploymentExecutor{
+) *PythonReleaseExecutor {
+	return &PythonReleaseExecutor{
 		PythonBin:         "python3",
 		pluginRepository:  pluginRepository,
 		projectRepository: projectRepository,
@@ -44,51 +44,51 @@ func NewPythonDeploymentExecutor(
 	}
 }
 
-func (e *PythonDeploymentExecutor) Execute(
+func (e *PythonReleaseExecutor) Execute(
 	ctx context.Context,
-	job *DeploymentJob,
-) (DeploymentExecutionResult, error) {
+	job *ReleaseJob,
+) (ReleaseExecutionResult, error) {
 	if job == nil {
-		return DeploymentExecutionResult{}, errors.New("job is nil")
+		return ReleaseExecutionResult{}, errors.New("job is nil")
 	}
 
 	if e.pluginRepository == nil {
-		return DeploymentExecutionResult{}, errors.New("plugin repository is required")
+		return ReleaseExecutionResult{}, errors.New("plugin repository is required")
 	}
 
 	if e.projectRepository == nil {
-		return DeploymentExecutionResult{}, errors.New("project repository is required")
+		return ReleaseExecutionResult{}, errors.New("project repository is required")
 	}
 
 	plugin, err := e.pluginRepository.FindOne(ctx, job.PluginID)
 	if err != nil {
 		if !errors.As(err, &errs.NotFoundError{}) {
-			return DeploymentExecutionResult{}, misc.WrapError(
+			return ReleaseExecutionResult{}, misc.WrapError(
 				err,
 				errs.NewInternalServerError("failed to find plugin by ID", nil),
 			)
 		}
-		return DeploymentExecutionResult{}, err
+		return ReleaseExecutionResult{}, err
 	}
 
 	project, err := e.projectRepository.FindOne(ctx, job.ProjectID)
 	if err != nil {
 		if !errors.As(err, &errs.NotFoundError{}) {
-			return DeploymentExecutionResult{}, misc.WrapError(
+			return ReleaseExecutionResult{}, misc.WrapError(
 				err,
 				errs.NewInternalServerError("failed to find project by ID", nil),
 			)
 		}
-		return DeploymentExecutionResult{}, err
+		return ReleaseExecutionResult{}, err
 	}
 
 	if project == nil {
-		return DeploymentExecutionResult{}, errors.New("project is required")
+		return ReleaseExecutionResult{}, errors.New("project is required")
 	}
 
 	scriptPath := strings.TrimSpace(plugin.Entrypoint)
 	if scriptPath == "" {
-		return DeploymentExecutionResult{}, errors.New("plugin entrypoint is required")
+		return ReleaseExecutionResult{}, errors.New("plugin entrypoint is required")
 	}
 
 	if e.Timeout > 0 {
@@ -98,25 +98,26 @@ func (e *PythonDeploymentExecutor) Execute(
 	}
 
 	payload := map[string]any{
-		"deployment_id": job.ID.String(),
+		"release_id":    job.ID.String(),
 		"project_id":    job.ProjectID.String(),
 		"plugin_id":     job.PluginID.String(),
-		"service":       job.Service,
-		"environment":   job.Environment,
-		"version":       job.Version,
+		"tag":           job.Tag,
+		"target":        job.Target,
+		"name":          job.Name,
+		"notes":         job.Notes,
 		"project_name":  project.Name,
 		"repo_url":      project.RepoURL,
 	}
 
 	in := map[string]any{
-		"action":         "deploy",
+		"action":         "release",
 		"correlation_id": job.ID.String(),
 		"payload":        payload,
 	}
 
 	stdinBytes, err := json.Marshal(in)
 	if err != nil {
-		return DeploymentExecutionResult{}, fmt.Errorf("marshal deployment input: %w", err)
+		return ReleaseExecutionResult{}, fmt.Errorf("marshal release input: %w", err)
 	}
 
 	cmd := exec.CommandContext(ctx, e.PythonBin, scriptPath)
@@ -133,8 +134,8 @@ func (e *PythonDeploymentExecutor) Execute(
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		return DeploymentExecutionResult{}, fmt.Errorf(
-			"execute python deployment: %w; stdout=%s; stderr=%s",
+		return ReleaseExecutionResult{}, fmt.Errorf(
+			"execute python release: %w; stdout=%s; stderr=%s",
 			err,
 			strings.TrimSpace(stdout.String()),
 			strings.TrimSpace(stderr.String()),
@@ -152,8 +153,8 @@ func (e *PythonDeploymentExecutor) Execute(
 	}
 
 	if err := json.Unmarshal(stdout.Bytes(), &out); err != nil {
-		return DeploymentExecutionResult{}, fmt.Errorf(
-			"invalid deployment json output: %w; stdout=%s",
+		return ReleaseExecutionResult{}, fmt.Errorf(
+			"invalid release json output: %w; stdout=%s",
 			err,
 			strings.TrimSpace(stdout.String()),
 		)
@@ -161,12 +162,12 @@ func (e *PythonDeploymentExecutor) Execute(
 
 	if strings.ToLower(strings.TrimSpace(out.Status)) != "ok" {
 		if strings.TrimSpace(out.Error) != "" {
-			return DeploymentExecutionResult{}, fmt.Errorf("deployment plugin failed: %s", out.Error)
+			return ReleaseExecutionResult{}, fmt.Errorf("release plugin failed: %s", out.Error)
 		}
-		return DeploymentExecutionResult{}, errors.New("deployment plugin returned non-ok status")
+		return ReleaseExecutionResult{}, errors.New("release plugin returned non-ok status")
 	}
 
-	result := DeploymentExecutionResult{
+	result := ReleaseExecutionResult{
 		ExternalRef: strings.TrimSpace(out.Output.ExternalRef),
 		CommitSHA:   strings.TrimSpace(out.Output.CommitSHA),
 		FinishedAt:  time.Now().UTC(),
@@ -179,7 +180,7 @@ func (e *PythonDeploymentExecutor) Execute(
 	}
 
 	if result.ExternalRef == "" {
-		result.ExternalRef = fmt.Sprintf("%s-%s", job.Service, job.Environment)
+		result.ExternalRef = job.Tag
 	}
 
 	return result, nil

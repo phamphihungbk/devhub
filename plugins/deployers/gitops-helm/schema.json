@@ -1,0 +1,8 @@
+{
+  "required": ["service", "environment", "version"],
+  "properties": {
+    "service": { "type": "string" },
+    "environment": { "type": "string" },
+    "version": { "type": "string" }
+  }
+}

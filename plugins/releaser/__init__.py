@@ -13,6 +13,7 @@ from ..utils import (
     scaffold_from_directory,
     scaffold_from_template,
     split_container_image,
+    push_tag_to_repo,
     success,
     validate_service_name,
 )
@@ -23,6 +24,7 @@ __all__ = [
     "infer_module_base_from_repo_url",
     "maybe_publish_to_gitea",
     "normalize_module_path",
+    "push_tag_to_repo",
     "read_int",
     "read_optional_str",
     "read_payload",

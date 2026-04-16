@@ -14,19 +14,19 @@ var (
 type DeploymentStatus string
 
 const (
-	StatusPending    DeploymentStatus = "pending"
-	StatusRunning    DeploymentStatus = "running"
-	StatusCompleted  DeploymentStatus = "completed"
-	StatusFailed     DeploymentStatus = "failed"
-	StatusRolledBack DeploymentStatus = "rolled_back"
+	DeploymentStatusPending    DeploymentStatus = "pending"
+	DeploymentStatusRunning    DeploymentStatus = "running"
+	DeploymentStatusCompleted  DeploymentStatus = "completed"
+	DeploymentStatusFailed     DeploymentStatus = "failed"
+	DeploymentStatusRolledBack DeploymentStatus = "rolled_back"
 )
 
 var deploymentStatusStringMapper = map[DeploymentStatus]string{
-	StatusPending:    "pending",
-	StatusRunning:    "running",
-	StatusCompleted:  "completed",
-	StatusFailed:     "failed",
-	StatusRolledBack: "rolled_back",
+	DeploymentStatusPending:    "pending",
+	DeploymentStatusRunning:    "running",
+	DeploymentStatusCompleted:  "completed",
+	DeploymentStatusFailed:     "failed",
+	DeploymentStatusRolledBack: "rolled_back",
 }
 
 func (s DeploymentStatus) String() string {
@@ -35,7 +35,7 @@ func (s DeploymentStatus) String() string {
 
 func (s DeploymentStatus) IsValid() bool {
 	switch s {
-	case StatusPending, StatusRunning, StatusCompleted, StatusFailed, StatusRolledBack:
+	case DeploymentStatusPending, DeploymentStatusRunning, DeploymentStatusCompleted, DeploymentStatusFailed, DeploymentStatusRolledBack:
 		return true
 	default:
 		return false
@@ -55,6 +55,7 @@ func (s DeploymentStatus) Parse(status string) (DeploymentStatus, error) {
 type Deployment struct {
 	ID          uuid.UUID
 	ProjectID   uuid.UUID
+	PluginID    uuid.UUID
 	Environment ProjectEnvironment
 	Service     string
 	Version     string

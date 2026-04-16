@@ -24,6 +24,7 @@ type updateDeploymentRequest struct {
 type updateDeploymentResponse struct {
 	ID          string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	ProjectID   string `json:"project_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	PluginID    string `json:"plugin_id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	Environment string `json:"environment" example:"prod"`
 	Service     string `json:"service" example:"Service Name"`
 	Version     string `json:"version" example:"1.0.0"`
@@ -81,6 +82,7 @@ func (h *deploymentHandler) newUpdateDeploymentResponse(deployment *entity.Deplo
 	return updateDeploymentResponse{
 		ID:          deployment.ID.String(),
 		ProjectID:   deployment.ProjectID.String(),
+		PluginID:    deployment.PluginID.String(),
 		Environment: deployment.Environment.String(),
 		Service:     deployment.Service,
 		Version:     deployment.Version,

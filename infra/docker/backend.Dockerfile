@@ -16,7 +16,6 @@ RUN go mod download
 
 COPY backend/ /app/backend/
 COPY plugins/ /app/plugins/
-COPY templates/ /app/templates/
 
 FROM base AS dev
 

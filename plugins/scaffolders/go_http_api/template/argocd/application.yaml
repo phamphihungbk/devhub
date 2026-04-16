@@ -4,11 +4,11 @@ metadata:
   name: [[ SERVICE_NAME ]]-[[ TARGET_REVISION ]]
   namespace: argocd
 spec:
-  project: default
+  project: [[ ARGOCD_PROJECT ]]
   source:
     repoURL: [[ REPO_URL ]]
-    targetRevision: main
-    path: charts/app
+    targetRevision: [[ TARGET_REVISION ]]
+    path: app
   destination:
     server: https://kubernetes.default.svc
     namespace: [[ NAMESPACE ]]

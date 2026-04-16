@@ -15,9 +15,11 @@ import (
 type Releases struct {
 	ID          uuid.UUID `sql:"primary_key" db:"releases.id"`
 	ProjectID   uuid.UUID `db:"releases.project_id"`
+	PluginID    uuid.UUID `db:"releases.plugin_id"`
 	Tag         string    `db:"releases.tag"`
 	Target      string    `db:"releases.target"`
 	Name        string    `db:"releases.name"`
+	Status      string    `db:"releases.status"`
 	Notes       string    `db:"releases.notes"`
 	HTMLURL     string    `db:"releases.html_url"`
 	ExternalRef string    `db:"releases.external_ref"`

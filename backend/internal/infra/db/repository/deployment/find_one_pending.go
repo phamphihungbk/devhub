@@ -22,7 +22,7 @@ func (r *deploymentRepositoryImpl) FindOnePending(ctx context.Context) (deployme
 		deploymentsTable.AllColumns,
 	).
 		FROM(deploymentsTable).
-		WHERE(deploymentsTable.Status.EQ(postgres.String(entity.StatusPending.String()))).
+		WHERE(deploymentsTable.Status.EQ(postgres.String(entity.DeploymentStatusPending.String()))).
 		ORDER_BY(deploymentsTable.CreatedAt.ASC(), deploymentsTable.ID.ASC()).
 		LIMIT(1)
 
