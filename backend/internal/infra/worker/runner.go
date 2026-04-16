@@ -135,6 +135,7 @@ func buildDeploymentRunner(deps *Dependencies, observer Observability, cfg Facto
 
 	return deployment.NewDeploymentPollingRunner(
 		observer,
+		deps.cfg,
 		deps.pluginRepository,
 		deps.projectRepository,
 		deps.deploymentRepository,

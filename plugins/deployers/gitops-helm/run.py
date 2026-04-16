@@ -3,6 +3,7 @@ import json
 import os
 import subprocess
 import sys
+import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -15,6 +16,7 @@ from scaffolders import (  # noqa: E402
     read_payload,
     read_required_str,
     success,
+    fail
 )
 
 SCHEMA_PATH = Path(__file__).with_name("schema.json")
@@ -78,7 +80,7 @@ def parse_payload(schema: dict[str, Any]) -> dict[str, Any]:
 
 
 def build_values_path(payload: DeploymentPayload) -> str:
-    return f"{payload.gitops_base_path.strip('/')}/{payload.environment}/{payload.service}.yaml"
+    return f"{payload.gitops_base_path.strip('/')}/{payload.service}.yaml"
 
 
 def build_commit_message(payload: DeploymentPayload) -> str:
@@ -114,6 +116,42 @@ def get_file(payload: DeploymentPayload, path: str) -> dict[str, Any]:
     if status < 200 or status >= 300:
         raise RuntimeError(f"get file failed: {status} {body}")
     return json.loads(body)
+
+
+def get_file_or_none(payload: DeploymentPayload, path: str) -> dict[str, Any] | list[dict[str, Any]] | None:
+    try:
+        return get_file(payload, path)
+    except urllib.error.HTTPError as exc:
+        if exc.code == 404:
+            return None
+        raise
+
+
+def resolve_values_path(payload: DeploymentPayload) -> str:
+    primary_path = build_values_path(payload)
+    candidate_paths = [
+        primary_path,
+        f"{primary_path}/values.yaml",
+        f"{primary_path}/app/values.yaml",
+    ]
+
+    last_directory_path = ""
+    for candidate_path in candidate_paths:
+        existing = get_file_or_none(payload, candidate_path)
+        if isinstance(existing, list):
+            last_directory_path = candidate_path
+            continue
+        if isinstance(existing, dict):
+            return candidate_path
+
+    if last_directory_path != "":
+        raise RuntimeError(
+            f"gitops path conflict: {last_directory_path} resolves to a directory, expected a file"
+        )
+
+    raise RuntimeError(
+        f"gitops values file not found; tried: {', '.join(candidate_paths)}"
+    )
 
 
 def update_file(payload: DeploymentPayload, path: str, sha: str, content_b64: str, message: str) -> dict[str, Any]:
@@ -228,14 +266,14 @@ def run() -> None:
     payload_dict = parse_payload(schema)
     payload = DeploymentPayload.from_dict(payload_dict)
 
-    values_path = build_values_path(payload)
+    values_path = resolve_values_path(payload)
     scm_file = get_file(payload, values_path)
 
     sha = str(scm_file.get("sha", "")).strip()
     content = str(scm_file.get("content", "")).strip()
 
     if sha == "" or content == "":
-        raise RuntimeError("invalid gitops file response: missing sha or content")
+        fail("invalid gitops file response: missing sha or content")
 
     decoded_yaml = decode_content(content)
     updated_yaml = update_image_tag_in_yaml(decoded_yaml, payload.version)

@@ -40,7 +40,7 @@ func (s ReleaseStatus) IsValid() bool {
 	}
 }
 
-// Parse parses a string into a DeploymentStatus. It returns an error if the string is not a valid DeploymentStatus.
+// Parse parses a string into a ReleaseStatus. It returns an error if the string is not a valid ReleaseStatus.
 func (s ReleaseStatus) Parse(status string) (ReleaseStatus, error) {
 	releaseStatus := ReleaseStatus(status)
 

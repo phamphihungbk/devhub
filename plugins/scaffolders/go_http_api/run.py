@@ -1,6 +1,10 @@
 import json
+import os
 import sys
 import tempfile
+import urllib.error
+import urllib.request
+import base64
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -31,6 +35,11 @@ DEFAULT_TARGET_REVISION = "main"
 DEFAULT_ARGOCD_PROJECT = "default"
 DEFAULT_REGISTRY_URL = "host.docker.internal:5001"
 DEFAULT_SERVER_URL = "http://host.docker.internal:3000"
+DEFAULT_GITOPS_BRANCH = "main"
+DEFAULT_GITOPS_BASE_PATH = "envs"
+DEFAULT_GITOPS_COMMIT_USER_NAME = "devhub-bot"
+DEFAULT_GITOPS_COMMIT_USER_EMAIL = "devhub-bot@local"
+API_PREFIX = "/api/v1"
 
 
 @dataclass(frozen=True)
@@ -141,6 +150,190 @@ def build_template_context(payload: ScaffoldPayload) -> dict[str, str]:
     }
 
 
+def normalize_api_base_url(raw: str) -> str:
+    value = raw.strip().rstrip("/")
+    if value == "":
+        return ""
+    if value.endswith(API_PREFIX):
+        return value
+    return f"{value}{API_PREFIX}"
+
+
+def http_request(method: str, url: str, token: str, body: dict[str, Any] | None = None) -> tuple[int, str]:
+    data = None
+    headers = {"Accept": "application/json"}
+
+    if token:
+        headers["Authorization"] = f"token {token}"
+
+    if body is not None:
+        data = json.dumps(body).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+
+    request = urllib.request.Request(url, data=data, headers=headers, method=method)
+    with urllib.request.urlopen(request) as response:
+        return response.getcode(), response.read().decode("utf-8")
+
+
+def get_file(api_base_url: str, token: str, owner: str, repo_name: str, path: str, branch: str) -> dict[str, Any] | list[dict[str, Any]] | None:
+    url = f"{api_base_url}/repos/{owner}/{repo_name}/contents/{path}?ref={branch}"
+    try:
+        status, body = http_request("GET", url, token)
+    except urllib.error.HTTPError as exc:
+        if exc.code == 404:
+            return None
+        raise
+
+    if status < 200 or status >= 300:
+        raise RuntimeError(f"get file failed: {status} {body}")
+
+    parsed = json.loads(body)
+    if isinstance(parsed, dict) or isinstance(parsed, list):
+        return parsed
+    raise RuntimeError(f"unexpected contents response type for path={path}")
+
+
+def upsert_file(
+    api_base_url: str,
+    token: str,
+    owner: str,
+    repo_name: str,
+    path: str,
+    branch: str,
+    content: str,
+    message: str,
+    author_name: str,
+    author_email: str,
+) -> None:
+    existing = get_file(api_base_url, token, owner, repo_name, path, branch)
+    if isinstance(existing, list):
+        raise RuntimeError(f"gitops path conflict: {path} resolves to a directory, expected a file")
+
+    body: dict[str, Any] = {
+        "branch": branch,
+        "content": base64.b64encode(content.encode("utf-8")).decode("utf-8"),
+        "message": message,
+        "author": {"name": author_name, "email": author_email},
+        "committer": {"name": author_name, "email": author_email},
+    }
+    if isinstance(existing, dict):
+        body["sha"] = str(existing.get("sha", "")).strip()
+
+    url = f"{api_base_url}/repos/{owner}/{repo_name}/contents/{path}"
+    status, response = http_request("PUT", url, token, body)
+    if status < 200 or status >= 300:
+        raise RuntimeError(f"upsert file failed: {status} {response}")
+
+
+def resolve_gitops_values_path(
+    api_base_url: str,
+    token: str,
+    owner: str,
+    repo_name: str,
+    branch: str,
+    base_path: str,
+    service_name: str,
+) -> str:
+    primary_path = f"{base_path}/{service_name}.yaml"
+    candidate_paths = [
+        primary_path,
+        f"{primary_path}/values.yaml",
+        f"{primary_path}/app/values.yaml",
+    ]
+
+    last_directory_path = ""
+    for index, candidate_path in enumerate(candidate_paths):
+        existing = get_file(api_base_url, token, owner, repo_name, candidate_path, branch)
+        if isinstance(existing, list):
+            last_directory_path = candidate_path
+            continue
+
+        if existing is not None:
+            return candidate_path
+
+        if index == 0:
+            return candidate_path
+
+    if last_directory_path != "":
+        raise RuntimeError(
+            f"gitops path conflict: {last_directory_path} resolves to a directory, expected a file"
+        )
+
+    return candidate_paths[-1]
+
+
+def build_gitops_values_content(payload: ScaffoldPayload) -> str:
+    image_repository, image_tag = split_container_image(payload.image)
+    return f"""nameOverride: "{payload.service_name}"
+fullnameOverride: "{payload.service_name}"
+
+replicaCount: 1
+
+image:
+  repository: "{image_repository}"
+  tag: "{image_tag}"
+  pullPolicy: IfNotPresent
+
+service:
+  enabled: true
+  type: ClusterIP
+  port: {payload.port}
+
+containerPort: {payload.port}
+
+ingress:
+  enabled: false
+  className: ""
+  host: "{payload.service_name}.devhub.local"
+  path: /
+
+serviceAccount:
+  create: true
+  name: ""
+
+config:
+  enabled: false
+  values: {{}}
+"""
+
+
+def maybe_bootstrap_gitops(payload: ScaffoldPayload) -> None:
+    api_base_url = normalize_api_base_url(os.getenv("SCM_API_URL", ""))
+    token = os.getenv("SCM_TOKEN", "").strip()
+    owner = os.getenv("GITOPS_REPO_OWNER", "").strip()
+    repo_name = os.getenv("GITOPS_REPO_NAME", "").strip()
+
+    if api_base_url == "" or token == "" or owner == "" or repo_name == "":
+        return
+
+    branch = os.getenv("GITOPS_BRANCH", DEFAULT_GITOPS_BRANCH).strip() or DEFAULT_GITOPS_BRANCH
+    base_path = os.getenv("GITOPS_BASE_PATH", DEFAULT_GITOPS_BASE_PATH).strip().strip("/") or DEFAULT_GITOPS_BASE_PATH
+    author_name = os.getenv("GITOPS_COMMIT_USER_NAME", DEFAULT_GITOPS_COMMIT_USER_NAME).strip() or DEFAULT_GITOPS_COMMIT_USER_NAME
+    author_email = os.getenv("GITOPS_COMMIT_USER_EMAIL", DEFAULT_GITOPS_COMMIT_USER_EMAIL).strip() or DEFAULT_GITOPS_COMMIT_USER_EMAIL
+
+    values_path = resolve_gitops_values_path(
+        api_base_url,
+        token,
+        owner,
+        repo_name,
+        branch,
+        base_path,
+        payload.service_name,
+    )
+    upsert_file(
+        api_base_url,
+        token,
+        owner,
+        repo_name,
+        values_path,
+        branch,
+        build_gitops_values_content(payload),
+        f"bootstrap gitops values for {payload.service_name}",
+        author_name,
+        author_email,
+    )
+
+
 def run() -> None:
     schema = load_schema()
     payload_dict = parse_payload(schema)
@@ -151,6 +344,7 @@ def run() -> None:
         template_context = build_template_context(payload)
 
         scaffold_from_directory(service_dir, LOCAL_TEMPLATE_DIR, template_context)
+        maybe_bootstrap_gitops(payload)
 
         success(build_scaffold_output(service_dir, payload.service_name, payload.to_output_payload()))
 

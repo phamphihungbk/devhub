@@ -3,6 +3,7 @@ package deployment
 import (
 	"bytes"
 	"context"
+	"devhub-backend/internal/config"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,6 +21,7 @@ import (
 type PythonDeploymentExecutor struct {
 	PythonBin         string
 	Timeout           time.Duration
+	cfg               *config.Config
 	pluginRepository  repository.PluginRepository
 	projectRepository repository.ProjectRepository
 }
@@ -33,11 +35,13 @@ type DeploymentExecutionResult struct {
 var _ core.Executor[DeploymentJob, DeploymentExecutionResult] = (*DeploymentExecutorAdapter)(nil)
 
 func NewPythonDeploymentExecutor(
+	cfg *config.Config,
 	pluginRepository repository.PluginRepository,
 	projectRepository repository.ProjectRepository,
 ) *PythonDeploymentExecutor {
 	return &PythonDeploymentExecutor{
 		PythonBin:         "python3",
+		cfg:               cfg,
 		pluginRepository:  pluginRepository,
 		projectRepository: projectRepository,
 		Timeout:           10 * time.Minute,
@@ -86,6 +90,10 @@ func (e *PythonDeploymentExecutor) Execute(
 		return DeploymentExecutionResult{}, errors.New("project is required")
 	}
 
+	if e.cfg == nil {
+		return DeploymentExecutionResult{}, errors.New("config is required")
+	}
+
 	scriptPath := strings.TrimSpace(plugin.Entrypoint)
 	if scriptPath == "" {
 		return DeploymentExecutionResult{}, errors.New("plugin entrypoint is required")
@@ -98,14 +106,25 @@ func (e *PythonDeploymentExecutor) Execute(
 	}
 
 	payload := map[string]any{
-		"deployment_id": job.ID.String(),
-		"project_id":    job.ProjectID.String(),
-		"plugin_id":     job.PluginID.String(),
-		"service":       job.Service,
-		"environment":   job.Environment,
-		"version":       job.Version,
-		"project_name":  project.Name,
-		"repo_url":      project.RepoURL,
+		"deployment_id":     job.ID.String(),
+		"project_id":        job.ProjectID.String(),
+		"plugin_id":         job.PluginID.String(),
+		"service":           job.Service,
+		"environment":       job.Environment,
+		"version":           job.Version,
+		"project_name":      project.Name,
+		"repo_url":          project.RepoURL,
+		"scm_api_url":       strings.TrimSpace(e.cfg.ScmConfig.APIURL),
+		"scm_token":         strings.TrimSpace(e.cfg.ScmConfig.Token),
+		"gitops_repo_owner": strings.TrimSpace(e.cfg.Gitops.RepoOwner),
+		"gitops_repo_name":  strings.TrimSpace(e.cfg.Gitops.RepoName),
+		"gitops_branch":     strings.TrimSpace(e.cfg.Gitops.Branch),
+		"gitops_base_path":  strings.TrimSpace(e.cfg.Gitops.BasePath),
+		"commit_user_name":  strings.TrimSpace(e.cfg.Gitops.CommitUserName),
+		"commit_user_email": strings.TrimSpace(e.cfg.Gitops.CommitUserEmail),
+		"argocd_server":     strings.TrimSpace(e.cfg.ArgoCD.Server),
+		"argocd_auth_token": strings.TrimSpace(e.cfg.ArgoCD.AuthToken),
+		"argocd_insecure":   e.cfg.ArgoCD.Insecure,
 	}
 
 	in := map[string]any{

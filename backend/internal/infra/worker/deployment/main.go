@@ -2,6 +2,7 @@ package deployment
 
 import (
 	"context"
+	"devhub-backend/internal/config"
 	"errors"
 	"time"
 
@@ -39,12 +40,13 @@ func (a *DeploymentExecutorAdapter) Execute(ctx context.Context, job *Deployment
 
 func NewDeploymentPollingRunner(
 	observer core.Observability,
+	cfg *config.Config,
 	pluginRepository repository.PluginRepository,
 	projectRepository repository.ProjectRepository,
 	deploymentRepository repository.DeploymentRepository,
 	pollDelay time.Duration,
 ) (core.Runner, error) {
-	executor := NewPythonDeploymentExecutor(pluginRepository, projectRepository)
+	executor := NewPythonDeploymentExecutor(cfg, pluginRepository, projectRepository)
 
 	return core.NewPollingRunner[DeploymentJob, DeploymentExecutionResult](
 		core.PollingRunnerConfig{
