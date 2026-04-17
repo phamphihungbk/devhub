@@ -15,13 +15,15 @@ import (
 
 type CreateDeploymentInput struct {
 	ProjectID   string `json:"project_id" example:"123e4567-e89b-12d3-a456-426614174000" validate:"required,uuid"`
+	PluginID    string `json:"plugin_id" example:"123e4567-e89b-12d3-a456-426614174000" validate:"required,uuid"`
 	Environment string `json:"environment" example:"prod" validate:"required,oneof=dev staging prod"`
 	Service     string `json:"service" example:"Service Name" validate:"required"`
-	Version     string `json:"version" example:"v1.0.0" validate:"required,git_revision"`
+	Version     string `json:"version" example:"v1.0.0" validate:"required,git_revision,startswith=v"`
 	TriggeredBy string `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000" validate:"required,uuid"`
 }
 
 func (u *deploymentUsecase) CreateDeployment(ctx context.Context, input CreateDeploymentInput) (deployment *entity.Deployment, err error) {
+	// TODO: later deployment rely on release instead
 	const errLocation = "[usecase deployment/create_deployment CreateDeployment] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
@@ -48,10 +50,11 @@ func (u *deploymentUsecase) CreateDeployment(ctx context.Context, input CreateDe
 
 	deployment = &entity.Deployment{
 		ProjectID:   uuid.MustParse(input.ProjectID),
+		PluginID:    uuid.MustParse(input.PluginID),
 		Environment: env,
 		Service:     input.Service,
 		Version:     input.Version,
-		Status:      entity.StatusPending,
+		Status:      entity.DeploymentStatusPending,
 		TriggeredBy: uuid.MustParse(input.TriggeredBy),
 	}
 

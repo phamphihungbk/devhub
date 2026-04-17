@@ -1,0 +1,11 @@
+openapi: 3.0.3
+info:
+  title: [[ SERVICE_NAME ]] API
+  version: 0.1.0
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK

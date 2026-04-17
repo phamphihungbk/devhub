@@ -6,6 +6,9 @@ DEVHUB_NAMESPACE="${DEVHUB_NAMESPACE:-devhub}"
 ARGOCD_VERSION="${ARGOCD_VERSION:-stable}"
 UI_PORT="${ARGOCD_UI_PORT:-8081}"
 ARGOCD_UI_HOST="${ARGOCD_UI_HOST:-argocd.devhub.local}"
+GITOPS_REPO_URL="${GITOPS_REPO_URL:-http://host.minikube.internal:3000/phamphihungbk/gitops-repo.git}"
+GITOPS_REPO_BRANCH="${GITOPS_REPO_BRANCH:-main}"
+GITOPS_ENV_GLOB="${GITOPS_ENV_GLOB:-envs/dev/*.yaml}"
 ROOT_DIR="$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)"
 APP_MANIFEST="${ROOT_DIR}/infra/kubernetes/argocd/devhub.yaml"
 INGRESS_MANIFEST="${ROOT_DIR}/infra/kubernetes/argocd/argocd-ui-ingress.yaml"
@@ -54,7 +57,9 @@ print_password() {
 
 apply_devhub_app() {
   ensure_namespace "${DEVHUB_NAMESPACE}"
-  kubectl apply -f "${APP_MANIFEST}"
+  require_cmd envsubst
+  export GITOPS_REPO_URL GITOPS_REPO_BRANCH GITOPS_ENV_GLOB
+  envsubst '${GITOPS_REPO_URL} ${GITOPS_REPO_BRANCH} ${GITOPS_ENV_GLOB}' < "${APP_MANIFEST}" | kubectl apply -f -
 }
 
 enable_minikube_ingress() {
@@ -95,7 +100,6 @@ login_cli() {
 
 print_auth_token() {
   require_cmd argocd
-  configure_admin_access
   login_cli >/dev/null
   token="$(argocd account generate-token)"
   printf 'export ARGOCD_AUTH_TOKEN=%s\n' "${token}"
@@ -108,7 +112,7 @@ Usage: ./scripts/argocd.sh <command>
 Commands:
   install   Install Argo CD into the current Kubernetes cluster
   configure Configure Argo CD admin for login, apiKey, and admin RBAC
-  app       Apply the DevHub Argo CD Application manifest
+  app       Apply the DevHub Argo CD ApplicationSet manifest
   ingress   Enable Minikube ingress and apply the Argo CD UI hostname
   domain    Print the Argo CD UI domain and the required /etc/hosts entry
   password  Print the Argo CD admin password
@@ -123,6 +127,9 @@ Environment:
   ARGOCD_VERSION     Default: stable
   ARGOCD_UI_PORT     Default: 8081
   ARGOCD_UI_HOST     Default: argocd.devhub.local
+  GITOPS_REPO_URL    Default: https://gitea.devhub.local/phamphihungbk/gitops-repo.git
+  GITOPS_REPO_BRANCH Default: main
+  GITOPS_ENV_GLOB    Default: envs/dev/*.yaml
 EOF
 }
 

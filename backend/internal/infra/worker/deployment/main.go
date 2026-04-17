@@ -24,31 +24,31 @@ func (j DeploymentJob) GetID() uuid.UUID {
 }
 
 type DeploymentExecutorAdapter struct {
-	executor *CommandExecutor
+	executor *PythonDeploymentExecutor
 }
 
-func NewDeploymentExecutorAdapter(executor *CommandExecutor) *DeploymentExecutorAdapter {
+func NewDeploymentExecutorAdapter(executor *PythonDeploymentExecutor) *DeploymentExecutorAdapter {
 	return &DeploymentExecutorAdapter{executor: executor}
 }
 
-func (a *DeploymentExecutorAdapter) Execute(ctx context.Context, job *DeploymentJob) (ExecutionResult, error) {
+func (a *DeploymentExecutorAdapter) Execute(ctx context.Context, job *DeploymentJob) (DeploymentExecutionResult, error) {
 	if job == nil {
-		return ExecutionResult{}, errors.New("deployment job is nil")
+		return DeploymentExecutionResult{}, errors.New("deployment job is nil")
 	}
 	return a.executor.Execute(ctx, job)
 }
 
 func NewDeploymentPollingRunner(
 	observer core.Observability,
-	argoCDCfg config.ArgoCDConfig,
-	giteaCfg config.GiteaConfig,
+	cfg *config.Config,
+	pluginRepository repository.PluginRepository,
 	projectRepository repository.ProjectRepository,
 	deploymentRepository repository.DeploymentRepository,
 	pollDelay time.Duration,
 ) (core.Runner, error) {
-	executor := NewCommandExecutorWithGitProvider(argoCDCfg, giteaCfg, projectRepository)
+	executor := NewPythonDeploymentExecutor(cfg, pluginRepository, projectRepository)
 
-	return core.NewPollingRunner[DeploymentJob, ExecutionResult](
+	return core.NewPollingRunner[DeploymentJob, DeploymentExecutionResult](
 		core.PollingRunnerConfig{
 			Name:      RunnerName,
 			PollDelay: pollDelay,

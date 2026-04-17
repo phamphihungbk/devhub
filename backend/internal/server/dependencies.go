@@ -56,7 +56,7 @@ func (s *Server) setupRouteDependencies(ctx context.Context, appLogger logger.Lo
 	userUsecase := userUsecase.NewUserUsecase(s.cfg.App, dbUserRepo)
 	projectUsecase := projectUsecase.NewProjectUsecase(s.cfg.App, dbProjectRepo)
 	deploymentUsecase := deploymentUsecase.NewDeploymentUsecase(s.cfg.App, dbDeploymentRepo)
-	releaseUsecase := releaseUsecase.NewReleaseUsecase(s.cfg.App, dbProjectRepo, dbReleaseRepo, s.cfg.Gitea)
+	releaseUsecase := releaseUsecase.NewReleaseUsecase(s.cfg.App, dbProjectRepo, dbReleaseRepo)
 	pluginUsecase := pluginUsecase.NewPluginUsecase(s.cfg.App, dbPluginRepo)
 	scaffoldRequestUsecase := scaffoldRequestUsecase.NewScaffoldRequestUsecase(s.cfg.App, dbScaffoldRequestRepo)
 	authUsecase := authUsecase.NewAuthUsecase(s.cfg.Token, dbUserRepo, dbRefreshTokenRepo)

@@ -1,0 +1,9 @@
+name: tag-trigger
+type: releaser
+version: 1.0.0
+runtime: python
+entrypoint: run.py
+description: Create a release event from an incoming tag payload
+timeout_seconds: 600
+permissions:
+  - release:create

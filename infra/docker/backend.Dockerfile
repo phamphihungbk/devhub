@@ -6,7 +6,7 @@ ARG ARGOCD_VERSION
 
 WORKDIR /app
 
-RUN apk add --no-cache bash ca-certificates git python3 py3-pip wget && \
+RUN apk add --no-cache bash ca-certificates git python3 py3-pip py3-jinja2 wget && \
     wget -O /usr/local/bin/argocd "https://github.com/argoproj/argo-cd/releases/download/${ARGOCD_VERSION}/argocd-linux-amd64" && \
     chmod +x /usr/local/bin/argocd
 

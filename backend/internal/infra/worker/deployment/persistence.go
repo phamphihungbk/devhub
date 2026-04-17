@@ -16,7 +16,7 @@ type StatePersistence struct {
 	deploymentRepository repository.DeploymentRepository
 }
 
-var _ core.StatePersistence[ExecutionResult] = (*StatePersistence)(nil)
+var _ core.StatePersistence[DeploymentExecutionResult] = (*StatePersistence)(nil)
 
 func NewStatePersistence(deploymentRepository repository.DeploymentRepository) *StatePersistence {
 	return &StatePersistence{deploymentRepository: deploymentRepository}
@@ -30,11 +30,11 @@ func (p *StatePersistence) MarkRunning(ctx context.Context, id uuid.UUID) error 
 	if deployment == nil {
 		return fmt.Errorf("deployment %s not found", id)
 	}
-	if deployment.Status != entity.StatusPending {
+	if deployment.Status != entity.DeploymentStatusPending {
 		return fmt.Errorf("deployment %s is not pending", id)
 	}
 
-	status := entity.StatusRunning
+	status := entity.DeploymentStatusRunning
 	if _, err := p.deploymentRepository.UpdateOne(ctx, repository.UpdateDeploymentInput{
 		ID:     id,
 		Status: &status,
@@ -45,7 +45,7 @@ func (p *StatePersistence) MarkRunning(ctx context.Context, id uuid.UUID) error 
 	return nil
 }
 
-func (p *StatePersistence) MarkCompleted(ctx context.Context, id uuid.UUID, result ExecutionResult) error {
+func (p *StatePersistence) MarkCompleted(ctx context.Context, id uuid.UUID, result DeploymentExecutionResult) error {
 	deployment, err := p.deploymentRepository.FindOne(ctx, id)
 	if err != nil {
 		return fmt.Errorf("find deployment before marking completed: %w", err)
@@ -53,11 +53,11 @@ func (p *StatePersistence) MarkCompleted(ctx context.Context, id uuid.UUID, resu
 	if deployment == nil {
 		return fmt.Errorf("deployment %s not found", id)
 	}
-	if deployment.Status != entity.StatusRunning {
+	if deployment.Status != entity.DeploymentStatusRunning {
 		return fmt.Errorf("deployment %s is not running", id)
 	}
 
-	status := entity.StatusCompleted
+	status := entity.DeploymentStatusCompleted
 	finishedAt := result.FinishedAt
 	if finishedAt.IsZero() {
 		finishedAt = time.Now().UTC()
@@ -84,11 +84,11 @@ func (p *StatePersistence) MarkFailed(ctx context.Context, id uuid.UUID, reason 
 	if deployment == nil {
 		return fmt.Errorf("deployment %s not found", id)
 	}
-	if deployment.Status != entity.StatusRunning {
+	if deployment.Status != entity.DeploymentStatusRunning {
 		return fmt.Errorf("deployment %s is not running", id)
 	}
 
-	status := entity.StatusFailed
+	status := entity.DeploymentStatusFailed
 	finishedAt := time.Now().UTC()
 
 	if _, err := p.deploymentRepository.UpdateOne(ctx, repository.UpdateDeploymentInput{

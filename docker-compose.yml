@@ -103,8 +103,27 @@ services:
       - gitea_data:/data
       - gitea_config:/etc/gitea
 
+  gitea-runner:
+    image: devhub-gitea-runner:local
+    build:
+      context: .
+      dockerfile: infra/docker/gitea-runner.Dockerfile
+    profiles: ["ci"]
+    restart: unless-stopped
+    environment:
+      GITEA_INSTANCE_URL: ${GITEA_RUNNER_INSTANCE_URL:-http://gitea:3000}
+      GITEA_RUNNER_REGISTRATION_TOKEN: ${GITEA_RUNNER_REGISTRATION_TOKEN:-}
+      GITEA_RUNNER_NAME: ${GITEA_RUNNER_NAME:-devhub-runner}
+      GITEA_RUNNER_LABELS: ${GITEA_RUNNER_LABELS:-linux:docker://docker:27-cli}
+    depends_on:
+      - gitea
+    volumes:
+      - gitea_runner_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+
 volumes:
   db_data:
   redis_data:
   gitea_data:
   gitea_config:
+  gitea_runner_data:

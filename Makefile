@@ -1,9 +1,9 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap generate-dev-cert setup-local-https dev dev-ui build build-ui down restart logs logs-worker ps shell \
-	worker-up worker-down migrate migrate-down generate sync-worker create-plugin config prod-config argocd-ui argocd-token
+.PHONY: help bootstrap generate-dev-cert setup-local-https dev dev-ui build build-ui down restart logs logs-worker logs-runner ps shell \
+	worker-up worker-down runner-up runner-down migrate migrate-down generate sync-worker create-plugin config prod-config argocd-ui argocd-token
 
-CORE_SERVICES := backend worker nginx db redis gitea
+CORE_SERVICES := backend worker nginx db redis gitea gitea-runner
 
 ##@ Setup
 bootstrap: ## Create local env files for first run
@@ -41,6 +41,9 @@ logs: ## Follow logs for the dev stack
 logs-worker: ## Follow logs for the worker service
 	@./scripts/dev.sh logs -f worker
 
+logs-runner: ## Follow logs for the Gitea Actions runner
+	@COMPOSE_PROFILES=ci ./scripts/dev.sh logs -f gitea-runner
+
 ps: ## List dev stack containers
 	@./scripts/dev.sh ps
 
@@ -52,6 +55,12 @@ worker-up: ## Start only the worker service and its dependencies
 
 worker-down: ## Stop the worker service
 	@./scripts/dev.sh stop worker
+
+runner-up: ## Start the Gitea Actions runner
+	@COMPOSE_PROFILES=ci ./scripts/dev.sh up -d gitea-runner
+
+runner-down: ## Stop the Gitea Actions runner
+	@COMPOSE_PROFILES=ci ./scripts/dev.sh stop gitea-runner
 
 ##@ Backend
 migrate: ## Run database migrations up

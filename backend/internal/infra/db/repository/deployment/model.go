@@ -23,6 +23,7 @@ func (c *Deployment) ToEntity() *entity.Deployment {
 	return &entity.Deployment{
 		ID:          c.ID,
 		ProjectID:   c.ProjectID,
+		PluginID:    c.PluginID,
 		Environment: env,
 		Service:     c.Service,
 		Version:     c.Version,

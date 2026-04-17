@@ -19,9 +19,11 @@ type releasesTable struct {
 	// Columns
 	ID          postgres.ColumnString
 	ProjectID   postgres.ColumnString
+	PluginID    postgres.ColumnString
 	Tag         postgres.ColumnString
 	Target      postgres.ColumnString
 	Name        postgres.ColumnString
+	Status      postgres.ColumnString
 	Notes       postgres.ColumnString
 	HTMLURL     postgres.ColumnString
 	ExternalRef postgres.ColumnString
@@ -70,16 +72,18 @@ func newReleasesTableImpl(schemaName, tableName, alias string) releasesTable {
 	var (
 		IDColumn          = postgres.StringColumn("id")
 		ProjectIDColumn   = postgres.StringColumn("project_id")
+		PluginIDColumn    = postgres.StringColumn("plugin_id")
 		TagColumn         = postgres.StringColumn("tag")
 		TargetColumn      = postgres.StringColumn("target")
 		NameColumn        = postgres.StringColumn("name")
+		StatusColumn      = postgres.StringColumn("status")
 		NotesColumn       = postgres.StringColumn("notes")
 		HTMLURLColumn     = postgres.StringColumn("html_url")
 		ExternalRefColumn = postgres.StringColumn("external_ref")
 		TriggeredByColumn = postgres.StringColumn("triggered_by")
 		CreatedAtColumn   = postgres.TimestampColumn("created_at")
-		allColumns        = postgres.ColumnList{IDColumn, ProjectIDColumn, TagColumn, TargetColumn, NameColumn, NotesColumn, HTMLURLColumn, ExternalRefColumn, TriggeredByColumn, CreatedAtColumn}
-		mutableColumns    = postgres.ColumnList{ProjectIDColumn, TagColumn, TargetColumn, NameColumn, NotesColumn, HTMLURLColumn, ExternalRefColumn, TriggeredByColumn, CreatedAtColumn}
+		allColumns        = postgres.ColumnList{IDColumn, ProjectIDColumn, PluginIDColumn, TagColumn, TargetColumn, NameColumn, StatusColumn, NotesColumn, HTMLURLColumn, ExternalRefColumn, TriggeredByColumn, CreatedAtColumn}
+		mutableColumns    = postgres.ColumnList{ProjectIDColumn, PluginIDColumn, TagColumn, TargetColumn, NameColumn, StatusColumn, NotesColumn, HTMLURLColumn, ExternalRefColumn, TriggeredByColumn, CreatedAtColumn}
 		defaultColumns    = postgres.ColumnList{IDColumn, NotesColumn, CreatedAtColumn}
 	)
 
@@ -89,9 +93,11 @@ func newReleasesTableImpl(schemaName, tableName, alias string) releasesTable {
 		//Columns
 		ID:          IDColumn,
 		ProjectID:   ProjectIDColumn,
+		PluginID:    PluginIDColumn,
 		Tag:         TagColumn,
 		Target:      TargetColumn,
 		Name:        NameColumn,
+		Status:      StatusColumn,
 		Notes:       NotesColumn,
 		HTMLURL:     HTMLURLColumn,
 		ExternalRef: ExternalRefColumn,

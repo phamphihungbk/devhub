@@ -1,0 +1,31 @@
+{
+  "type": "object",
+  "required": ["tag", "repo_url"],
+  "properties": {
+    "release_id": { "type": "string" },
+    "project_id": { "type": "string" },
+    "plugin_id": { "type": "string" },
+    "tag": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Release tag to trigger."
+    },
+    "target": {
+      "type": "string",
+      "description": "Git target revision for the tag."
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-friendly release name."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Release notes content."
+    },
+    "repo_url": {
+      "type": "string",
+      "description": "Source repository URL."
+    }
+  },
+  "additionalProperties": true
+}

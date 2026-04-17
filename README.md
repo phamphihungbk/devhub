@@ -130,14 +130,14 @@ devhub/
 
 ## Helm And Argo CD
 
-The repo now includes a deployable Helm chart at [infra/kubernetes/helm/devhub/values.yaml](/Users/hungpham/workspace/personal/devhub/infra/kubernetes/helm/devhub/values.yaml) and an Argo CD `Application` at [infra/kubernetes/argocd/devhub.yaml](/Users/hungpham/workspace/personal/devhub/infra/kubernetes/argocd/devhub.yaml).
+The repo includes a deployable Helm chart for the DevHub platform at [infra/kubernetes/helm/devhub/values.yaml](/Users/hungpham/workspace/personal/devhub/infra/kubernetes/helm/devhub/values.yaml) and an Argo CD `ApplicationSet` template at [infra/kubernetes/argocd/devhub.yaml](/Users/hungpham/workspace/personal/devhub/infra/kubernetes/argocd/devhub.yaml).
 
 The chart deploys:
 
 - `api`: the Go HTTP server
 - `worker`: a separate `Deployment` that runs `/app/devhub sync-worker`
 
-For the fastest local end-to-end Argo CD smoke test, the included `Application` currently points to the public `argoproj/argocd-example-apps` repository over HTTPS and syncs the `guestbook` example. This avoids SSH repo credential setup while you verify worker-triggered syncs.
+The Helm chart is still needed. It deploys the DevHub API and worker themselves. The Argo CD manifest is separate: it watches `gitops-repo` and creates one Argo CD app per `envs/dev/*.yaml` file.
 
 The backend worker now includes a real deployment runner that executes an Argo CD sync for each pending deployment. It invokes:
 
@@ -161,7 +161,22 @@ For local Docker Compose runs, the worker reads Argo CD credentials from `.env` 
 ARGOCD_AUTH_TOKEN=<token>
 ```
 
-After verifying the flow, update `spec.source.repoURL` and `spec.source.path` in [infra/kubernetes/argocd/devhub.yaml](/Users/hungpham/workspace/personal/devhub/infra/kubernetes/argocd/devhub.yaml) back to your real GitOps source.
+Each GitOps values file is expected to include service metadata and Helm values, for example:
+
+```yaml
+appName: "payment-service"
+appEnvironment: "dev"
+appRepoURL: "https://gitea.devhub.local/phamphihungbk/payment-service.git"
+appTargetRevision: "main"
+appNamespace: "devhub"
+appProject: "default"
+
+nameOverride: "payment-service"
+fullnameOverride: "payment-service"
+...
+```
+
+When `gitops-repo/envs/dev/payment-service.yaml` appears, the `ApplicationSet` creates an Argo CD app named `payment-service-dev` that deploys the chart from `deploy/helm` in the service repo and uses that GitOps file as its Helm values file.
 
 Example:
 
@@ -173,7 +188,10 @@ helm upgrade --install devhub infra/kubernetes/helm/devhub \
   --set image.tag=latest \
   --set secrets.tokenSecret="$TOKEN_SECRET"
 
-kubectl apply -f infra/kubernetes/argocd/devhub.yaml
+GITOPS_REPO_URL=https://gitea.devhub.local/phamphihungbk/gitops-repo.git \
+GITOPS_REPO_BRANCH=main \
+GITOPS_ENV_GLOB='envs/dev/*.yaml' \
+./scripts/argocd.sh app
 ```
 
 ### Local Argo CD UI With Minikube
@@ -190,7 +208,7 @@ minikube start
 That command will:
 
 - install Argo CD into the current cluster
-- apply the DevHub Argo CD `Application`
+  - apply the DevHub Argo CD `ApplicationSet`
 - start a local port-forward for the UI on `http://127.0.0.1:8081`
 - print the default `admin` password from `argocd-initial-admin-secret`
 
@@ -216,7 +234,7 @@ make argocd-ui
 make argocd-token
 ```
 
-Note: the included Argo CD `Application` manifest points at `git@personal:phamphihungbk/devhub.git`. Make sure your Argo CD instance can reach that Git remote and has credentials configured for it.
+Note: the included Argo CD `ApplicationSet` manifest is parameterized with `GITOPS_REPO_URL`, `GITOPS_REPO_BRANCH`, and `GITOPS_ENV_GLOB`. Make sure Argo CD can reach that Git remote and has credentials configured for both the GitOps repo and the generated service repos.
 
 ## Local Gitea For Multi-Repo Testing
 

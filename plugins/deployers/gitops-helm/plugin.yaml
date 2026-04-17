@@ -1,0 +1,9 @@
+name: deploy-gitops-helm
+type: deployer
+version: 1.0.0
+runtime: python
+entrypoint: run.py
+description: Update GitOps values and sync ArgoCD
+timeout_seconds: 600
+permissions:
+  - deployment:create

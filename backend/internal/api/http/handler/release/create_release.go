@@ -12,6 +12,7 @@ import (
 )
 
 type createReleaseRequest struct {
+	PluginID string `json:"plugin_id" example:"123e4567-e89b-12d3-a456-426614174000" binding:"required"`
 	Tag    string `json:"tag" example:"v1.0.0" binding:"required"`
 	Target string `json:"target" example:"main"`
 	Name   string `json:"name" example:"v1.0.0"`
@@ -21,6 +22,7 @@ type createReleaseRequest struct {
 type createReleaseResponse struct {
 	ID          string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	ProjectID   string `json:"project_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	PluginID    string `json:"plugin_id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	Tag         string `json:"tag" example:"v1.0.0"`
 	Target      string `json:"target" example:"main"`
 	Name        string `json:"name" example:"v1.0.0"`
@@ -58,6 +60,7 @@ func (h *releaseHandler) CreateRelease(c *gin.Context) {
 
 	release, err := h.releaseUsecase.CreateRelease(c.Request.Context(), releaseUsecase.CreateReleaseInput{
 		ProjectID:   projectID,
+		PluginID:    input.PluginID,
 		Tag:         input.Tag,
 		Target:      input.Target,
 		Name:        input.Name,
@@ -80,6 +83,7 @@ func (h *releaseHandler) newCreateReleaseResponse(release *entity.Release) creat
 	return createReleaseResponse{
 		ID:          release.ID.String(),
 		ProjectID:   release.ProjectID.String(),
+		PluginID:    release.PluginID.String(),
 		Tag:         release.Tag,
 		Target:      release.Target,
 		Name:        release.Name,

@@ -18,9 +18,11 @@ func (r *Release) ToEntity() *entity.Release {
 	return &entity.Release{
 		ID:          r.ID,
 		ProjectID:   r.ProjectID,
+		PluginID:    r.PluginID,
 		Tag:         r.Tag,
 		Target:      r.Target,
 		Name:        r.Name,
+		Status:      entity.ReleaseStatus(r.Status),
 		Notes:       r.Notes,
 		HTMLURL:     r.HTMLURL,
 		ExternalRef: r.ExternalRef,

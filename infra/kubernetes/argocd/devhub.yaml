@@ -1,20 +1,40 @@
 apiVersion: argoproj.io/v1alpha1
-kind: Application
+kind: ApplicationSet
 metadata:
-  name: devhub
+  name: devhub-services
   namespace: argocd
+
 spec:
-  project: default
-  source:
-    repoURL: https://github.com/argoproj/argocd-example-apps.git
-    targetRevision: master
-    path: guestbook
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: devhub
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
+  goTemplate: true
+  generators:
+    - git:
+        repoURL: ${GITOPS_REPO_URL}
+        revision: ${GITOPS_REPO_BRANCH}
+        files:
+          - path: ${GITOPS_ENV_GLOB}
+  template:
+    metadata:
+      name: '{{ .appName }}-{{ .appEnvironment }}'
+      namespace: argocd
+    spec:
+      project: '{{ .appProject }}'
+      sources:
+        - repoURL: '{{ .appRepoURL }}'
+          targetRevision: '{{ .appTargetRevision }}'
+          path: deploy/helm
+          helm:
+            valueFiles:
+              - $values/{{ .path.path }}/{{ .path.filename }}
+        
+        - repoURL: ${GITOPS_REPO_URL}
+          targetRevision: ${GITOPS_REPO_BRANCH}
+          ref: values
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{ .appNamespace }}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
