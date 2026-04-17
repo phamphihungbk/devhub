@@ -1,7 +1,5 @@
 import base64
 import json
-import os
-import subprocess
 import sys
 import urllib.error
 import urllib.request
@@ -16,7 +14,7 @@ from scaffolders import (  # noqa: E402
     read_payload,
     read_required_str,
     success,
-    fail
+    fail,
 )
 
 SCHEMA_PATH = Path(__file__).with_name("schema.json")
@@ -25,6 +23,9 @@ DEFAULT_GITOPS_BRANCH = "main"
 DEFAULT_GITOPS_BASE_PATH = "envs"
 DEFAULT_COMMIT_USER_NAME = "devhub-bot"
 DEFAULT_COMMIT_USER_EMAIL = "devhub-bot@local"
+
+def log(msg: str):
+    print(msg, file=sys.stderr)
 
 
 @dataclass(frozen=True)
@@ -70,91 +71,52 @@ class DeploymentPayload:
         )
 
 
-def load_schema() -> dict[str, Any]:
-    return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+def normalize_url(url: str) -> str:
+    if not url:
+        return url
+    if not url.startswith("http://") and not url.startswith("https://"):
+        return f"http://{url}"
+    return url
 
 
-def parse_payload(schema: dict[str, Any]) -> dict[str, Any]:
-    required_fields = schema.get("required", ["service", "environment", "version"])
-    return read_payload(required_fields=required_fields)
-
-
-def build_values_path(payload: DeploymentPayload) -> str:
-    return f"{payload.gitops_base_path.strip('/')}/{payload.service}.yaml"
-
-
-def build_commit_message(payload: DeploymentPayload) -> str:
-    return f"deploy {payload.service} to {payload.environment} with image tag {payload.version}"
-
-
-def http_request(method: str, url: str, token: str, body: dict[str, Any] | None = None) -> tuple[int, str]:
-    data = None
-    headers = {
-        "Accept": "application/json",
-    }
+def http_request(method: str, url: str, token: str, body: dict | None = None):
+    headers = {"Accept": "application/json"}
 
     if token:
         headers["Authorization"] = f"token {token}"
 
-    if body is not None:
-        data = json.dumps(body).encode("utf-8")
+    data = None
+    if body:
         headers["Content-Type"] = "application/json"
+        data = json.dumps(body).encode()
 
-    req = urllib.request.Request(url, data=data, method=method, headers=headers)
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
 
-    with urllib.request.urlopen(req) as resp:
-        return resp.getcode(), resp.read().decode("utf-8")
+    try:
+        with urllib.request.urlopen(req) as resp:
+            return resp.getcode(), resp.read().decode()
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"HTTP {e.code}: {e.read().decode()}") from e
 
 
-def get_file(payload: DeploymentPayload, path: str) -> dict[str, Any]:
+def get_file(payload: DeploymentPayload, path: str):
     url = (
         f"{payload.scm_api_url}/repos/"
         f"{payload.gitops_repo_owner}/{payload.gitops_repo_name}/contents/{path}"
         f"?ref={payload.gitops_branch}"
     )
-    status, body = http_request("GET", url, payload.scm_token)
-    if status < 200 or status >= 300:
-        raise RuntimeError(f"get file failed: {status} {body}")
-    return json.loads(body)
 
-
-def get_file_or_none(payload: DeploymentPayload, path: str) -> dict[str, Any] | list[dict[str, Any]] | None:
     try:
-        return get_file(payload, path)
-    except urllib.error.HTTPError as exc:
-        if exc.code == 404:
+        _, body = http_request("GET", url, payload.scm_token)
+    except RuntimeError as e:
+        if "404" in str(e):
             return None
         raise
 
-
-def resolve_values_path(payload: DeploymentPayload) -> str:
-    primary_path = build_values_path(payload)
-    candidate_paths = [
-        primary_path,
-        f"{primary_path}/values.yaml",
-        f"{primary_path}/app/values.yaml",
-    ]
-
-    last_directory_path = ""
-    for candidate_path in candidate_paths:
-        existing = get_file_or_none(payload, candidate_path)
-        if isinstance(existing, list):
-            last_directory_path = candidate_path
-            continue
-        if isinstance(existing, dict):
-            return candidate_path
-
-    if last_directory_path != "":
-        raise RuntimeError(
-            f"gitops path conflict: {last_directory_path} resolves to a directory, expected a file"
-        )
-
-    raise RuntimeError(
-        f"gitops values file not found; tried: {', '.join(candidate_paths)}"
-    )
+    return json.loads(body)
 
 
-def update_file(payload: DeploymentPayload, path: str, sha: str, content_b64: str, message: str) -> dict[str, Any]:
+def update_file(payload: DeploymentPayload, path: str, sha: str, content_b64: str, message: str):
     url = f"{payload.scm_api_url}/repos/{payload.gitops_repo_owner}/{payload.gitops_repo_name}/contents/{path}"
 
     body = {
@@ -172,23 +134,21 @@ def update_file(payload: DeploymentPayload, path: str, sha: str, content_b64: st
         },
     }
 
-    status, response = http_request("PUT", url, payload.scm_token, body)
-    if status < 200 or status >= 300:
-        raise RuntimeError(f"update file failed: {status} {response}")
-    return json.loads(response)
+    _, resp = http_request("PUT", url, payload.scm_token, body)
+    return json.loads(resp)
 
 
 def decode_content(encoded: str) -> str:
-    return base64.b64decode(encoded.replace("\n", "")).decode("utf-8")
+    return base64.b64decode(encoded.replace("\n", "")).decode()
 
 
 def encode_content(content: str) -> str:
-    return base64.b64encode(content.encode("utf-8")).decode("utf-8")
+    return base64.b64encode(content.encode()).decode()
 
 
-def update_image_tag_in_yaml(yaml_text: str, new_tag: str) -> str:
+def update_image_tag(yaml_text: str, new_tag: str) -> str:
     lines = yaml_text.splitlines()
-    updated: list[str] = []
+    result = []
     in_image = False
 
     for line in lines:
@@ -196,100 +156,81 @@ def update_image_tag_in_yaml(yaml_text: str, new_tag: str) -> str:
 
         if stripped.startswith("image:"):
             in_image = True
-            updated.append(line)
+            result.append(line)
             continue
 
         if in_image and stripped.startswith("tag:"):
             indent = line[: line.index("tag")]
-            updated.append(f"{indent}tag: {new_tag}")
+            result.append(f"{indent}tag: {new_tag}")
             in_image = False
             continue
 
-        updated.append(line)
+        result.append(line)
 
-    return "\n".join(updated) + "\n"
+    return "\n".join(result) + "\n"
 
 
-def maybe_sync_argocd(payload: DeploymentPayload, app_name: str) -> None:
-    if payload.argocd_server == "" or payload.argocd_auth_token == "":
+def sync_argocd(payload: DeploymentPayload, app_name: str):
+    if not payload.argocd_server or not payload.argocd_auth_token:
         return
 
-    base_cmd = [
-        "argocd",
-        "--server",
-        payload.argocd_server,
-        "--auth-token",
-        payload.argocd_auth_token,
-    ]
+    server = normalize_url(payload.argocd_server)
 
-    if payload.argocd_insecure:
-        base_cmd.append("--insecure")
+    url = f"{server}/api/v1/applications/{app_name}/sync"
 
-    refresh_cmd = base_cmd + ["app", "get", app_name, "--refresh"]
-    sync_cmd = base_cmd + ["app", "sync", app_name]
+    headers = {
+        "Authorization": f"Bearer {payload.argocd_auth_token}",
+        "Content-Type": "application/json",
+    }
+
+    body = {"revision": payload.gitops_branch}
+
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(body).encode(),
+        headers=headers,
+        method="POST",
+    )
 
     try:
-        subprocess.run(
-            refresh_cmd,
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=60,
-        )
-
-        sync_proc = subprocess.run(
-            sync_cmd,
-            capture_output=True,
-            text=True,
-            check=False,
-            timeout=300,
-        )
-
-        if sync_proc.returncode != 0:
-            stderr = (sync_proc.stderr or "").strip()
-            stdout = (sync_proc.stdout or "").strip()
-            raise RuntimeError(
-                f"argocd app sync failed for app={app_name!r}; "
-                f"stdout={stdout}; stderr={stderr}"
-            )
-
-    except subprocess.TimeoutExpired as exc:
-        raise RuntimeError(f"argocd command timed out for app={app_name!r}") from exc
-    except FileNotFoundError as exc:
-        raise RuntimeError(
-            "argocd CLI not found. Ensure it is installed in the plugin runtime/container."
-        ) from exc
+        urllib.request.urlopen(req)
+    except urllib.error.HTTPError as e:
+        log(f"ArgoCD sync failed (ignored): {e.read().decode()}")
 
 
-def run() -> None:
-    schema = load_schema()
-    payload_dict = parse_payload(schema)
+def run():
+    schema = json.loads(SCHEMA_PATH.read_text())
+    payload_dict = read_payload(required_fields=schema.get("required", []))
     payload = DeploymentPayload.from_dict(payload_dict)
 
-    values_path = resolve_values_path(payload)
+    values_path = f"{payload.gitops_base_path}/{payload.environment}/{payload.service}.yaml"
+
     scm_file = get_file(payload, values_path)
+    if not scm_file:
+        fail(f"values file not found: {values_path}")
 
-    sha = str(scm_file.get("sha", "")).strip()
-    content = str(scm_file.get("content", "")).strip()
+    sha = scm_file.get("sha")
+    content = scm_file.get("content")
 
-    if sha == "" or content == "":
-        fail("invalid gitops file response: missing sha or content")
+    if not sha or not content:
+        fail("invalid gitops file response")
 
-    decoded_yaml = decode_content(content)
-    updated_yaml = update_image_tag_in_yaml(decoded_yaml, payload.version)
-    encoded_yaml = encode_content(updated_yaml)
+    decoded = decode_content(content)
+    updated = update_image_tag(decoded, payload.version)
+    encoded = encode_content(updated)
 
-    commit_message = build_commit_message(payload)
-    update_result = update_file(payload, values_path, sha, encoded_yaml, commit_message)
+    commit_message = f"deploy {payload.service}:{payload.version}"
 
-    commit_sha = str(update_result.get("commit", {}).get("sha", "")).strip()
-    external_ref = f"{payload.service}-{payload.environment}"
+    result = update_file(payload, values_path, sha, encoded, commit_message)
 
-    maybe_sync_argocd(payload, external_ref)
+    commit_sha = result.get("commit", {}).get("sha", "")
+    app_name = f"{payload.service}-{payload.environment}"
+
+    sync_argocd(payload, app_name)
 
     success(
         {
-            "external_ref": external_ref,
+            "external_ref": app_name,
             "commit_sha": commit_sha,
             "finished_at": datetime.now(timezone.utc).isoformat(),
         }

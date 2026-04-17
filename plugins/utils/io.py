@@ -58,3 +58,12 @@ def read_int(payload: dict[str, Any], key: str, default: int, min_value: int, ma
     if value < min_value or value > max_value:
         fail(f"{key} must be between {min_value} and {max_value}")
     return value
+
+def read_port(payload, properties):
+    return read_int(
+        payload,
+        "port",
+        default=properties.get("port", {}).get("default", 8080),
+        min_value=1,
+        max_value=65535,
+    )

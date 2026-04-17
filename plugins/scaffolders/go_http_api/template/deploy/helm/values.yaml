@@ -1,3 +1,9 @@
+appName: "[[ SERVICE_NAME ]]" 
+appEnvironment: "[[ ENVIRONMENT ]]" 
+appRepoURL: "[[ REPO_URL ]]"
+appTargetRevision: "[[ TARGET_REVISION ]]"
+appNamespace: "[[ NAMESPACE ]]"
+appProject: "[[ ARGOCD_PROJECT ]]"
 nameOverride: "[[ SERVICE_NAME ]]"
 fullnameOverride: "[[ SERVICE_NAME ]]"
 
