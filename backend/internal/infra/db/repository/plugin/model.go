@@ -15,15 +15,24 @@ func (c *Plugin) ToEntity() *entity.Plugin {
 	if err != nil {
 		return nil
 	}
+	pluginScope, err := new(entity.PluginScope).Parse(c.Scope)
+	if err != nil {
+		return nil
+	}
+	pluginRuntime, err := new(entity.PluginRuntime).Parse(c.Runtime)
+	if err != nil {
+		return nil
+	}
 
 	return &entity.Plugin{
 		ID:          c.ID,
 		Name:        c.Name,
 		Version:     c.Version,
 		Type:        pluginType,
+		Runtime:     pluginRuntime,
 		Entrypoint:  c.Entrypoint,
 		Enabled:     c.Enabled,
-		Scope:       c.Scope,
+		Scope:       pluginScope,
 		Description: misc.GetValue(c.Description),
 		InstalledAt: c.InstalledAt,
 	}

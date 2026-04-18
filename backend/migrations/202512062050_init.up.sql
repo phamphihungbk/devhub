@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS plugins (
     name VARCHAR(255) NOT NULL,
     version VARCHAR(64) NOT NULL,
     type VARCHAR(16) NOT NULL,
+    runtime VARCHAR(16) NOT NULL, -- python, go, node
     entrypoint TEXT NOT NULL,
     enabled BOOLEAN NOT NULL DEFAULT true,
     scope VARCHAR(16) NOT NULL, -- global, project, environment

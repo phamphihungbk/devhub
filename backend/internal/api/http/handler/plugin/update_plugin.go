@@ -16,6 +16,7 @@ type updatePluginRequest struct {
 	Description *string `json:"description" example:"Plugin Description"`
 	Type        *string `json:"type" example:"scaffolder"`
 	Version     *string `json:"version" example:"1.0.0"`
+	Runtime     *string `json:"runtime" example:"python"`
 	Entrypoint  *string `json:"entrypoint" example:"/app/plugins/scaffolders/go_http_api/action.py"`
 	Scope       *string `json:"scope" example:"global"`
 	Enabled     *bool   `json:"enabled" example:"true"`
@@ -26,6 +27,7 @@ type updatePluginResponse struct {
 	Name        string `json:"name" example:"Plugin Name"`
 	Type        string `json:"type" example:"scaffolder"`
 	Version     string `json:"version" example:"1.0.0"`
+	Runtime     string `json:"runtime" example:"python"`
 	Entrypoint  string `json:"entrypoint" example:"/app/plugins/scaffolders/go_http_api/action.py"`
 	Enabled     bool   `json:"enabled" example:"true"`
 	Scope       string `json:"scope" example:"global"`
@@ -57,6 +59,7 @@ func (h *pluginHandler) UpdatePlugin(c *gin.Context) {
 		Name:        input.Name,
 		Version:     input.Version,
 		Type:        input.Type,
+		Runtime:     input.Runtime,
 		Description: input.Description,
 		Entrypoint:  input.Entrypoint,
 		Scope:       input.Scope,
@@ -82,8 +85,9 @@ func (h *pluginHandler) newUpdatePluginResponse(plugin *entity.Plugin) updatePlu
 		Description: plugin.Description,
 		Version:     plugin.Version,
 		Type:        plugin.Type.String(),
+		Runtime:     plugin.Runtime.String(),
 		Entrypoint:  plugin.Entrypoint,
 		Enabled:     plugin.Enabled,
-		Scope:       plugin.Scope,
+		Scope:       plugin.Scope.String(),
 	}
 }

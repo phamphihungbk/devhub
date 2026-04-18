@@ -17,6 +17,7 @@ type Plugins struct {
 	Name        string    `db:"plugins.name"`
 	Version     string    `db:"plugins.version"`
 	Type        string    `db:"plugins.type"`
+	Runtime     string    `db:"plugins.runtime"`
 	Entrypoint  string    `db:"plugins.entrypoint"`
 	Enabled     bool      `db:"plugins.enabled"`
 	Scope       string    `db:"plugins.scope"`

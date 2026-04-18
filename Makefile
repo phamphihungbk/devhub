@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 .PHONY: help bootstrap generate-dev-cert setup-local-https dev dev-ui build build-ui down restart logs logs-worker logs-runner ps shell \
-	worker-up worker-down runner-up runner-down migrate migrate-down generate sync-worker create-plugin config prod-config argocd-ui argocd-token
+	worker-up worker-down runner-up runner-down migrate migrate-down generate sync-worker plugin-scan create-plugin config prod-config argocd-ui argocd-token
 
 CORE_SERVICES := backend worker nginx db redis gitea gitea-runner
 
@@ -74,6 +74,9 @@ generate: ## Run backend DB code generation
 
 sync-worker: ## Run the backend async worker process in a one-off worker container
 	@./scripts/sync-worker.sh
+
+plugin-scan: ## Scan plugin manifests and upsert them into the plugins table
+	@./scripts/plugin-scan.sh $(ARGS)
 
 argocd-ui: ## Install/apply Argo CD resources if needed, then port-forward the UI
 	@./scripts/argocd.sh all
