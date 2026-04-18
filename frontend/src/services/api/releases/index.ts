@@ -1,5 +1,5 @@
 import { api } from '@/services/request'
-import { apiBaseURL } from '..'
+import { apiBaseURL } from '../constants'
 import type { CreateReleasePayload, Release } from './types'
 
 export function createRelease(projectId: string, payload: CreateReleasePayload) {

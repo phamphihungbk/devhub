@@ -1,16 +1,8 @@
-export const apiBaseURL = {
-  auth: '/auth',
-  users: '/users',
-  projects: '/projects',
-  plugins: '/plugins',
-  deployments: '/deployments',
-  scaffoldRequests: '/scaffold-requests',
-} as const
-
-export * from './auth'
-export * from './deployments'
-export * from './plugins'
-export * from './projects'
-export * from './releases'
-export * from './scaffold-requests'
-export * from './users'
+export * from './auth/index'
+export * from './deployments/index'
+export * from './plugins/index'
+export * from './projects/index'
+export * from './releases/index'
+export * from './scaffold-requests/index'
+export * from './users/index'
+export * from './constants'

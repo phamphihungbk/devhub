@@ -1,5 +1,5 @@
 import { api } from '@/services/request'
-import { apiBaseURL } from '..'
+import { apiBaseURL } from '../constants'
 import type { PluginListQuery, PluginPayload, PluginRecord, UpdatePluginPayload } from './types'
 
 const baseURL = `${apiBaseURL.plugins}/`
