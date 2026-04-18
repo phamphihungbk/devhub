@@ -31,6 +31,7 @@ VERSION="0.1.0"
 DESCRIPTION=""
 LANGUAGE="python"
 FORCE="0"
+ENTRYPOINT_FILE="run.py"
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -101,19 +102,6 @@ case "$SCOPE" in
     ;;
 esac
 
-case "$LANGUAGE" in
-  python)
-    ENTRYPOINT_FILE="action.py"
-    ;;
-  shell)
-    ENTRYPOINT_FILE="run.sh"
-    ;;
-  *)
-    echo "Invalid --language: $LANGUAGE" >&2
-    exit 1
-    ;;
-esac
-
 SLUG="$(printf '%s' "$NAME" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' )"
 PLUGIN_DIR="${ROOT_DIR}/plugins/${TYPE_DIR}/${SLUG}"
 ENTRYPOINT_PATH="/app/plugins/${TYPE_DIR}/${SLUG}/${ENTRYPOINT_FILE}"
@@ -143,7 +131,7 @@ cat > "${PLUGIN_DIR}/schema.json" <<EOF
 EOF
 
 if [ "$LANGUAGE" = "python" ]; then
-  cat > "${PLUGIN_DIR}/action.py" <<EOF
+  cat > "${PLUGIN_DIR}/${ENTRYPOINT_FILE}" <<EOF
 import json
 import sys
 
