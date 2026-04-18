@@ -15,6 +15,7 @@ type createPluginRequest struct {
 	Name        string `json:"name" example:"Plugin Name" binding:"required"`
 	Version     string `json:"version" example:"1.0.0" binding:"required"`
 	Type        string `json:"type" example:"scaffolder" binding:"required"`
+	Runtime     string `json:"runtime" example:"python" binding:"required"`
 	Entrypoint  string `json:"entrypoint" example:"/app/plugins/scaffolders/go_http_api/action.py" binding:"required"`
 	Scope       string `json:"scope" example:"global" binding:"required"`
 	Description string `json:"description" example:"Plugin Description" binding:"required"`
@@ -26,6 +27,7 @@ type createPluginResponse struct {
 	Name        string `json:"name" example:"Plugin Name"`
 	Version     string `json:"version" example:"1.0.0"`
 	Type        string `json:"type" example:"scaffolder"`
+	Runtime     string `json:"runtime" example:"python"`
 	Entrypoint  string `json:"entrypoint" example:"/app/plugins/scaffolders/go_http_api/action.py"`
 	Enabled     bool   `json:"enabled" example:"true"`
 	Scope       string `json:"scope" example:"global"`
@@ -55,6 +57,7 @@ func (h *pluginHandler) CreatePlugin(c *gin.Context) {
 		Name:        input.Name,
 		Version:     input.Version,
 		Type:        input.Type,
+		Runtime:     input.Runtime,
 		Entrypoint:  input.Entrypoint,
 		Scope:       input.Scope,
 		Description: input.Description,
@@ -79,9 +82,10 @@ func (h *pluginHandler) newCreatePluginResponse(plugin *entity.Plugin) createPlu
 		Version:     plugin.Version,
 		Name:        plugin.Name,
 		Type:        plugin.Type.String(),
+		Runtime:     plugin.Runtime.String(),
 		Entrypoint:  plugin.Entrypoint,
 		Enabled:     plugin.Enabled,
-		Scope:       plugin.Scope,
+		Scope:       plugin.Scope.String(),
 		Description: plugin.Description,
 	}
 }

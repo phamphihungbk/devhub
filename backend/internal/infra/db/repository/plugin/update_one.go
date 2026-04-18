@@ -39,12 +39,16 @@ func (r *pluginRepositoryImpl) UpdateOne(ctx context.Context, input repository.U
 		updateModel.Version = misc.GetValue(input.Version)
 		columns = append(columns, pluginsTable.Version)
 	}
+	if input.Runtime != nil {
+		updateModel.Runtime = input.Runtime.String()
+		columns = append(columns, pluginsTable.Runtime)
+	}
 	if input.Entrypoint != nil {
 		updateModel.Entrypoint = misc.GetValue(input.Entrypoint)
 		columns = append(columns, pluginsTable.Entrypoint)
 	}
 	if input.Scope != nil {
-		updateModel.Scope = misc.GetValue(input.Scope)
+		updateModel.Scope = input.Scope.String()
 		columns = append(columns, pluginsTable.Scope)
 	}
 	if input.Enabled != nil {

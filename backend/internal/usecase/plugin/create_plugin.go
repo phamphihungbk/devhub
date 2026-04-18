@@ -13,7 +13,8 @@ import (
 type CreatePluginInput struct {
 	Name        string `json:"name" validate:"required,min=2,max=100"`
 	Version     string `json:"version" validate:"required"`
-	Type        string `json:"type" validate:"required,oneof=scaffolder runner"`
+	Type        string `json:"type" validate:"required,oneof=scaffolder deployer releaser runner"`
+	Runtime     string `json:"runtime" validate:"required,oneof=python go node"`
 	Entrypoint  string `json:"entrypoint" validate:"required,min=1,max=500"`
 	Scope       string `json:"scope" validate:"required,oneof=global project environment"`
 	Description string `json:"description" validate:"required,min=2,max=100"`
@@ -43,13 +44,22 @@ func (u *pluginUsecase) CreatePlugin(ctx context.Context, input CreatePluginInpu
 	if err != nil {
 		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid plugin type", nil))
 	}
+	pluginScope, err := new(entity.PluginScope).Parse(input.Scope)
+	if err != nil {
+		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid plugin scope", nil))
+	}
+	pluginRuntime, err := new(entity.PluginRuntime).Parse(input.Runtime)
+	if err != nil {
+		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid plugin runtime", nil))
+	}
 
 	plugin = &entity.Plugin{
 		Name:        input.Name,
 		Version:     input.Version,
 		Type:        pluginType,
+		Runtime:     pluginRuntime,
 		Entrypoint:  input.Entrypoint,
-		Scope:       input.Scope,
+		Scope:       pluginScope,
 		Description: input.Description,
 		Enabled: func() bool {
 			if input.Enabled == nil {

@@ -11,6 +11,7 @@ type PluginUsecase interface {
 	CreatePlugin(ctx context.Context, user CreatePluginInput) (*entity.Plugin, error)
 	FindOnePlugin(ctx context.Context, id FindOnePluginInput) (*entity.Plugin, error)
 	FindAllPlugins(ctx context.Context, input FindAllPluginsInput) (entity.Page[entity.Plugin], error)
+	SyncRegistry(ctx context.Context, input SyncRegistryInput) (SyncRegistryOutput, error)
 	UpdatePlugin(ctx context.Context, input UpdatePluginInput) (*entity.Plugin, error)
 	DeletePlugin(ctx context.Context, id DeletePluginInput) (*entity.Plugin, error)
 }

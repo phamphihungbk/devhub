@@ -187,6 +187,17 @@ Entrypoint:
 \`${ENTRYPOINT_PATH}\`
 EOF
 
+cat > "${PLUGIN_DIR}/plugin.yaml" <<EOF
+name: ${SLUG}
+type: ${TYPE}
+version: ${VERSION}
+description: ${DESCRIPTION:-${NAME}}
+scope: ${SCOPE}
+enabled: true
+runtime: ${LANGUAGE}
+entrypoint: ${ENTRYPOINT_FILE}
+EOF
+
 echo "Created plugin scaffold at:"
 echo "  ${PLUGIN_DIR}"
 echo
