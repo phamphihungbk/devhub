@@ -29,7 +29,6 @@ func (c *ScaffoldRequest) ToEntity() *entity.ScaffoldRequest {
 		PluginID:      c.PluginID,
 		ProjectID:     c.ProjectID,
 		RequestedBy:   c.RequestedBy,
-		Template:      c.Template,
 		Status:        status,
 		Environment:   env,
 		Variables:     variables,

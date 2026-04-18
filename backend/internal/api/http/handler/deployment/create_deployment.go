@@ -14,16 +14,14 @@ import (
 type createDeploymentRequest struct {
 	PluginID    string `json:"plugin_id" example:"123e4567-e89b-12d3-a456-426614174000" binding:"required"`
 	Environment string `json:"environment" example:"prod" binding:"required"`
-	Service     string `json:"service" example:"Service Name" binding:"required"`
 	Version     string `json:"version" example:"v1.0.0" binding:"required"`
 }
 
 type createDeploymentResponse struct {
 	ID          string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	ProjectID   string `json:"project_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ServiceID   string `json:"service_id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	PluginID    string `json:"plugin_id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	Environment string `json:"environment" example:"prod"`
-	Service     string `json:"service" example:"Service Name"`
 	Version     string `json:"version" example:"1.0.0"`
 	Status      string `json:"status" example:"Deployment Status"`
 	ExternalRef string `json:"external_ref" example:"argocd-sync-123"`
@@ -59,10 +57,9 @@ func (h *deploymentHandler) CreateDeployment(c *gin.Context) {
 	}
 
 	createdDeployment, err := h.deploymentUsecase.CreateDeployment(c.Request.Context(), deploymentUsecase.CreateDeploymentInput{
-		ProjectID:   projectID,
+		ServiceID:   projectID,
 		PluginID:    input.PluginID,
 		Environment: input.Environment,
-		Service:     input.Service,
 		Version:     input.Version,
 		TriggeredBy: userID.(string),
 	})
@@ -82,10 +79,9 @@ func (h *deploymentHandler) newCreateDeploymentResponse(deployment *entity.Deplo
 
 	return createDeploymentResponse{
 		ID:          deployment.ID.String(),
-		ProjectID:   deployment.ProjectID.String(),
+		ServiceID:   deployment.ServiceID.String(),
 		PluginID:    deployment.PluginID.String(),
 		Environment: deployment.Environment.String(),
-		Service:     deployment.Service,
 		Version:     deployment.Version,
 		Status:      deployment.Status.String(),
 		ExternalRef: deployment.ExternalRef,

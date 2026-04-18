@@ -94,7 +94,6 @@ async function submit() {
               attr-type="submit"
               block
               size="large"
-              :loading="pending"
               class="h-12 rounded-2xl text-sm font-700 shadow-[0_18px_32px_rgba(37,99,235,0.22)]"
             >
               Continue

@@ -14,7 +14,6 @@ type findOneScaffoldRequestResponse struct {
 	PluginID     string                          `json:"plugin_id" example:"72bd5b8f-54b3-442a-b54f-685643f6d46e"`
 	RequestedBy  string                          `json:"requested_by" example:"8bb6438e-b4a7-4945-9969-f446f7c26ca5"`
 	ProjectID    string                          `json:"project_id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Template     string                          `json:"template" example:"template-name"`
 	Status       string                          `json:"status" example:"pending"`
 	Environments string                          `json:"environments" example:"prod"`
 	Variables    entity.ScaffoldRequestVariables `json:"variables" example:"key=value"`
@@ -53,7 +52,6 @@ func (h *scaffoldRequestHandler) newFindOneScaffoldRequestResponse(scaffoldReque
 		PluginID:     scaffoldRequest.PluginID.String(),
 		RequestedBy:  scaffoldRequest.RequestedBy.String(),
 		ProjectID:    scaffoldRequest.ProjectID.String(),
-		Template:     scaffoldRequest.Template,
 		Status:       scaffoldRequest.Status.String(),
 		Environments: scaffoldRequest.Environment.String(),
 		Variables:    scaffoldRequest.Variables,

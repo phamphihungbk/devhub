@@ -1,31 +1,69 @@
 {
   "type": "object",
-  "required": ["service_name", "repo_url"],
+  "required": [
+    "service_name",
+    "project_id",
+    "repo_url",
+    "environment",
+    "namespace",
+    "target_revision",
+    "argocd_project",
+    "registry_url",
+    "server_url",
+    "module_path",
+    "port",
+    "image"
+  ],
   "properties": {
     "service_name": {
       "type": "string",
       "pattern": "^[a-z0-9][a-z0-9-]*$",
       "description": "Kebab-case service name."
     },
-    "output_dir": {
+    "project_id": {
       "type": "string",
-      "minLength": 1,
-      "description": "Optional base directory for generated files. Defaults to /app/generated/<project_id>."
+      "minLength": 1
+    },
+    "repo_url": {
+      "type": "string",
+      "minLength": 1
+    },
+    "environment": {
+      "type": "string",
+      "minLength": 1
+    },
+    "namespace": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_revision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "argocd_project": {
+      "type": "string",
+      "minLength": 1
+    },
+    "registry_url": {
+      "type": "string",
+      "minLength": 1
+    },
+    "server_url": {
+      "type": "string",
+      "minLength": 1
     },
     "module_path": {
       "type": "string",
-      "default": "github.com/acme"
+      "minLength": 1
     },
     "port": {
       "type": "integer",
       "minimum": 1,
-      "maximum": 65535,
-      "default": 8080
+      "maximum": 65535
     },
-    "repo_url": {
+    "image": {
       "type": "string",
-      "minLength": 1,
-      "description": "Required output repo URL returned by the scaffolder."
+      "minLength": 1
     }
   },
   "additionalProperties": true

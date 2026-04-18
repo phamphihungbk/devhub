@@ -1,6 +1,6 @@
 export interface Release {
   id: string
-  project_id: string
+  service_id: string
   plugin_id: string
   tag: string
   target: string

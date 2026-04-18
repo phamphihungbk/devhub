@@ -22,10 +22,9 @@ type FindAllDeploymentsQuery struct {
 
 type findAllDeploymentsResponse struct {
 	ID          string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	ProjectID   string `json:"project_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ServiceID   string `json:"service_id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	PluginID    string `json:"plugin_id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	Environment string `json:"environment" example:"prod"`
-	Service     string `json:"service" example:"Service Name"`
 	Version     string `json:"version" example:"1.0.0"`
 	Status      string `json:"status" example:"Deployment Status"`
 	TriggeredBy string `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000"`
@@ -79,7 +78,7 @@ func (h *deploymentHandler) FindAllDeployments(c *gin.Context) {
 	}
 
 	deployments, err := h.deploymentUsecase.FindAllDeployments(c.Request.Context(), deploymentUsecase.FindAllDeploymentsInput{
-		ProjectID: projectID,
+		ServiceID: projectID,
 		StartDate: query.StartDate,
 		EndDate:   query.EndDate,
 		Limit:     limit,
@@ -104,10 +103,9 @@ func (h *deploymentHandler) newFindAllDeploymentsResponse(deployments entity.Dep
 	for _, deployment := range deployments {
 		response = append(response, findAllDeploymentsResponse{
 			ID:          deployment.ID.String(),
-			ProjectID:   deployment.ProjectID.String(),
+			ServiceID:   deployment.ServiceID.String(),
 			PluginID:    deployment.PluginID.String(),
 			Environment: deployment.Environment.String(),
-			Service:     deployment.Service,
 			Version:     deployment.Version,
 			Status:      deployment.Status.String(),
 			TriggeredBy: deployment.TriggeredBy.String(),

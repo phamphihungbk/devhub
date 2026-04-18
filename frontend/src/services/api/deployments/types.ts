@@ -12,7 +12,6 @@ export interface Deployment {
   project_id: string
   plugin_id: string
   environment: string
-  service: string
   version: string
   status: string
   external_ref?: string
@@ -24,13 +23,11 @@ export interface Deployment {
 export interface CreateDeploymentPayload {
   plugin_id: string
   environment: string
-  service: string
   version: string
 }
 
 export interface UpdateDeploymentPayload {
   environment?: string
-  service?: string
   version?: string
   status?: string
   external_ref?: string

@@ -60,10 +60,6 @@ func (e *PythonDeploymentExecutor) Execute(
 		return DeploymentExecutionResult{}, errors.New("plugin repository is required")
 	}
 
-	if e.projectRepository == nil {
-		return DeploymentExecutionResult{}, errors.New("project repository is required")
-	}
-
 	plugin, err := e.pluginRepository.FindOne(ctx, job.PluginID)
 	if err != nil {
 		if !errors.As(err, &errs.NotFoundError{}) {
@@ -73,21 +69,6 @@ func (e *PythonDeploymentExecutor) Execute(
 			)
 		}
 		return DeploymentExecutionResult{}, err
-	}
-
-	project, err := e.projectRepository.FindOne(ctx, job.ProjectID)
-	if err != nil {
-		if !errors.As(err, &errs.NotFoundError{}) {
-			return DeploymentExecutionResult{}, misc.WrapError(
-				err,
-				errs.NewInternalServerError("failed to find project by ID", nil),
-			)
-		}
-		return DeploymentExecutionResult{}, err
-	}
-
-	if project == nil {
-		return DeploymentExecutionResult{}, errors.New("project is required")
 	}
 
 	if e.cfg == nil {
@@ -107,13 +88,10 @@ func (e *PythonDeploymentExecutor) Execute(
 
 	payload := map[string]any{
 		"deployment_id":     job.ID.String(),
-		"project_id":        job.ProjectID.String(),
+		"service_id":        job.ServiceID.String(),
 		"plugin_id":         job.PluginID.String(),
-		"service":           job.Service,
 		"environment":       job.Environment,
 		"version":           job.Version,
-		"project_name":      project.Name,
-		"repo_url":          project.RepoURL,
 		"scm_api_url":       strings.TrimSpace(e.cfg.ScmConfig.APIURL),
 		"scm_token":         strings.TrimSpace(e.cfg.ScmConfig.Token),
 		"gitops_repo_owner": strings.TrimSpace(e.cfg.Gitops.RepoOwner),
@@ -198,7 +176,7 @@ func (e *PythonDeploymentExecutor) Execute(
 	}
 
 	if result.ExternalRef == "" {
-		result.ExternalRef = fmt.Sprintf("%s-%s", job.Service, job.Environment)
+		result.ExternalRef = fmt.Sprintf("%s-%s", job.ServiceID.String(), job.Environment)
 	}
 
 	return result, nil

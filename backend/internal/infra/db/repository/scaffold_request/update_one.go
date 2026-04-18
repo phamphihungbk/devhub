@@ -36,10 +36,6 @@ func (r *scaffoldRequestRepositoryImpl) UpdateOne(ctx context.Context, input rep
 		updateModel.RequestedBy = *input.RequestedBy
 		columns = append(columns, scaffoldRequestsTable.RequestedBy)
 	}
-	if input.Template != nil {
-		updateModel.Template = *input.Template
-		columns = append(columns, scaffoldRequestsTable.Template)
-	}
 	if input.Status != nil {
 		updateModel.Status = input.Status.String()
 		columns = append(columns, scaffoldRequestsTable.Status)

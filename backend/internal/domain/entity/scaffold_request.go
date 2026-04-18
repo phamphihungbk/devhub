@@ -86,7 +86,6 @@ type ScaffoldRequest struct {
 	PluginID      uuid.UUID
 	ProjectID     uuid.UUID
 	RequestedBy   uuid.UUID
-	Template      string
 	Status        ScaffoldRequestStatus
 	Environment   ProjectEnvironment
 	Variables     ScaffoldRequestVariables

@@ -127,10 +127,10 @@ type Project struct {
 	Environments []ProjectEnvironment
 	Status       ProjectStatus
 	OwnerTeam    string
-	RepoURL      string
-	RepoProvider string
+	ScmProvider  string
 	OwnerContact string
 	CreatedBy    uuid.UUID
+	CreatedByName string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    time.Time

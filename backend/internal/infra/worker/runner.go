@@ -31,6 +31,7 @@ type Dependencies struct {
 	scaffoldRequestRepository repository.ScaffoldRequestRepository
 	deploymentRepository      repository.DeploymentRepository
 	releaseRepository         repository.ReleaseRepository
+	serviceRepository         repository.ServiceRepository
 }
 
 func NewDependencies(
@@ -41,6 +42,7 @@ func NewDependencies(
 	scaffoldRequestRepository repository.ScaffoldRequestRepository,
 	deploymentRepository repository.DeploymentRepository,
 	releaseRepository repository.ReleaseRepository,
+	serviceRepository repository.ServiceRepository,
 ) *Dependencies {
 	return &Dependencies{
 		cfg:                       cfg,
@@ -50,6 +52,7 @@ func NewDependencies(
 		scaffoldRequestRepository: scaffoldRequestRepository,
 		deploymentRepository:      deploymentRepository,
 		releaseRepository:         releaseRepository,
+		serviceRepository:         serviceRepository,
 	}
 }
 
@@ -121,9 +124,11 @@ func buildScaffoldRunner(deps *Dependencies, observer Observability, cfg Factory
 
 	return scaffold.NewScaffoldPollingRunner(
 		observer,
+		deps.cfg,
 		deps.pluginRepository,
 		deps.projectRepository,
 		deps.scaffoldRequestRepository,
+		deps.serviceRepository,
 		cfg.PollDelay,
 	)
 }
@@ -151,7 +156,6 @@ func buildReleaseRunner(deps *Dependencies, observer Observability, cfg FactoryC
 	return release.NewReleasePollingRunner(
 		observer,
 		deps.pluginRepository,
-		deps.projectRepository,
 		deps.releaseRepository,
 		cfg.PollDelay,
 	)

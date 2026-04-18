@@ -20,8 +20,7 @@ type Projects struct {
 	Environments pq.StringArray `db:"projects.environments"`
 	Status       string         `db:"projects.status"`
 	OwnerTeam    string         `db:"projects.owner_team"`
-	RepoURL      string         `db:"projects.repo_url"`
-	RepoProvider string         `db:"projects.repo_provider"`
+	ScmProvider  string         `db:"projects.scm_provider"`
 	OwnerContact string         `db:"projects.owner_contact"`
 	CreatedBy    uuid.UUID      `db:"projects.created_by"`
 	CreatedAt    time.Time      `db:"projects.created_at"`

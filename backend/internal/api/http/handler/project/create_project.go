@@ -17,8 +17,7 @@ type createProjectRequest struct {
 	Environments []string `json:"environments" example:"[dev, prod, staging]" binding:"required"`
 	Status       string   `json:"status" example:"active" binding:"required"`
 	OwnerTeam    string   `json:"owner_team" example:"platform" binding:"required"`
-	RepoURL      string   `json:"repo_url" example:"https://git.example.com/acme/project.git" binding:"required"`
-	RepoProvider string   `json:"repo_provider" example:"gitea" binding:"required"`
+	ScmProvider  string   `json:"scm_provider" example:"gitea" binding:"required"`
 	OwnerContact string   `json:"owner_contact" example:"team@example.com" binding:"required"`
 }
 
@@ -29,8 +28,7 @@ type createProjectResponse struct {
 	Environments []string `json:"environments" example:"[dev, prod, staging]"`
 	Status       string   `json:"status" example:"active"`
 	OwnerTeam    string   `json:"owner_team" example:"platform"`
-	RepoURL      string   `json:"repo_url" example:"https://git.example.com/acme/project.git"`
-	RepoProvider string   `json:"repo_provider" example:"gitea"`
+	ScmProvider  string   `json:"scm_provider" example:"gitea"`
 	OwnerContact string   `json:"owner_contact" example:"team@example.com"`
 	CreatedBy    string   `json:"created_by" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
@@ -67,8 +65,7 @@ func (h *projectHandler) CreateProject(c *gin.Context) {
 		Environments: input.Environments,
 		Status:       input.Status,
 		OwnerTeam:    input.OwnerTeam,
-		RepoURL:      input.RepoURL,
-		RepoProvider: input.RepoProvider,
+		ScmProvider:  input.ScmProvider,
 		OwnerContact: input.OwnerContact,
 		CreatedBy:    userID.(string),
 	})
@@ -98,8 +95,7 @@ func (h *projectHandler) newCreateProjectResponse(project *entity.Project) creat
 		Environments: envs,
 		Status:       project.Status.String(),
 		OwnerTeam:    project.OwnerTeam,
-		RepoURL:      project.RepoURL,
-		RepoProvider: project.RepoProvider,
+		ScmProvider:  project.ScmProvider,
 		OwnerContact: project.OwnerContact,
 		CreatedBy:    project.CreatedBy.String(),
 	}

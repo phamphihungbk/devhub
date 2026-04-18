@@ -13,19 +13,16 @@ type ReleaseUsecase interface {
 
 type releaseUsecase struct {
 	appConfig         config.AppConfig
-	projectRepository repository.ProjectRepository
 	releaseRepository repository.ReleaseRepository
 }
 
 func NewReleaseUsecase(
 	appConfig config.AppConfig,
-	projectRepository repository.ProjectRepository,
 	releaseRepository repository.ReleaseRepository,
 ) ReleaseUsecase {
 
 	return &releaseUsecase{
 		appConfig:         appConfig,
-		projectRepository: projectRepository,
 		releaseRepository: releaseRepository,
 	}
 }

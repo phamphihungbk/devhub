@@ -1,35 +1,15 @@
 import os
 from dataclasses import dataclass
 from typing import Any
-from scaffolders import (  # noqa: E402
-    infer_module_base_from_repo_url,
-    read_int,
-    read_optional_str,
-    read_required_str,
-    resolve_container_image,
-)
+
+from scaffolders import read_int, read_required_str  # noqa: E402
 
 
-def read_port(payload, properties):
-    return read_int(
-        payload,
-        "port",
-        default=properties.get("port", {}).get("default", 8080),
-        min_value=1,
-        max_value=65535,
-    )
+DEFAULT_GITOPS_BRANCH = "main"
+DEFAULT_GITOPS_BASE_PATH = "envs"
+DEFAULT_GITOPS_COMMIT_USER_NAME = "devhub-bot"
+DEFAULT_GITOPS_COMMIT_USER_EMAIL = "devhub-bot@local"
 
-
-def read_module_base(payload, properties):
-    explicit = read_optional_str(payload, "module_path")
-    if explicit:
-        return explicit
-
-    inferred = infer_module_base_from_repo_url(read_optional_str(payload, "repo_url"))
-    if inferred:
-        return inferred
-
-    return properties.get("module_path", {}).get("default", "github.com/acme")
 
 @dataclass(frozen=True)
 class ScaffoldPayload:
@@ -47,11 +27,9 @@ class ScaffoldPayload:
     image: str
 
     @classmethod
-    def from_dict(cls, payload: dict[str, Any], properties: dict[str, Any]):
-        service_name = read_required_str(payload, "service_name")
-
+    def from_dict(cls, payload: dict[str, Any], _properties: dict[str, Any]):
         return cls(
-            service_name=service_name,
+            service_name=read_required_str(payload, "service_name"),
             project_id=read_required_str(payload, "project_id"),
             repo_url=read_required_str(payload, "repo_url"),
             environment=read_required_str(payload, "environment"),
@@ -60,11 +38,11 @@ class ScaffoldPayload:
             argocd_project=read_required_str(payload, "argocd_project"),
             registry_url=read_required_str(payload, "registry_url"),
             server_url=read_required_str(payload, "server_url"),
-            module_path=read_module_base(payload, properties),
-            port=read_port(payload, properties),
-            image=resolve_container_image(payload, service_name),
+            module_path=read_required_str(payload, "module_path"),
+            port=read_int(payload, "port", default=0, min_value=1, max_value=65535),
+            image=read_required_str(payload, "image"),
         )
-    
+
     def to_output_payload(self):
         return {
             "service_name": self.service_name,
@@ -108,8 +86,10 @@ class GitOpsConfig:
             token=token,
             owner=owner,
             repo_name=repo_name,
-            branch=os.getenv("GITOPS_BRANCH", DEFAULT_GITOPS_BRANCH),
+            branch=os.getenv("GITOPS_BRANCH", DEFAULT_GITOPS_BRANCH).strip() or DEFAULT_GITOPS_BRANCH,
             base_path=os.getenv("GITOPS_BASE_PATH", DEFAULT_GITOPS_BASE_PATH).strip("/"),
-            author_name=os.getenv("GITOPS_COMMIT_USER_NAME", DEFAULT_GITOPS_COMMIT_USER_NAME),
-            author_email=os.getenv("GITOPS_COMMIT_USER_EMAIL", DEFAULT_GITOPS_COMMIT_USER_EMAIL),
+            author_name=os.getenv("GITOPS_COMMIT_USER_NAME", DEFAULT_GITOPS_COMMIT_USER_NAME).strip()
+            or DEFAULT_GITOPS_COMMIT_USER_NAME,
+            author_email=os.getenv("GITOPS_COMMIT_USER_EMAIL", DEFAULT_GITOPS_COMMIT_USER_EMAIL).strip()
+            or DEFAULT_GITOPS_COMMIT_USER_EMAIL,
         )

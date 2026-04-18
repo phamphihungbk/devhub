@@ -16,6 +16,19 @@ const rows = ref<Project[]>([])
 const columns = [
   { title: 'Name', key: 'name' },
   {
+    title: 'Status',
+    key: 'status',
+    render: (row: Project) =>
+      h(
+        NTag,
+        {
+          bordered: false,
+          color: { color: '#dbeafe', textColor: '#1d4ed8' },
+        },
+        { default: () => row.status || 'Unknown' },
+      ),
+  },
+  {
     title: 'Environments',
     key: 'environments',
     render: (row: Project) =>
@@ -31,8 +44,25 @@ const columns = [
         ),
       ),
   },
+  { title: 'Owner Team', key: 'owner_team', render: (row: Project) => row.owner_team || 'Not set' },
+  { title: 'SCM Provider', key: 'scm_provider', render: (row: Project) => row.scm_provider || 'Not set' },
+  { title: 'Owner Contact', key: 'owner_contact', render: (row: Project) => row.owner_contact || 'Not set' },
   { title: 'Description', key: 'description' },
   { title: 'Created By', key: 'created_by' },
+  {
+    title: 'Actions',
+    key: 'actions',
+    render: (row: Project) =>
+      h(
+        NButton,
+        {
+          size: 'small',
+          secondary: true,
+          onClick: () => router.push({ name: 'project-operations', params: { projectId: row.id } }),
+        },
+        { default: () => 'Manage ops' },
+      ),
+  },
 ]
 
 async function load() {

@@ -14,8 +14,7 @@ export interface Project {
   environments: string[]
   status?: string
   owner_team?: string
-  repo_url?: string
-  repo_provider?: string
+  scm_provider?: string
   owner_contact?: string
   created_by: string
 }
@@ -26,8 +25,7 @@ export interface ProjectPayload {
   environments: string[]
   status: string
   owner_team: string
-  repo_url: string
-  repo_provider: string
+  scm_provider: string
   owner_contact: string
 }
 
@@ -37,7 +35,6 @@ export interface UpdateProjectPayload {
   environments?: string[]
   status?: string
   owner_team?: string
-  repo_url?: string
-  repo_provider?: string
+  scm_provider?: string
   owner_contact?: string
 }

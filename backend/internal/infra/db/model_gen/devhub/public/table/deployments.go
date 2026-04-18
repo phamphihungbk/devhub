@@ -18,10 +18,9 @@ type deploymentsTable struct {
 
 	// Columns
 	ID          postgres.ColumnString
-	ProjectID   postgres.ColumnString
+	ServiceID   postgres.ColumnString
 	PluginID    postgres.ColumnString
 	Environment postgres.ColumnString
-	Service     postgres.ColumnString
 	Version     postgres.ColumnString
 	Status      postgres.ColumnString
 	ExternalRef postgres.ColumnString
@@ -72,10 +71,9 @@ func newDeploymentsTable(schemaName, tableName, alias string) *DeploymentsTable 
 func newDeploymentsTableImpl(schemaName, tableName, alias string) deploymentsTable {
 	var (
 		IDColumn          = postgres.StringColumn("id")
-		ProjectIDColumn   = postgres.StringColumn("project_id")
+		ServiceIDColumn   = postgres.StringColumn("service_id")
 		PluginIDColumn    = postgres.StringColumn("plugin_id")
 		EnvironmentColumn = postgres.StringColumn("environment")
-		ServiceColumn     = postgres.StringColumn("service")
 		VersionColumn     = postgres.StringColumn("version")
 		StatusColumn      = postgres.StringColumn("status")
 		ExternalRefColumn = postgres.StringColumn("external_ref")
@@ -84,8 +82,8 @@ func newDeploymentsTableImpl(schemaName, tableName, alias string) deploymentsTab
 		CreatedAtColumn   = postgres.TimestampColumn("created_at")
 		UpdatedAtColumn   = postgres.TimestampColumn("updated_at")
 		FinishedAtColumn  = postgres.TimestampColumn("finished_at")
-		allColumns        = postgres.ColumnList{IDColumn, ProjectIDColumn, PluginIDColumn, EnvironmentColumn, ServiceColumn, VersionColumn, StatusColumn, ExternalRefColumn, CommitShaColumn, TriggeredByColumn, CreatedAtColumn, UpdatedAtColumn, FinishedAtColumn}
-		mutableColumns    = postgres.ColumnList{ProjectIDColumn, PluginIDColumn, EnvironmentColumn, ServiceColumn, VersionColumn, StatusColumn, ExternalRefColumn, CommitShaColumn, TriggeredByColumn, CreatedAtColumn, UpdatedAtColumn, FinishedAtColumn}
+		allColumns        = postgres.ColumnList{IDColumn, ServiceIDColumn, PluginIDColumn, EnvironmentColumn, VersionColumn, StatusColumn, ExternalRefColumn, CommitShaColumn, TriggeredByColumn, CreatedAtColumn, UpdatedAtColumn, FinishedAtColumn}
+		mutableColumns    = postgres.ColumnList{ServiceIDColumn, PluginIDColumn, EnvironmentColumn, VersionColumn, StatusColumn, ExternalRefColumn, CommitShaColumn, TriggeredByColumn, CreatedAtColumn, UpdatedAtColumn, FinishedAtColumn}
 		defaultColumns    = postgres.ColumnList{IDColumn, CreatedAtColumn, UpdatedAtColumn}
 	)
 
@@ -94,10 +92,9 @@ func newDeploymentsTableImpl(schemaName, tableName, alias string) deploymentsTab
 
 		//Columns
 		ID:          IDColumn,
-		ProjectID:   ProjectIDColumn,
+		ServiceID:   ServiceIDColumn,
 		PluginID:    PluginIDColumn,
 		Environment: EnvironmentColumn,
-		Service:     ServiceColumn,
 		Version:     VersionColumn,
 		Status:      StatusColumn,
 		ExternalRef: ExternalRefColumn,

@@ -17,27 +17,11 @@ from scaffolders import (  # noqa: E402
     scaffold_from_directory,
     split_container_image,
     success,
-    read_optional_str,
-    infer_module_base_from_repo_url,
 )
 
 SCHEMA_PATH = Path(__file__).with_name("schema.json")
 LOCAL_TEMPLATE_DIR = Path(__file__).with_name("template")
 VALUES_TEMPLATE_PATH = LOCAL_TEMPLATE_DIR / "deploy" / "helm" / "values.yaml"
-
-DEFAULT_ENVIRONMENT = "dev"
-DEFAULT_NAMESPACE = "devhub"
-DEFAULT_TARGET_REVISION = "main"
-DEFAULT_ARGOCD_PROJECT = "default"
-DEFAULT_SERVER_URL = "http://host.docker.internal:3000"
-DEFAULT_REGISTRY_URL = "host.docker.internal:5001"
-DEFAULT_HELM_SERVER_URL = "http://host.minikube.internal:3000"
-DEFAULT_HELM_REGISTRY_URL = "host.minikube.internal:5001"
-
-DEFAULT_GITOPS_BRANCH = "main"
-DEFAULT_GITOPS_BASE_PATH = "envs"
-DEFAULT_GITOPS_COMMIT_USER_NAME = "devhub-bot"
-DEFAULT_GITOPS_COMMIT_USER_EMAIL = "devhub-bot@local"
 
 class GitOpsClient:
     def __init__(self, config: GitOpsConfig):
@@ -145,7 +129,7 @@ def build_template_context(payload: ScaffoldPayload):
         "MODULE_PATH": normalize_module_path(payload.module_path, payload.service_name),
         "PORT": str(payload.port),
         "IMAGE": payload.image,
-        "IMAGE_REPOSITORY": f'payload.registry_url/{repo}',
+        "IMAGE_REPOSITORY": repo,
         "IMAGE_TAG": tag,
         "REPO_URL": payload.repo_url,
         "TARGET_REVISION": payload.target_revision,
@@ -185,18 +169,6 @@ def bootstrap_gitops(payload: ScaffoldPayload):
         content=content,
         message=f"bootstrap gitops values for {payload.service_name}",
     )
-
-
-def read_module_base(payload, properties):
-    explicit = read_optional_str(payload, "module_path")
-    if explicit:
-        return explicit
-
-    inferred = infer_module_base_from_repo_url(read_optional_str(payload, "repo_url"))
-    if inferred:
-        return inferred
-
-    return properties.get("module_path", {}).get("default", "github.com/acme")
 
 
 def run():

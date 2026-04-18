@@ -17,7 +17,6 @@ export interface ScaffoldRequestRecord {
   plugin_id: string
   requested_by: string
   project_id: string
-  template: string
   status: string
   environment?: string
   environments?: string
@@ -26,7 +25,6 @@ export interface ScaffoldRequestRecord {
 
 export interface CreateScaffoldRequestPayload {
   plugin_id: string
-  template: string
   environment: string
   variables: ScaffoldRequestVariables
 }

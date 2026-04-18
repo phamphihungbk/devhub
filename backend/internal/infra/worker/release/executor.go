@@ -21,7 +21,6 @@ type PythonReleaseExecutor struct {
 	PythonBin         string
 	Timeout           time.Duration
 	pluginRepository  repository.PluginRepository
-	projectRepository repository.ProjectRepository
 }
 
 type ReleaseExecutionResult struct {
@@ -34,12 +33,10 @@ var _ core.Executor[ReleaseJob, ReleaseExecutionResult] = (*ReleaseExecutorAdapt
 
 func NewPythonReleaseExecutor(
 	pluginRepository repository.PluginRepository,
-	projectRepository repository.ProjectRepository,
 ) *PythonReleaseExecutor {
 	return &PythonReleaseExecutor{
 		PythonBin:         "python3",
 		pluginRepository:  pluginRepository,
-		projectRepository: projectRepository,
 		Timeout:           10 * time.Minute,
 	}
 }
@@ -56,10 +53,6 @@ func (e *PythonReleaseExecutor) Execute(
 		return ReleaseExecutionResult{}, errors.New("plugin repository is required")
 	}
 
-	if e.projectRepository == nil {
-		return ReleaseExecutionResult{}, errors.New("project repository is required")
-	}
-
 	plugin, err := e.pluginRepository.FindOne(ctx, job.PluginID)
 	if err != nil {
 		if !errors.As(err, &errs.NotFoundError{}) {
@@ -69,21 +62,6 @@ func (e *PythonReleaseExecutor) Execute(
 			)
 		}
 		return ReleaseExecutionResult{}, err
-	}
-
-	project, err := e.projectRepository.FindOne(ctx, job.ProjectID)
-	if err != nil {
-		if !errors.As(err, &errs.NotFoundError{}) {
-			return ReleaseExecutionResult{}, misc.WrapError(
-				err,
-				errs.NewInternalServerError("failed to find project by ID", nil),
-			)
-		}
-		return ReleaseExecutionResult{}, err
-	}
-
-	if project == nil {
-		return ReleaseExecutionResult{}, errors.New("project is required")
 	}
 
 	scriptPath := strings.TrimSpace(plugin.Entrypoint)
@@ -99,14 +77,12 @@ func (e *PythonReleaseExecutor) Execute(
 
 	payload := map[string]any{
 		"release_id":    job.ID.String(),
-		"project_id":    job.ProjectID.String(),
+		"service_id":    job.ServiceID.String(),
 		"plugin_id":     job.PluginID.String(),
 		"tag":           job.Tag,
 		"target":        job.Target,
 		"name":          job.Name,
 		"notes":         job.Notes,
-		"project_name":  project.Name,
-		"repo_url":      project.RepoURL,
 	}
 
 	in := map[string]any{

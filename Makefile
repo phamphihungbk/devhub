@@ -1,9 +1,9 @@
 .DEFAULT_GOAL := help
 
 .PHONY: help bootstrap generate-dev-cert setup-local-https \
-	backend-up backend-down frontend-up frontend-down frontend-watch \
+	backend-up backend-down backend-watch frontend-up frontend-down frontend-watch \
 	build-backend build-frontend up down logs logs-worker logs-runner logs-frontend ps shell \
-	worker-up worker-down runner-up runner-down migrate migrate-down generate sync-worker plugin-scan create-plugin config prod-config argocd-ui argocd-token
+	worker-up worker-down runner-up runner-down migrate migrate-down migrate-force generate sync-worker plugin-scan create-plugin config prod-config argocd-ui argocd-token
 
 BACKEND_SERVICES := backend worker db redis gitea
 FRONTEND_SERVICES := frontend nginx
@@ -21,6 +21,9 @@ setup-local-https: ## Generate certs, update hosts, and trust local devhub/api c
 ##@ Development
 backend-up: ## Start backend services without UI or nginx
 	@./scripts/dev.sh up --build $(BACKEND_SERVICES)
+
+backend-watch: backend-up ## Start support services, then run the Go backend locally with Air hot reload
+	@./scripts/backend-watch.sh
 
 frontend-up: ## Start the UI stack; nginx will also bring up backend dependencies it needs
 	@COMPOSE_PROFILES=ui ./scripts/dev.sh up --build $(FRONTEND_SERVICES)
@@ -82,6 +85,9 @@ migrate: ## Run database migrations up
 
 migrate-down: ## Roll back one database migration
 	@./scripts/migrate.sh down
+
+migrate-force: ## Force-set migration version; defaults to -1, or pass VERSION=<n>
+	@FORCE_VERSION=$(if $(VERSION),$(VERSION),-1) ./scripts/migrate.sh
 
 generate: ## Run backend DB code generation
 	@./scripts/generate.sh

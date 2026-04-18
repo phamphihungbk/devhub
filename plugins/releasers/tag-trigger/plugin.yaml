@@ -1,4 +1,4 @@
-name: tag-trigger
+name: tag trigger
 type: releaser
 version: 1.0.0
 description: Create a release event from an incoming tag payload

@@ -18,7 +18,6 @@ import (
 type UpdateDeploymentInput struct {
 	ID          string  `json:"id" validate:"required,uuid"`
 	Environment *string `json:"environment" validate:"omitempty,oneof=dev staging prod"`
-	Service     *string `json:"service" validate:"omitempty,min=2,max=100"`
 	Version     *string `json:"version" validate:"omitempty,min=1,max=50"`
 	Status      *string `json:"status" validate:"omitempty,oneof=pending running completed failed rolled_back"`
 	ExternalRef *string `json:"external_ref" validate:"omitempty,max=255"`
@@ -58,7 +57,6 @@ func (u *deploymentUsecase) UpdateDeployment(ctx context.Context, input UpdateDe
 		ID:          uuid.MustParse(input.ID),
 		Environment: (*entity.ProjectEnvironment)(input.Environment),
 		Status:      (*entity.DeploymentStatus)(input.Status),
-		Service:     input.Service,
 		Version:     input.Version,
 		ExternalRef: input.ExternalRef,
 		CommitSHA:   input.CommitSHA,

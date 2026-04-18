@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"devhub-backend/internal/config"
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/domain/repository"
 	core "devhub-backend/internal/infra/worker/core"
@@ -39,12 +40,14 @@ func (a *ScaffoldExecutorAdapter) Execute(ctx context.Context, job *ScaffoldJob)
 
 func NewScaffoldPollingRunner(
 	observer core.Observability,
+	cfg *config.Config,
 	pluginRepository repository.PluginRepository,
 	projectRepository repository.ProjectRepository,
 	scaffoldRequestRepository repository.ScaffoldRequestRepository,
+	serviceRepository repository.ServiceRepository,
 	pollDelay time.Duration,
 ) (core.Runner, error) {
-	executor := NewPythonScaffoldExecutor(pluginRepository, projectRepository)
+	executor := NewPythonScaffoldExecutor(cfg, pluginRepository, projectRepository, serviceRepository)
 
 	// Compose the generic polling runner from queue, state, executor, and observability adapters.
 	return core.NewPollingRunner[ScaffoldJob, ScaffoldExecutionResult](

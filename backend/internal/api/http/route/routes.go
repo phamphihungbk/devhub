@@ -98,7 +98,11 @@ func (r *router) applyProjectRoutes(router *gin.Engine) {
 		projectRoute.GET("/:project", r.ProjectHandler.FindProjectByID)
 		projectRoute.DELETE("/:project", r.ProjectHandler.DeleteProject)
 		projectRoute.PATCH("/:project", r.ProjectHandler.UpdateProject)
-		projectRoute.POST("/:project/releases", r.Middleware.Auth(r.tokenCfg.Secret), r.ReleaseHandler.CreateRelease)
+	}
+
+	serviceRoute := router.Group("/services")
+	{
+		serviceRoute.POST("/:service/releases", r.Middleware.Auth(r.tokenCfg.Secret), r.ReleaseHandler.CreateRelease)
 	}
 }
 

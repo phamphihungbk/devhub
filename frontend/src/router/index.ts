@@ -68,6 +68,17 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'projects/:projectId/operations',
+        name: 'project-operations',
+        component: () => import('@/views/projects/operations.vue'),
+        meta: {
+          title: 'Project Operations',
+          icon: Document,
+          hideInMenu: true,
+          activeMenu: 'projects',
+        },
+      },
+      {
         path: 'plugins',
         name: 'plugins',
         component: () => import('@/views/plugins/index.vue'),

@@ -17,5 +17,6 @@ func UseSchema(schema string) {
 	Releases = Releases.FromSchema(schema)
 	ScaffoldRequests = ScaffoldRequests.FromSchema(schema)
 	SchemaMigrations = SchemaMigrations.FromSchema(schema)
+	Services = Services.FromSchema(schema)
 	Users = Users.FromSchema(schema)
 }
