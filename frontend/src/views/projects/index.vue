@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { NButton, NCard, NDataTable, NTag, useMessage } from 'naive-ui'
 import { h, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import PageHeader from '@/components/page-header.vue'
 import { fetchProjects } from '@/services/api'
@@ -8,6 +9,7 @@ import { ApiError } from '@/services/request'
 import type { Project } from '@/services/api'
 
 const message = useMessage()
+const router = useRouter()
 const loading = ref(false)
 const rows = ref<Project[]>([])
 
@@ -54,9 +56,14 @@ onMounted(load)
       title="Projects"
       description="The service catalog for the platform. Track ownership, deployment targets, and the spaces where scaffolding and lifecycle actions will land."
     >
-      <NButton type="primary" secondary @click="load">
-        Refresh
-      </NButton>
+      <div class="flex flex-wrap gap-3">
+        <NButton type="primary" @click="router.push({ name: 'project-create' })">
+          New project
+        </NButton>
+        <NButton type="primary" secondary @click="load">
+          Refresh
+        </NButton>
+      </div>
     </PageHeader>
 
     <NCard class="rounded-3xl border border-[var(--app-border)] shadow-[var(--app-shadow)]">

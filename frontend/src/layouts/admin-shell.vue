@@ -40,7 +40,9 @@ onMounted(async () => {
 
 const menuOptions = computed<MenuOption[]>(() =>
   router.getRoutes()
-    .filter((item) => item.meta.requiresAuth && item.name && item.meta.title)
+    .filter((item) => item.name && item.meta.title)
+    .filter((item) => !item.meta.guestOnly)
+    .filter((item) => !item.meta.hideInMenu)
     .filter((item) => item.path !== '/')
     .map((item) => ({
       key: item.name as string,
@@ -58,7 +60,7 @@ const breadcrumbItems = computed(() =>
     })),
 )
 
-const activeKey = computed(() => (route.name as string) || 'dashboard')
+const activeKey = computed(() => (route.meta.activeMenu as string) || (route.name as string) || 'dashboard')
 
 const userMenu = computed<MenuOption[]>(() => [
   {
