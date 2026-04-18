@@ -40,6 +40,9 @@ services:
     profiles: ["ui"]
     env_file:
       - .env
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+      VITE_APP_TITLE: ${VITE_APP_TITLE:-DevHub}
 
   nginx:
     image: devhub-nginx:local

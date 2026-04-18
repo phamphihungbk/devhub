@@ -1,9 +1,12 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap generate-dev-cert setup-local-https dev dev-ui build build-ui down restart logs logs-worker logs-runner ps shell \
+.PHONY: help bootstrap generate-dev-cert setup-local-https \
+	backend-up backend-down frontend-up frontend-down frontend-watch \
+	build-backend build-frontend up down logs logs-worker logs-runner logs-frontend ps shell \
 	worker-up worker-down runner-up runner-down migrate migrate-down generate sync-worker plugin-scan create-plugin config prod-config argocd-ui argocd-token
 
-CORE_SERVICES := backend worker nginx db redis gitea gitea-runner
+BACKEND_SERVICES := backend worker db redis gitea
+FRONTEND_SERVICES := frontend nginx
 
 ##@ Setup
 bootstrap: ## Create local env files for first run
@@ -16,30 +19,41 @@ setup-local-https: ## Generate certs, update hosts, and trust local devhub/api c
 	@./scripts/setup-local-https.sh $(if $(DOMAIN),$(DOMAIN),) $(if $(API_DOMAIN),$(API_DOMAIN),)
 
 ##@ Development
-dev: ## Start the dev stack without UI (backend, worker, db, redis, gitea)
-	@./scripts/dev.sh up --build $(CORE_SERVICES)
+backend-up: ## Start backend services without UI or nginx
+	@./scripts/dev.sh up --build $(BACKEND_SERVICES)
 
-dev-ui: ## Start the full dev stack including frontend and nginx
-	@COMPOSE_PROFILES=ui ./scripts/dev.sh up --build
+frontend-up: ## Start the UI stack; nginx will also bring up backend dependencies it needs
+	@COMPOSE_PROFILES=ui ./scripts/dev.sh up --build $(FRONTEND_SERVICES)
 
-build: ## Build the dev images without UI services
-	@./scripts/dev.sh build $(CORE_SERVICES)
+frontend-watch: frontend-up ## Start and follow the frontend dev stack (frontend + nginx) for UI work
+	@./scripts/frontend-watch.sh
 
-build-ui: ## Build the full dev stack including frontend and nginx
-	@COMPOSE_PROFILES=ui ./scripts/dev.sh build
+build-backend: ## Build backend-side dev images without UI services
+	@./scripts/dev.sh build $(BACKEND_SERVICES)
+
+build-frontend: ## Build only the frontend UI services
+	@COMPOSE_PROFILES=ui ./scripts/dev.sh build $(FRONTEND_SERVICES)
+
+up: ## Start full stack services
+	@./scripts/dev.sh up --build
 
 down: ## Stop and remove the dev stack
 	@./scripts/dev.sh down
 
-restart: ## Restart the dev stack
-	@./scripts/dev.sh down
-	@./scripts/dev.sh up --build $(CORE_SERVICES)
+backend-down: ## Stop backend services without touching the UI profile
+	@./scripts/dev.sh stop $(BACKEND_SERVICES)
+
+frontend-down: ## Stop the frontend and nginx services
+	@COMPOSE_PROFILES=ui ./scripts/dev.sh stop $(FRONTEND_SERVICES)
 
 logs: ## Follow logs for the dev stack
 	@./scripts/dev.sh logs -f
 
 logs-worker: ## Follow logs for the worker service
 	@./scripts/dev.sh logs -f worker
+
+logs-frontend: ## Follow logs for the frontend and nginx services
+	@COMPOSE_PROFILES=ui ./scripts/dev.sh logs -f frontend nginx
 
 logs-runner: ## Follow logs for the Gitea Actions runner
 	@COMPOSE_PROFILES=ci ./scripts/dev.sh logs -f gitea-runner
