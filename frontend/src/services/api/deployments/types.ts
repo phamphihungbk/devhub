@@ -9,7 +9,7 @@ export interface DeploymentListQuery {
 
 export interface Deployment {
   id: string
-  project_id: string
+  service_id: string
   plugin_id: string
   environment: string
   version: string

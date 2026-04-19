@@ -142,7 +142,7 @@ func buildDeploymentRunner(deps *Dependencies, observer Observability, cfg Facto
 		observer,
 		deps.cfg,
 		deps.pluginRepository,
-		deps.projectRepository,
+		deps.serviceRepository,
 		deps.deploymentRepository,
 		cfg.PollDelay,
 	)

@@ -122,7 +122,7 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 	}
 
 	repoURL, err := buildScaffoldRepoURL(
-		strings.TrimSpace(e.cfg.ScmConfig.ExternalURL),
+		strings.TrimSpace(e.cfg.ArgoCD.RepoBaseURL),
 		project.OwnerTeam,
 		job.Variables.ServiceName,
 		project.ScmProvider,
@@ -136,8 +136,7 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 		return ScaffoldExecutionResult{}, fmt.Errorf("infer module path from repo url: %w", err)
 	}
 
-	registryURL := defaultScaffoldRegistryURL(e.cfg)
-	image := buildScaffoldImage(registryURL, job.Variables.ServiceName)
+	image := buildScaffoldImage(e.cfg.ArgoCD.ImageRegistryURL, job.Variables.ServiceName)
 
 	scriptPath := strings.TrimSpace(plugin.Entrypoint)
 
@@ -163,8 +162,8 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 		Namespace:         strings.TrimSpace(e.cfg.ArgoCD.AppNamespace),
 		TargetRevision:    strings.TrimSpace(e.cfg.Gitops.Branch),
 		ArgocdProject:     strings.TrimSpace(e.cfg.ArgoCD.AppProject),
-		RegistryURL:       registryURL,
-		ServerURL:         strings.TrimSpace(e.cfg.ScmConfig.InternalURL),
+		RegistryURL:       strings.TrimSpace(e.cfg.ArgoCD.ImageRegistryHost),
+		ServerURL:         strings.TrimSpace(e.cfg.ArgoCD.RepoBaseURL),
 		ModulePath:        modulePath,
 		Image:             image,
 	}
@@ -281,19 +280,6 @@ func inferModuleBaseFromRepoURL(repoURL string) (string, error) {
 	}
 
 	return path.Join(append([]string{host}, ownerSegments...)...), nil
-}
-
-func defaultScaffoldRegistryURL(cfg *config.Config) string {
-	if cfg == nil {
-		return "host.docker.internal:5001"
-	}
-
-	if strings.Contains(strings.TrimSpace(cfg.ArgoCD.RepoBaseURL), "host.minikube.internal") ||
-		strings.Contains(strings.TrimSpace(cfg.ScmConfig.ExternalURL), "host.minikube.internal") {
-		return "host.minikube.internal:5001"
-	}
-
-	return "host.docker.internal:5001"
 }
 
 func buildScaffoldImage(registryURL string, serviceName string) string {

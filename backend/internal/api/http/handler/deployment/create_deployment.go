@@ -38,7 +38,7 @@ type createDeploymentResponse struct {
 // @Success		201		{object}	httpresponse.SuccessResponse{data=createDeploymentResponse,metadata=nil}	"Deployment created"
 // @Failure		400		{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
 // @Failure		500		{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
-// @Router			/projects/:project/deployments [post]
+// @Router			/services/:service/deployments [post]
 func (h *deploymentHandler) CreateDeployment(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 
@@ -47,7 +47,7 @@ func (h *deploymentHandler) CreateDeployment(c *gin.Context) {
 		return
 	}
 
-	projectID := c.Param("project")
+	serviceID := c.Param("service")
 	var input createDeploymentRequest
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -57,7 +57,7 @@ func (h *deploymentHandler) CreateDeployment(c *gin.Context) {
 	}
 
 	createdDeployment, err := h.deploymentUsecase.CreateDeployment(c.Request.Context(), deploymentUsecase.CreateDeploymentInput{
-		ServiceID:   projectID,
+		ServiceID:   serviceID,
 		PluginID:    input.PluginID,
 		Environment: input.Environment,
 		Version:     input.Version,

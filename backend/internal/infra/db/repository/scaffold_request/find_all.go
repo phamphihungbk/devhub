@@ -59,9 +59,15 @@ func (r *scaffoldRequestRepositoryImpl) FindAll(ctx context.Context, filter repo
 		switch *filter.SortBy {
 		case "name":
 			if *filter.SortOrder == entity.SortOrderDesc {
-				stmt = stmt.ORDER_BY(table.ScaffoldRequests.ProjectID.DESC())
+				stmt = stmt.ORDER_BY(table.ScaffoldRequests.CreatedAt.DESC())
 			} else {
-				stmt = stmt.ORDER_BY(table.ScaffoldRequests.ProjectID.ASC())
+				stmt = stmt.ORDER_BY(table.ScaffoldRequests.CreatedAt.ASC())
+			}
+		case "date":
+			if *filter.SortOrder == entity.SortOrderDesc {
+				stmt = stmt.ORDER_BY(table.ScaffoldRequests.CreatedAt.DESC())
+			} else {
+				stmt = stmt.ORDER_BY(table.ScaffoldRequests.CreatedAt.ASC())
 			}
 		}
 	}

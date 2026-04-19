@@ -44,9 +44,9 @@ type findAllDeploymentsResponse struct {
 // @Success		200			{object}	httpresponse.SuccessResponse{data=[]findAllDeploymentsResponse,metadata=httpresponse.PaginationMetadata}	"List of deployments with pagination details"
 // @Failure		400			{object}	httpresponse.ErrorResponse{data=nil}																	"Bad request"
 // @Failure		500			{object}	httpresponse.ErrorResponse{data=nil}																	"Internal server error"
-// @Router			/projects/:project/deployment [get]
+// @Router			/services/:service/deployments [get]
 func (h *deploymentHandler) FindAllDeployments(c *gin.Context) {
-	projectID := c.Param("project")
+	serviceID := c.Param("service")
 	var query FindAllDeploymentsQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
 		err = misc.WrapError(err, errs.NewBadRequestError("unable to parse request", map[string]string{"details": err.Error()}))
@@ -78,7 +78,7 @@ func (h *deploymentHandler) FindAllDeployments(c *gin.Context) {
 	}
 
 	deployments, err := h.deploymentUsecase.FindAllDeployments(c.Request.Context(), deploymentUsecase.FindAllDeploymentsInput{
-		ServiceID: projectID,
+		ServiceID: serviceID,
 		StartDate: query.StartDate,
 		EndDate:   query.EndDate,
 		Limit:     limit,

@@ -22,8 +22,9 @@ import {
   createScaffoldRequest,
   fetchPlugins,
   fetchProjectById,
-  fetchProjectDeployments,
+  fetchProjectServices,
   fetchProjectScaffoldRequests,
+  fetchServiceDeployments,
 } from '@/services/api'
 import { ApiError } from '@/services/request'
 import type {
@@ -33,6 +34,7 @@ import type {
   PluginRecord,
   Project,
   ScaffoldRequestRecord,
+  Service,
 } from '@/services/api'
 
 const route = useRoute()
@@ -46,9 +48,11 @@ const deploymentSubmitting = ref(false)
 const scaffoldSubmitting = ref(false)
 
 const project = ref<Project | null>(null)
+const services = ref<Service[]>([])
 const plugins = ref<PluginRecord[]>([])
 const deployments = ref<Deployment[]>([])
 const scaffoldRequests = ref<ScaffoldRequestRecord[]>([])
+const selectedServiceId = ref('')
 
 const deploymentForm = reactive<CreateDeploymentPayload>({
   plugin_id: '',
@@ -87,6 +91,10 @@ const scaffolderOptions = computed(() =>
 
 const pluginNameById = computed(() =>
   Object.fromEntries(plugins.value.map(plugin => [plugin.id, plugin.name])),
+)
+
+const serviceOptions = computed(() =>
+  services.value.map(service => ({ label: service.name, value: service.id })),
 )
 
 const deploymentColumns = [
@@ -145,17 +153,21 @@ async function loadProjectOperations() {
   pageLoading.value = true
 
   try {
-    const [projectData, pluginData, deploymentData, scaffoldData] = await Promise.all([
+    const [projectData, serviceData, pluginData, scaffoldData] = await Promise.all([
       fetchProjectById(projectId.value),
+      fetchProjectServices(projectId.value),
       fetchPlugins(),
-      fetchProjectDeployments(projectId.value),
       fetchProjectScaffoldRequests(projectId.value),
     ])
 
     project.value = projectData
+    services.value = serviceData
     plugins.value = pluginData
-    deployments.value = deploymentData
     scaffoldRequests.value = scaffoldData
+    selectedServiceId.value = serviceData[0]?.id || ''
+    deployments.value = selectedServiceId.value
+      ? await fetchServiceDeployments(selectedServiceId.value)
+      : []
   } catch (error) {
     message.error(error instanceof ApiError ? error.message : 'Unable to load project operations.')
   } finally {
@@ -179,7 +191,7 @@ function resetScaffoldForm() {
 }
 
 async function submitDeployment() {
-  if (!deploymentForm.plugin_id || !deploymentForm.environment || !deploymentForm.version.trim()) {
+  if (!selectedServiceId.value || !deploymentForm.plugin_id || !deploymentForm.environment || !deploymentForm.version.trim()) {
     message.warning('Complete the deployment form before submitting.')
     return
   }
@@ -187,18 +199,23 @@ async function submitDeployment() {
   deploymentSubmitting.value = true
 
   try {
-    await createDeployment(projectId.value, {
+    await createDeployment(selectedServiceId.value, {
       ...deploymentForm,
       version: deploymentForm.version.trim(),
     })
     message.success('Deployment created successfully.')
     resetDeploymentForm()
-    deployments.value = await fetchProjectDeployments(projectId.value)
+    deployments.value = await fetchServiceDeployments(selectedServiceId.value)
   } catch (error) {
     message.error(error instanceof ApiError ? error.message : 'Unable to create deployment.')
   } finally {
     deploymentSubmitting.value = false
   }
+}
+
+async function handleServiceChange(serviceId: string) {
+  selectedServiceId.value = serviceId
+  deployments.value = serviceId ? await fetchServiceDeployments(serviceId) : []
 }
 
 async function submitScaffoldRequest() {
@@ -239,7 +256,7 @@ onMounted(async () => {
     <PageHeader
       eyebrow="Operations"
       :title="project ? `${project.name} operations` : 'Project operations'"
-      description="Create deployments and scaffold requests for this project, then track the most recent operational activity in one place."
+      description="Create project scaffold requests, deploy individual services, and track the most recent operational activity in one place."
     >
       <NSpace>
         <NButton @click="router.push({ name: 'projects' })">
@@ -251,9 +268,12 @@ onMounted(async () => {
       </NSpace>
     </PageHeader>
 
-    <div class="grid gap-4 md:grid-cols-3">
+    <div class="grid gap-4 md:grid-cols-4">
       <NCard class="rounded-3xl border border-[var(--app-border)] shadow-[var(--app-shadow)]">
         <NStatistic label="Deployments" :value="deployments.length" />
+      </NCard>
+      <NCard class="rounded-3xl border border-[var(--app-border)] shadow-[var(--app-shadow)]">
+        <NStatistic label="Services" :value="services.length" />
       </NCard>
       <NCard class="rounded-3xl border border-[var(--app-border)] shadow-[var(--app-shadow)]">
         <NStatistic label="Scaffold requests" :value="scaffoldRequests.length" />
@@ -267,6 +287,15 @@ onMounted(async () => {
       <NCard class="rounded-3xl border border-[var(--app-border)] shadow-[var(--app-shadow)]" title="New deployment">
         <NForm label-placement="top">
           <div class="grid gap-4 md:grid-cols-2">
+            <NFormItem label="Service">
+              <NSelect
+                v-model:value="selectedServiceId"
+                :options="serviceOptions"
+                placeholder="Select service"
+                @update:value="handleServiceChange"
+              />
+            </NFormItem>
+
             <NFormItem label="Deployer plugin">
               <NSelect
                 v-model:value="deploymentForm.plugin_id"

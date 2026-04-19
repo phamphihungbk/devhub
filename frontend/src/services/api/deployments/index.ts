@@ -9,16 +9,16 @@ import type {
 
 const baseURL = apiBaseURL.deployments
 
-export function fetchProjectDeployments(projectId: string, query?: DeploymentListQuery) {
-  return api.get<Deployment[]>(`${apiBaseURL.projects}/${projectId}/deployments`, query)
+export function fetchServiceDeployments(serviceId: string, query?: DeploymentListQuery) {
+  return api.get<Deployment[]>(`${apiBaseURL.services}/${serviceId}/deployments`, query)
 }
 
 export function fetchDeploymentById(deploymentId: string) {
   return api.get<Deployment>(`${baseURL}/${deploymentId}`)
 }
 
-export function createDeployment(projectId: string, payload: CreateDeploymentPayload) {
-  return api.post<Deployment>(`${apiBaseURL.projects}/${projectId}/deployments`, payload)
+export function createDeployment(serviceId: string, payload: CreateDeploymentPayload) {
+  return api.post<Deployment>(`${apiBaseURL.services}/${serviceId}/deployments`, payload)
 }
 
 export function updateDeployment(deploymentId: string, payload: UpdateDeploymentPayload) {

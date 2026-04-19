@@ -31,18 +31,20 @@ const (
 
 // Argo CD configuration environment variable keys
 const (
-	ArgoCDServerKey          = "ARGOCD_SERVER"
-	ArgoCDAuthTokenKey       = "ARGOCD_AUTH_TOKEN"
-	ArgoCDInsecureKey        = "ARGOCD_INSECURE"
-	ArgoCDTimeoutKey         = "ARGOCD_TIMEOUT"
-	ArgoCDRepoBaseURLKey     = "ARGOCD_REPO_BASE_URL"
-	ArgoCDAutoCreateAppKey   = "ARGOCD_AUTO_CREATE_APP"
-	ArgoCDAppProjectKey      = "ARGOCD_APP_PROJECT"
-	ArgoCDAppNamespaceKey    = "ARGOCD_APP_NAMESPACE"
-	ArgoCDAppDestServerKey   = "ARGOCD_APP_DEST_SERVER"
-	ArgoCDAutoBuildImageKey  = "ARGOCD_AUTO_BUILD_IMAGE"
-	ArgoCDImageBuilderKey    = "ARGOCD_IMAGE_BUILDER"
-	ArgoCDMinikubeProfileKey = "ARGOCD_MINIKUBE_PROFILE"
+	ArgoCDServerKey            = "ARGOCD_SERVER"
+	ArgoCDAuthTokenKey         = "ARGOCD_AUTH_TOKEN"
+	ArgoCDInsecureKey          = "ARGOCD_INSECURE"
+	ArgoCDTimeoutKey           = "ARGOCD_TIMEOUT"
+	ArgoCDRepoBaseURLKey       = "ARGOCD_REPO_BASE_URL"
+	ArgoCDImageRegistryURLKey  = "ARGOCD_IMAGE_REGISTRY_URL"
+	ArgoCDImageRegistryHostKey = "ARGOCD_IMAGE_REGISTRY_HOST"
+	ArgoCDAutoCreateAppKey     = "ARGOCD_AUTO_CREATE_APP"
+	ArgoCDAppProjectKey        = "ARGOCD_APP_PROJECT"
+	ArgoCDAppNamespaceKey      = "ARGOCD_APP_NAMESPACE"
+	ArgoCDAppDestServerKey     = "ARGOCD_APP_DEST_SERVER"
+	ArgoCDAutoBuildImageKey    = "ARGOCD_AUTO_BUILD_IMAGE"
+	ArgoCDImageBuilderKey      = "ARGOCD_IMAGE_BUILDER"
+	ArgoCDMinikubeProfileKey   = "ARGOCD_MINIKUBE_PROFILE"
 )
 
 // SCM configuration environment variable keys
@@ -84,18 +86,20 @@ var configDefaults = map[string]any{
 	DatabaseConnMaxIdleTimeKey: "5m",
 
 	// Argo CD configuration
-	ArgoCDServerKey:          "argocd-server.argocd.svc.cluster.local:443",
-	ArgoCDAuthTokenKey:       "your-token",
-	ArgoCDInsecureKey:        true,
-	ArgoCDTimeoutKey:         "10m",
-	ArgoCDRepoBaseURLKey:     "http://host.minikube.internal:3000",
-	ArgoCDAutoCreateAppKey:   false,
-	ArgoCDAppProjectKey:      "default",
-	ArgoCDAppNamespaceKey:    "devhub",
-	ArgoCDAppDestServerKey:   "https://kubernetes.default.svc",
-	ArgoCDAutoBuildImageKey:  false,
-	ArgoCDImageBuilderKey:    "minikube",
-	ArgoCDMinikubeProfileKey: "minikube",
+	ArgoCDServerKey:            "argocd-server.argocd.svc.cluster.local:443",
+	ArgoCDAuthTokenKey:         "your-token",
+	ArgoCDInsecureKey:          true,
+	ArgoCDTimeoutKey:           "10m",
+	ArgoCDRepoBaseURLKey:       "http://host.minikube.internal:3000",
+	ArgoCDImageRegistryURLKey:  "http://host.minikube.internal:5001",
+	ArgoCDImageRegistryHostKey: "host.minikube.internal:5001",
+	ArgoCDAutoCreateAppKey:     false,
+	ArgoCDAppProjectKey:        "default",
+	ArgoCDAppNamespaceKey:      "devhub",
+	ArgoCDAppDestServerKey:     "https://kubernetes.default.svc",
+	ArgoCDAutoBuildImageKey:    false,
+	ArgoCDImageBuilderKey:      "minikube",
+	ArgoCDMinikubeProfileKey:   "minikube",
 
 	// SCM configuration
 	SCMAPIURLKey:      "http://gitea:3000/api/v1",
