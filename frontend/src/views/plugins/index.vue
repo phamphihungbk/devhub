@@ -59,7 +59,7 @@ onMounted(load)
       title="Plugins"
       description="The automation registry for deployers, releasers, and scaffolders. Audit runtime, scope, and entrypoints without the warmer marketing-style treatment."
     >
-      <NButton type="primary" secondary @click="load">
+      <NButton @click="load">
         Refresh
       </NButton>
     </PageHeader>

@@ -47,7 +47,7 @@ onMounted(load)
       title="Users"
       description="The operator directory for the control plane, ready for role governance, invite flows, and access reviews."
     >
-      <NButton type="primary" secondary @click="load">
+      <NButton @click="load">
         Refresh
       </NButton>
     </PageHeader>

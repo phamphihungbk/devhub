@@ -107,7 +107,7 @@ onMounted(load)
       title="Platform dashboard"
       description="A higher-signal entry point for the control plane: service inventory, automation registry, and operator visibility in one calmer admin workspace."
     >
-      <NButton type="primary" secondary @click="load">
+      <NButton type="primary" @click="load">
         Refresh data
       </NButton>
     </PageHeader>

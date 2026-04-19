@@ -99,7 +99,7 @@ async function submit() {
       description="Register a new service space in DevHub so the platform can track ownership, deployment targets, and future scaffolding workflows."
     >
       <div class="flex flex-wrap gap-3">
-        <NButton secondary @click="router.push({ name: 'projects' })">
+        <NButton @click="router.push({ name: 'projects' })">
           Back to projects
         </NButton>
         <NButton

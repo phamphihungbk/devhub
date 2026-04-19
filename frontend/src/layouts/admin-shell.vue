@@ -123,7 +123,7 @@ async function handleUserAction(key: string) {
       />
 
       <div class="mt-auto px-2 pt-6">
-        <NButton tertiary class="w-full justify-start rounded-2xl" @click="collapsed = !collapsed">
+        <NButton class="w-full justify-start rounded-2xl" @click="collapsed = !collapsed">
           {{ collapsed ? 'Expand' : 'Collapse sidebar' }}
         </NButton>
       </div>

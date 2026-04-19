@@ -90,7 +90,7 @@ onMounted(load)
         <NButton type="primary" @click="router.push({ name: 'project-create' })">
           New project
         </NButton>
-        <NButton type="primary" secondary @click="load">
+        <NButton @click="load">
           Refresh
         </NButton>
       </div>

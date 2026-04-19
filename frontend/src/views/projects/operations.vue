@@ -242,7 +242,7 @@ onMounted(async () => {
       description="Create deployments and scaffold requests for this project, then track the most recent operational activity in one place."
     >
       <NSpace>
-        <NButton secondary @click="router.push({ name: 'projects' })">
+        <NButton @click="router.push({ name: 'projects' })">
           Back to projects
         </NButton>
         <NButton type="primary" secondary :loading="pageLoading" @click="loadProjectOperations">

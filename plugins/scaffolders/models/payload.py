@@ -27,7 +27,7 @@ class ScaffoldPayload:
     image: str
 
     @classmethod
-    def from_dict(cls, payload: dict[str, Any], _properties: dict[str, Any]):
+    def from_dict(cls, payload: dict[str, Any]):
         return cls(
             service_name=read_required_str(payload, "service_name"),
             project_id=read_required_str(payload, "project_id"),
@@ -43,7 +43,7 @@ class ScaffoldPayload:
             image=read_required_str(payload, "image"),
         )
 
-    def to_output_payload(self):
+    def to_dict(self):
         return {
             "service_name": self.service_name,
             "project_id": self.project_id,
@@ -64,8 +64,8 @@ class ScaffoldPayload:
 class GitOpsConfig:
     api_base_url: str
     token: str
-    owner: str
-    repo_name: str
+    gitops_owner: str
+    gitops_repo: str
     branch: str
     base_path: str
     author_name: str
@@ -75,17 +75,17 @@ class GitOpsConfig:
     def from_env(cls):
         api_base_url = os.getenv("SCM_API_URL", "").strip().rstrip("/")
         token = os.getenv("SCM_TOKEN", "").strip()
-        owner = os.getenv("GITOPS_REPO_OWNER", "").strip()
-        repo_name = os.getenv("GITOPS_REPO_NAME", "").strip()
+        gitops_owner = os.getenv("GITOPS_REPO_OWNER", "").strip()
+        gitops_repo = os.getenv("GITOPS_REPO_NAME", "").strip()
 
-        if not api_base_url or not token or not owner or not repo_name:
+        if not api_base_url or not token or not gitops_owner or not gitops_repo:
             return None
 
         return cls(
             api_base_url=api_base_url,
             token=token,
-            owner=owner,
-            repo_name=repo_name,
+            gitops_owner=gitops_owner,
+            gitops_repo=gitops_repo,
             branch=os.getenv("GITOPS_BRANCH", DEFAULT_GITOPS_BRANCH).strip() or DEFAULT_GITOPS_BRANCH,
             base_path=os.getenv("GITOPS_BASE_PATH", DEFAULT_GITOPS_BASE_PATH).strip("/"),
             author_name=os.getenv("GITOPS_COMMIT_USER_NAME", DEFAULT_GITOPS_COMMIT_USER_NAME).strip()
