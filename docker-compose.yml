@@ -90,6 +90,17 @@ services:
     volumes:
       - redis_data:/data
 
+  devhub-registry:
+    image: devhub-registry:local
+    build:
+      context: .
+      dockerfile: infra/docker/registry.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5001:5000"
+    volumes:
+      - registry_data:/var/lib/registry
+
   gitea:
     image: devhub-gitea:local
     build:
@@ -127,6 +138,7 @@ services:
 volumes:
   db_data:
   redis_data:
+  registry_data:
   gitea_data:
   gitea_config:
   gitea_runner_data:

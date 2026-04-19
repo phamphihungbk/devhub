@@ -3,9 +3,9 @@
 .PHONY: help bootstrap generate-dev-cert setup-local-https \
 	backend-up backend-down backend-watch frontend-up frontend-down frontend-watch \
 	build-backend build-frontend up down logs logs-worker logs-runner logs-frontend ps shell \
-	worker-up worker-down runner-up runner-down migrate migrate-down migrate-force generate sync-worker plugin-scan create-plugin config prod-config argocd-ui argocd-token
+	worker-up worker-down runner-up runner-down migrate migrate-down migrate-force generate sync-worker plugin-scan create-plugin config prod-config argocd-ui argocd-token minikube-registry
 
-BACKEND_SERVICES := backend worker db redis gitea
+BACKEND_SERVICES := backend worker db redis devhub-registry gitea gitea-runner
 FRONTEND_SERVICES := frontend nginx
 
 ##@ Setup
@@ -20,7 +20,7 @@ setup-local-https: ## Generate certs, update hosts, and trust local devhub/api c
 
 ##@ Development
 backend-up: ## Start backend services without UI or nginx
-	@./scripts/dev.sh up --build $(BACKEND_SERVICES)
+	@COMPOSE_PROFILES=ci ./scripts/dev.sh up --build $(BACKEND_SERVICES)
 
 backend-watch: backend-up ## Start support services, then run the Go backend locally with Air hot reload
 	@./scripts/backend-watch.sh
@@ -32,19 +32,19 @@ frontend-watch: frontend-up ## Start and follow the frontend dev stack (frontend
 	@./scripts/frontend-watch.sh
 
 build-backend: ## Build backend-side dev images without UI services
-	@./scripts/dev.sh build $(BACKEND_SERVICES)
+	@COMPOSE_PROFILES=ci ./scripts/dev.sh build $(BACKEND_SERVICES)
 
 build-frontend: ## Build only the frontend UI services
 	@COMPOSE_PROFILES=ui ./scripts/dev.sh build $(FRONTEND_SERVICES)
 
 up: ## Start full stack services
-	@./scripts/dev.sh up --build
+	@COMPOSE_PROFILES=ui,ci ./scripts/dev.sh up --build
 
 down: ## Stop and remove the dev stack
 	@./scripts/dev.sh down
 
 backend-down: ## Stop backend services without touching the UI profile
-	@./scripts/dev.sh stop $(BACKEND_SERVICES)
+	@COMPOSE_PROFILES=ci ./scripts/dev.sh stop $(BACKEND_SERVICES)
 
 frontend-down: ## Stop the frontend and nginx services
 	@COMPOSE_PROFILES=ui ./scripts/dev.sh stop $(FRONTEND_SERVICES)
@@ -103,6 +103,12 @@ argocd-ui: ## Install/apply Argo CD resources if needed, then port-forward the U
 
 argocd-token: ## Generate and print an ARGOCD_AUTH_TOKEN export line
 	@./scripts/argocd.sh token
+
+minikube-registry: ## Recreate minikube with host.minikube.internal:5001 allowed as an insecure registry
+	@./scripts/dev.sh up -d --build devhub-registry
+	@minikube delete
+	@minikube start --insecure-registry="host.minikube.internal:5001"
+	@minikube ssh -- 'nc -vz host.minikube.internal 5001'
 
 create-plugin: ## Scaffold a local plugin folder, e.g. make create-plugin NAME=my-plugin TYPE=scaffolder
 	@./scripts/create-plugin.sh \
