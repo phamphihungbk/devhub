@@ -28,7 +28,6 @@ type PythonScaffoldExecutor struct {
 	cfg               *config.Config
 	pluginRepository  repository.PluginRepository
 	projectRepository repository.ProjectRepository
-	serviceRepository repository.ServiceRepository
 }
 
 type ScaffoldExecutionResult struct {
@@ -75,14 +74,12 @@ func NewPythonScaffoldExecutor(
 	cfg *config.Config,
 	pluginRepository repository.PluginRepository,
 	projectRepository repository.ProjectRepository,
-	serviceRepository repository.ServiceRepository,
 ) *PythonScaffoldExecutor {
 	return &PythonScaffoldExecutor{
 		PythonBin:         "python3",
 		cfg:               cfg,
 		pluginRepository:  pluginRepository,
 		projectRepository: projectRepository,
-		serviceRepository: serviceRepository,
 		Timeout:           5 * time.Minute,
 	}
 }
@@ -167,7 +164,7 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 		TargetRevision:    strings.TrimSpace(e.cfg.Gitops.Branch),
 		ArgocdProject:     strings.TrimSpace(e.cfg.ArgoCD.AppProject),
 		RegistryURL:       registryURL,
-		ServerURL:         strings.TrimSpace(e.cfg.ScmConfig.ExternalURL),
+		ServerURL:         strings.TrimSpace(e.cfg.ScmConfig.InternalURL),
 		ModulePath:        modulePath,
 		Image:             image,
 	}

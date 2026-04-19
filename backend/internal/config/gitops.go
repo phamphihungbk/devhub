@@ -5,6 +5,7 @@ import "time"
 type SCMConfig struct {
 	APIURL      string
 	ExternalURL string
+	InternalURL string
 	Token       string
 	Timeout     time.Duration
 }
@@ -23,6 +24,7 @@ func LoadSCMConfig(cfg *ViperConfig) SCMConfig {
 	return SCMConfig{
 		APIURL:      cfg.GetString(SCMAPIURLKey),
 		ExternalURL: cfg.GetString(SCMExternalURLKey),
+		InternalURL: cfg.GetString(SCMInternalURLKey),
 		Token:       cfg.GetString(SCMTokenKey),
 		Timeout:     cfg.GetDuration(SCMTimeoutKey),
 	}

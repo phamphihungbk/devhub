@@ -156,6 +156,7 @@ func buildReleaseRunner(deps *Dependencies, observer Observability, cfg FactoryC
 	return release.NewReleasePollingRunner(
 		observer,
 		deps.pluginRepository,
+		deps.serviceRepository,
 		deps.releaseRepository,
 		cfg.PollDelay,
 	)

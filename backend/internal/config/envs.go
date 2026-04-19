@@ -49,6 +49,7 @@ const (
 const (
 	SCMAPIURLKey      = "SCM_API_URL"
 	SCMExternalURLKey = "SCM_EXTERNAL_URL"
+	SCMInternalURLKey = "SCM_INTERNAL_URL"
 	SCMTokenKey       = "SCM_TOKEN"
 	SCMTimeoutKey     = "SCM_TIMEOUT"
 )
@@ -99,6 +100,7 @@ var configDefaults = map[string]any{
 	// SCM configuration
 	SCMAPIURLKey:      "http://gitea:3000/api/v1",
 	SCMExternalURLKey: "https://gitea.devhub.local",
+	SCMInternalURLKey: "http://host.docker.internal:3000",
 	SCMTimeoutKey:     "30s",
 
 	// GitOps configuration

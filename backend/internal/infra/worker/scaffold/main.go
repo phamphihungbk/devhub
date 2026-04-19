@@ -47,7 +47,7 @@ func NewScaffoldPollingRunner(
 	serviceRepository repository.ServiceRepository,
 	pollDelay time.Duration,
 ) (core.Runner, error) {
-	executor := NewPythonScaffoldExecutor(cfg, pluginRepository, projectRepository, serviceRepository)
+	executor := NewPythonScaffoldExecutor(cfg, pluginRepository, projectRepository)
 
 	// Compose the generic polling runner from queue, state, executor, and observability adapters.
 	return core.NewPollingRunner[ScaffoldJob, ScaffoldExecutionResult](
@@ -56,7 +56,7 @@ func NewScaffoldPollingRunner(
 			PollDelay: pollDelay,
 		},
 		NewScaffoldQueueSourceAdapter(scaffoldRequestRepository),
-		NewScaffoldStatePersistence(scaffoldRequestRepository),
+		NewScaffoldStatePersistence(scaffoldRequestRepository, serviceRepository),
 		NewScaffoldExecutorAdapter(executor),
 		observer,
 	)
