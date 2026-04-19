@@ -9,6 +9,8 @@ import (
 	repository "devhub-backend/internal/domain/repository"
 	"devhub-backend/internal/util/misc"
 	"devhub-backend/pkg/validator"
+
+	"github.com/google/uuid"
 )
 
 type FindAllProjectsInput struct {
@@ -63,6 +65,11 @@ func (u *projectUsecase) findAllProjects(ctx context.Context, input FindAllProje
 			return entity.Projects{}, nil, entity.Pagination{}, nil
 		}
 
+		enrichedProjects := misc.GetValue(projects)
+		for i := range enrichedProjects {
+			u.enrichProjectCreator(ctx, &enrichedProjects[i])
+		}
+
 		// Create pagination and next search criteria
 		pagination := entity.NewPagination(count, misc.GetValue(input.Limit), misc.GetValue(input.Offset))
 		nextSearchCriteria := FindAllProjectsInput{
@@ -73,6 +80,20 @@ func (u *projectUsecase) findAllProjects(ctx context.Context, input FindAllProje
 			SortBy:    input.SortBy,
 			SortOrder: input.SortOrder,
 		}
-		return misc.GetValue(projects), u.findAllProjects(ctx, nextSearchCriteria), pagination, nil
+		return enrichedProjects, u.findAllProjects(ctx, nextSearchCriteria), pagination, nil
 	}
+}
+
+func (u *projectUsecase) enrichProjectCreator(ctx context.Context, project *entity.Project) {
+	if project == nil {
+		return
+	}
+
+	user, err := u.userRepository.FindOne(ctx, uuid.UUID(project.CreatedBy))
+	if err != nil || user == nil || user.Name == "" {
+		project.CreatedByName = project.CreatedBy.String()
+		return
+	}
+
+	project.CreatedByName = user.Name
 }

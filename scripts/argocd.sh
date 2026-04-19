@@ -8,7 +8,7 @@ UI_PORT="${ARGOCD_UI_PORT:-8081}"
 ARGOCD_UI_HOST="${ARGOCD_UI_HOST:-argocd.devhub.local}"
 GITOPS_REPO_URL="${GITOPS_REPO_URL:-http://host.minikube.internal:3000/phamphihungbk/gitops-repo.git}"
 GITOPS_REPO_BRANCH="${GITOPS_REPO_BRANCH:-main}"
-GITOPS_ENV_GLOB="${GITOPS_ENV_GLOB:-envs/dev/*.yaml}"
+GITOPS_ENV_GLOB="${GITOPS_ENV_GLOB:-envs/*/*.yaml}"
 ROOT_DIR="$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)"
 APP_MANIFEST="${ROOT_DIR}/infra/kubernetes/argocd/devhub.yaml"
 INGRESS_MANIFEST="${ROOT_DIR}/infra/kubernetes/argocd/argocd-ui-ingress.yaml"
@@ -129,7 +129,7 @@ Environment:
   ARGOCD_UI_HOST     Default: argocd.devhub.local
   GITOPS_REPO_URL    Default: https://gitea.devhub.local/phamphihungbk/gitops-repo.git
   GITOPS_REPO_BRANCH Default: main
-  GITOPS_ENV_GLOB    Default: envs/dev/*.yaml
+  GITOPS_ENV_GLOB    Default: envs/*/*.yaml
 EOF
 }
 

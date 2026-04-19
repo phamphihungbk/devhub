@@ -25,7 +25,11 @@ type findAllProjectsResponse struct {
 	Name         string   `json:"name" example:"Project Name"`
 	Description  string   `json:"description" example:"Project Description"`
 	Environments []string `json:"environments" example:"[development, production]"`
-	CreatedBy    string   `json:"created_by" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Status       string   `json:"status" example:"active"`
+	OwnerTeam    string   `json:"owner_team" example:"platform"`
+	ScmProvider  string   `json:"scm_provider" example:"gitea"`
+	OwnerContact string   `json:"owner_contact" example:"team@example.com"`
+	CreatedBy    string   `json:"created_by" example:"Hung Pham"`
 }
 
 // @Summary		List Projects
@@ -108,7 +112,11 @@ func (h *projectHandler) newFindAllProjectsResponse(projects entity.Projects) []
 			Name:         project.Name,
 			Description:  project.Description,
 			Environments: envs,
-			CreatedBy:    project.CreatedBy.String(),
+			Status:       project.Status.String(),
+			OwnerTeam:    project.OwnerTeam,
+			ScmProvider:  project.ScmProvider,
+			OwnerContact: project.OwnerContact,
+			CreatedBy:    project.CreatedByName,
 		})
 	}
 	return response

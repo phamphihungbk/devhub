@@ -21,7 +21,7 @@ type PythonReleaseExecutor struct {
 	PythonBin         string
 	Timeout           time.Duration
 	pluginRepository  repository.PluginRepository
-	projectRepository repository.ProjectRepository
+	serviceRepository repository.ServiceRepository
 }
 
 type ReleaseExecutionResult struct {
@@ -30,16 +30,43 @@ type ReleaseExecutionResult struct {
 	FinishedAt  time.Time
 }
 
+type releasePluginPayload struct {
+	ReleaseID string `json:"release_id"`
+	ServiceID string `json:"service_id"`
+	PluginID  string `json:"plugin_id"`
+	Tag       string `json:"tag"`
+	Target    string `json:"target"`
+	Name      string `json:"name"`
+	Notes     string `json:"notes"`
+	RepoURL   string `json:"repo_url"`
+}
+
+type releasePluginInput struct {
+	Action        string               `json:"action"`
+	CorrelationID string               `json:"correlation_id"`
+	Payload       releasePluginPayload `json:"payload"`
+}
+
+type releasePluginOutput struct {
+	Status string `json:"status"`
+	Output struct {
+		ExternalRef string `json:"external_ref"`
+		CommitSHA   string `json:"commit_sha"`
+		FinishedAt  string `json:"finished_at"`
+	} `json:"output"`
+	Error string `json:"error"`
+}
+
 var _ core.Executor[ReleaseJob, ReleaseExecutionResult] = (*ReleaseExecutorAdapter)(nil)
 
 func NewPythonReleaseExecutor(
 	pluginRepository repository.PluginRepository,
-	projectRepository repository.ProjectRepository,
+	serviceRepository repository.ServiceRepository,
 ) *PythonReleaseExecutor {
 	return &PythonReleaseExecutor{
 		PythonBin:         "python3",
 		pluginRepository:  pluginRepository,
-		projectRepository: projectRepository,
+		serviceRepository: serviceRepository,
 		Timeout:           10 * time.Minute,
 	}
 }
@@ -56,8 +83,8 @@ func (e *PythonReleaseExecutor) Execute(
 		return ReleaseExecutionResult{}, errors.New("plugin repository is required")
 	}
 
-	if e.projectRepository == nil {
-		return ReleaseExecutionResult{}, errors.New("project repository is required")
+	if e.serviceRepository == nil {
+		return ReleaseExecutionResult{}, errors.New("service repository is required")
 	}
 
 	plugin, err := e.pluginRepository.FindOne(ctx, job.PluginID)
@@ -71,19 +98,18 @@ func (e *PythonReleaseExecutor) Execute(
 		return ReleaseExecutionResult{}, err
 	}
 
-	project, err := e.projectRepository.FindOne(ctx, job.ProjectID)
+	service, err := e.serviceRepository.FindOne(ctx, job.ServiceID)
 	if err != nil {
 		if !errors.As(err, &errs.NotFoundError{}) {
 			return ReleaseExecutionResult{}, misc.WrapError(
 				err,
-				errs.NewInternalServerError("failed to find project by ID", nil),
+				errs.NewInternalServerError("failed to find service by ID", nil),
 			)
 		}
 		return ReleaseExecutionResult{}, err
 	}
-
-	if project == nil {
-		return ReleaseExecutionResult{}, errors.New("project is required")
+	if service == nil {
+		return ReleaseExecutionResult{}, errors.New("service is required")
 	}
 
 	scriptPath := strings.TrimSpace(plugin.Entrypoint)
@@ -97,22 +123,21 @@ func (e *PythonReleaseExecutor) Execute(
 		defer cancel()
 	}
 
-	payload := map[string]any{
-		"release_id":    job.ID.String(),
-		"project_id":    job.ProjectID.String(),
-		"plugin_id":     job.PluginID.String(),
-		"tag":           job.Tag,
-		"target":        job.Target,
-		"name":          job.Name,
-		"notes":         job.Notes,
-		"project_name":  project.Name,
-		"repo_url":      project.RepoURL,
+	payload := releasePluginPayload{
+		ReleaseID: job.ID.String(),
+		ServiceID: job.ServiceID.String(),
+		PluginID:  job.PluginID.String(),
+		Tag:       job.Tag,
+		Target:    job.Target,
+		Name:      job.Name,
+		Notes:     job.Notes,
+		RepoURL:   service.RepoURL,
 	}
 
-	in := map[string]any{
-		"action":         "release",
-		"correlation_id": job.ID.String(),
-		"payload":        payload,
+	in := releasePluginInput{
+		Action:        "release",
+		CorrelationID: job.ID.String(),
+		Payload:       payload,
 	}
 
 	stdinBytes, err := json.Marshal(in)
@@ -142,15 +167,7 @@ func (e *PythonReleaseExecutor) Execute(
 		)
 	}
 
-	var out struct {
-		Status string `json:"status"`
-		Output struct {
-			ExternalRef string `json:"external_ref"`
-			CommitSHA   string `json:"commit_sha"`
-			FinishedAt  string `json:"finished_at"`
-		} `json:"output"`
-		Error string `json:"error"`
-	}
+	var out releasePluginOutput
 
 	if err := json.Unmarshal(stdout.Bytes(), &out); err != nil {
 		return ReleaseExecutionResult{}, fmt.Errorf(

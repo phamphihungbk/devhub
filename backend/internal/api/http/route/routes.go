@@ -7,6 +7,7 @@ import (
 	projectHandler "devhub-backend/internal/api/http/handler/project"
 	releaseHandler "devhub-backend/internal/api/http/handler/release"
 	scaffoldRequestHandler "devhub-backend/internal/api/http/handler/scaffold_request"
+	serviceHandler "devhub-backend/internal/api/http/handler/service"
 	userHandler "devhub-backend/internal/api/http/handler/user"
 	"devhub-backend/internal/api/http/middleware"
 	"devhub-backend/internal/config"
@@ -29,6 +30,7 @@ type router struct {
 	ProjectHandler         projectHandler.ProjectHandler                 // Handler for project routes
 	ReleaseHandler         releaseHandler.ReleaseHandler                 // Handler for release routes
 	ScaffoldRequestHandler scaffoldRequestHandler.ScaffoldRequestHandler // Handler for scaffold request routes
+	ServiceHandler         serviceHandler.ServiceHandler                 // Handler for service routes
 }
 
 type Dependency struct {
@@ -40,6 +42,7 @@ type Dependency struct {
 	ProjectHandler         projectHandler.ProjectHandler
 	ReleaseHandler         releaseHandler.ReleaseHandler
 	ScaffoldRequestHandler scaffoldRequestHandler.ScaffoldRequestHandler
+	ServiceHandler         serviceHandler.ServiceHandler
 }
 
 func NewHTTPRoutes(appCfg config.AppConfig, tokenCfg config.TokenConfig, dep Dependency) Router {
@@ -54,6 +57,7 @@ func NewHTTPRoutes(appCfg config.AppConfig, tokenCfg config.TokenConfig, dep Dep
 		DeploymentHandler:      dep.DeploymentHandler,
 		ProjectHandler:         dep.ProjectHandler,
 		ReleaseHandler:         dep.ReleaseHandler,
+		ServiceHandler:         dep.ServiceHandler,
 	}
 }
 
@@ -96,9 +100,17 @@ func (r *router) applyProjectRoutes(router *gin.Engine) {
 		projectRoute.GET("/", r.ProjectHandler.FindAllProjects)
 		projectRoute.POST("/", r.Middleware.Auth(r.tokenCfg.Secret), r.ProjectHandler.CreateProject)
 		projectRoute.GET("/:project", r.ProjectHandler.FindProjectByID)
+		projectRoute.GET("/:project/services", r.ServiceHandler.FindAllServices)
 		projectRoute.DELETE("/:project", r.ProjectHandler.DeleteProject)
 		projectRoute.PATCH("/:project", r.ProjectHandler.UpdateProject)
-		projectRoute.POST("/:project/releases", r.Middleware.Auth(r.tokenCfg.Secret), r.ReleaseHandler.CreateRelease)
+	}
+
+	serviceRoute := router.Group("/services")
+	{
+		serviceRoute.GET("/:service/deployments", r.DeploymentHandler.FindAllDeployments)
+		serviceRoute.POST("/:service/deployments", r.Middleware.Auth(r.tokenCfg.Secret), r.DeploymentHandler.CreateDeployment)
+		serviceRoute.GET("/:service/releases", r.ReleaseHandler.FindAllReleases)
+		serviceRoute.POST("/:service/releases", r.Middleware.Auth(r.tokenCfg.Secret), r.ReleaseHandler.CreateRelease)
 	}
 }
 
@@ -117,12 +129,8 @@ func (r *router) applyScaffoldRequestRoutes(router *gin.Engine) {
 
 // applyDeploymentRoutes applies the deployment routes to the provided router
 func (r *router) applyDeploymentRoutes(router *gin.Engine) {
-	projectRoute := router.Group("/projects/:project")
 	deploymentRoute := router.Group("/deployments")
 	{
-		projectRoute.GET("/deployments", r.DeploymentHandler.FindAllDeployments)
-		projectRoute.POST("/deployments", r.Middleware.Auth(r.tokenCfg.Secret), r.DeploymentHandler.CreateDeployment)
-
 		deploymentRoute.GET("/:deployment", r.DeploymentHandler.FindDeploymentByID)
 		deploymentRoute.DELETE("/:deployment", r.DeploymentHandler.DeleteDeployment)
 		deploymentRoute.PATCH("/:deployment", r.DeploymentHandler.UpdateDeployment)

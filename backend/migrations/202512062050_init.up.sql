@@ -19,13 +19,25 @@ CREATE TABLE IF NOT EXISTS projects (
     environments TEXT[] NOT NULL,
     status VARCHAR(16) NOT NULL,  -- draft, active, archived, deprecated 
     owner_team VARCHAR(255) NOT NULL,
-    repo_url TEXT NOT NULL,
-    repo_provider VARCHAR(32) NOT NULL,
+    scm_provider VARCHAR(32) NOT NULL,
     owner_contact VARCHAR(255) NOT NULL,
     created_by UUID NOT NULL REFERENCES users(id),
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
     deleted_at TIMESTAMP
+);
+
+-- Migration: Create services table
+CREATE TABLE services (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID NOT NULL REFERENCES projects(id),
+    name VARCHAR(255) NOT NULL,
+    repo_url TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at TIMESTAMP NOT NULL DEFAULT now(),
+    deleted_at TIMESTAMP,
+    UNIQUE (project_id, name),
+    UNIQUE (repo_url)
 );
 
 -- Migration: Create plugins table
@@ -45,10 +57,9 @@ CREATE TABLE IF NOT EXISTS plugins (
 -- Migration: Create deployments table
 CREATE TABLE IF NOT EXISTS deployments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id UUID NOT NULL REFERENCES projects(id),
+    service_id UUID NOT NULL REFERENCES services(id),
     plugin_id UUID NOT NULL REFERENCES plugins(id),
     environment VARCHAR(32) NOT NULL,
-    service VARCHAR(255) NOT NULL,
     version VARCHAR(64) NOT NULL,
     status VARCHAR(16) NOT NULL,  -- pending, running, completed, failed, rolled_back
     external_ref VARCHAR(255),  -- ArgoCD sync ID
@@ -63,10 +74,9 @@ CREATE TABLE IF NOT EXISTS deployments (
 CREATE TABLE IF NOT EXISTS scaffold_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     plugin_id UUID NOT NULL REFERENCES plugins(id),
-    template VARCHAR(255) NOT NULL,
+    project_id UUID NOT NULL REFERENCES projects(id),
     requested_by UUID NOT NULL REFERENCES users(id),
     status VARCHAR(16) NOT NULL,  -- pending, approved, running, completed, failed, rejected
-    project_id UUID NOT NULL REFERENCES projects(id),
     environment VARCHAR(32) NOT NULL,
     variables JSONB NOT NULL,
     approved_by UUID REFERENCES users(id),
@@ -89,7 +99,7 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 -- Migration: Create releases table
 CREATE TABLE IF NOT EXISTS releases (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id UUID NOT NULL REFERENCES projects(id),
+    service_id UUID NOT NULL REFERENCES services(id),
     plugin_id UUID NOT NULL REFERENCES plugins(id),
     tag VARCHAR(64) NOT NULL,
     target VARCHAR(255) NOT NULL,
@@ -100,5 +110,5 @@ CREATE TABLE IF NOT EXISTS releases (
     external_ref VARCHAR(255) NOT NULL,
     triggered_by UUID NOT NULL REFERENCES users(id),
     created_at TIMESTAMP NOT NULL DEFAULT now(),
-    UNIQUE (project_id, tag)
+    UNIQUE (service_id, tag)
 );

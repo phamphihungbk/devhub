@@ -50,5 +50,7 @@ func (u *projectUsecase) FindOneProject(ctx context.Context, input FindOneProjec
 		return nil, err // Return the NotFoundError directly
 	}
 
+	u.enrichProjectCreator(ctx, project)
+
 	return project, nil
 }

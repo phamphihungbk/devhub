@@ -9,6 +9,7 @@ import (
 
 type ReleaseHandler interface {
 	CreateRelease(c *gin.Context)
+	FindAllReleases(c *gin.Context)
 }
 
 type releaseHandler struct {

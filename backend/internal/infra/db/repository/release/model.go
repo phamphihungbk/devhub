@@ -17,7 +17,7 @@ func (r *Release) ToEntity() *entity.Release {
 
 	return &entity.Release{
 		ID:          r.ID,
-		ProjectID:   r.ProjectID,
+		ServiceID:   r.ServiceID,
 		PluginID:    r.PluginID,
 		Tag:         r.Tag,
 		Target:      r.Target,

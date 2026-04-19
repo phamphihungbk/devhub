@@ -23,7 +23,7 @@ type PythonDeploymentExecutor struct {
 	Timeout           time.Duration
 	cfg               *config.Config
 	pluginRepository  repository.PluginRepository
-	projectRepository repository.ProjectRepository
+	serviceRepository repository.ServiceRepository
 }
 
 type DeploymentExecutionResult struct {
@@ -32,18 +32,56 @@ type DeploymentExecutionResult struct {
 	FinishedAt  time.Time
 }
 
+type deploymentPluginPayload struct {
+	DeploymentID    string `json:"deployment_id"`
+	ProjectID       string `json:"project_id"`
+	ServiceID       string `json:"service_id"`
+	Service         string `json:"service"`
+	PluginID        string `json:"plugin_id"`
+	Environment     string `json:"environment"`
+	Version         string `json:"version"`
+	RepoURL         string `json:"repo_url"`
+	SCMAPIURL       string `json:"scm_api_url"`
+	SCMToken        string `json:"scm_token"`
+	GitopsRepoOwner string `json:"gitops_repo_owner"`
+	GitopsRepoName  string `json:"gitops_repo_name"`
+	GitopsBranch    string `json:"gitops_branch"`
+	GitopsBasePath  string `json:"gitops_base_path"`
+	CommitUserName  string `json:"commit_user_name"`
+	CommitUserEmail string `json:"commit_user_email"`
+	ArgocdServer    string `json:"argocd_server"`
+	ArgocdAuthToken string `json:"argocd_auth_token"`
+	ArgocdInsecure  bool   `json:"argocd_insecure"`
+}
+
+type deploymentPluginInput struct {
+	Action        string                  `json:"action"`
+	CorrelationID string                  `json:"correlation_id"`
+	Payload       deploymentPluginPayload `json:"payload"`
+}
+
+type deploymentPluginOutput struct {
+	Status string `json:"status"`
+	Output struct {
+		ExternalRef string `json:"external_ref"`
+		CommitSHA   string `json:"commit_sha"`
+		FinishedAt  string `json:"finished_at"`
+	} `json:"output"`
+	Error string `json:"error"`
+}
+
 var _ core.Executor[DeploymentJob, DeploymentExecutionResult] = (*DeploymentExecutorAdapter)(nil)
 
 func NewPythonDeploymentExecutor(
 	cfg *config.Config,
 	pluginRepository repository.PluginRepository,
-	projectRepository repository.ProjectRepository,
+	serviceRepository repository.ServiceRepository,
 ) *PythonDeploymentExecutor {
 	return &PythonDeploymentExecutor{
 		PythonBin:         "python3",
 		cfg:               cfg,
 		pluginRepository:  pluginRepository,
-		projectRepository: projectRepository,
+		serviceRepository: serviceRepository,
 		Timeout:           10 * time.Minute,
 	}
 }
@@ -60,8 +98,8 @@ func (e *PythonDeploymentExecutor) Execute(
 		return DeploymentExecutionResult{}, errors.New("plugin repository is required")
 	}
 
-	if e.projectRepository == nil {
-		return DeploymentExecutionResult{}, errors.New("project repository is required")
+	if e.serviceRepository == nil {
+		return DeploymentExecutionResult{}, errors.New("service repository is required")
 	}
 
 	plugin, err := e.pluginRepository.FindOne(ctx, job.PluginID)
@@ -75,19 +113,18 @@ func (e *PythonDeploymentExecutor) Execute(
 		return DeploymentExecutionResult{}, err
 	}
 
-	project, err := e.projectRepository.FindOne(ctx, job.ProjectID)
+	service, err := e.serviceRepository.FindOne(ctx, job.ServiceID)
 	if err != nil {
 		if !errors.As(err, &errs.NotFoundError{}) {
 			return DeploymentExecutionResult{}, misc.WrapError(
 				err,
-				errs.NewInternalServerError("failed to find project by ID", nil),
+				errs.NewInternalServerError("failed to find service by ID", nil),
 			)
 		}
 		return DeploymentExecutionResult{}, err
 	}
-
-	if project == nil {
-		return DeploymentExecutionResult{}, errors.New("project is required")
+	if service == nil {
+		return DeploymentExecutionResult{}, errors.New("service is required")
 	}
 
 	if e.cfg == nil {
@@ -105,32 +142,32 @@ func (e *PythonDeploymentExecutor) Execute(
 		defer cancel()
 	}
 
-	payload := map[string]any{
-		"deployment_id":     job.ID.String(),
-		"project_id":        job.ProjectID.String(),
-		"plugin_id":         job.PluginID.String(),
-		"service":           job.Service,
-		"environment":       job.Environment,
-		"version":           job.Version,
-		"project_name":      project.Name,
-		"repo_url":          project.RepoURL,
-		"scm_api_url":       strings.TrimSpace(e.cfg.ScmConfig.APIURL),
-		"scm_token":         strings.TrimSpace(e.cfg.ScmConfig.Token),
-		"gitops_repo_owner": strings.TrimSpace(e.cfg.Gitops.RepoOwner),
-		"gitops_repo_name":  strings.TrimSpace(e.cfg.Gitops.RepoName),
-		"gitops_branch":     strings.TrimSpace(e.cfg.Gitops.Branch),
-		"gitops_base_path":  strings.TrimSpace(e.cfg.Gitops.BasePath),
-		"commit_user_name":  strings.TrimSpace(e.cfg.Gitops.CommitUserName),
-		"commit_user_email": strings.TrimSpace(e.cfg.Gitops.CommitUserEmail),
-		"argocd_server":     strings.TrimSpace(e.cfg.ArgoCD.Server),
-		"argocd_auth_token": strings.TrimSpace(e.cfg.ArgoCD.AuthToken),
-		"argocd_insecure":   e.cfg.ArgoCD.Insecure,
+	payload := deploymentPluginPayload{
+		DeploymentID:    job.ID.String(),
+		ProjectID:       service.ProjectID.String(),
+		ServiceID:       job.ServiceID.String(),
+		Service:         strings.TrimSpace(service.Name),
+		PluginID:        job.PluginID.String(),
+		Environment:     job.Environment.String(),
+		Version:         job.Version,
+		RepoURL:         strings.TrimSpace(service.RepoURL),
+		SCMAPIURL:       strings.TrimSpace(e.cfg.ScmConfig.APIURL),
+		SCMToken:        strings.TrimSpace(e.cfg.ScmConfig.Token),
+		GitopsRepoOwner: strings.TrimSpace(e.cfg.Gitops.RepoOwner),
+		GitopsRepoName:  strings.TrimSpace(e.cfg.Gitops.RepoName),
+		GitopsBranch:    strings.TrimSpace(e.cfg.Gitops.Branch),
+		GitopsBasePath:  strings.TrimSpace(e.cfg.Gitops.BasePath),
+		CommitUserName:  strings.TrimSpace(e.cfg.Gitops.CommitUserName),
+		CommitUserEmail: strings.TrimSpace(e.cfg.Gitops.CommitUserEmail),
+		ArgocdServer:    strings.TrimSpace(e.cfg.ArgoCD.Server),
+		ArgocdAuthToken: strings.TrimSpace(e.cfg.ArgoCD.AuthToken),
+		ArgocdInsecure:  e.cfg.ArgoCD.Insecure,
 	}
 
-	in := map[string]any{
-		"action":         "deploy",
-		"correlation_id": job.ID.String(),
-		"payload":        payload,
+	in := deploymentPluginInput{
+		Action:        "deploy",
+		CorrelationID: job.ID.String(),
+		Payload:       payload,
 	}
 
 	stdinBytes, err := json.Marshal(in)
@@ -160,15 +197,7 @@ func (e *PythonDeploymentExecutor) Execute(
 		)
 	}
 
-	var out struct {
-		Status string `json:"status"`
-		Output struct {
-			ExternalRef string `json:"external_ref"`
-			CommitSHA   string `json:"commit_sha"`
-			FinishedAt  string `json:"finished_at"`
-		} `json:"output"`
-		Error string `json:"error"`
-	}
+	var out deploymentPluginOutput
 
 	if err := json.Unmarshal(stdout.Bytes(), &out); err != nil {
 		return DeploymentExecutionResult{}, fmt.Errorf(
@@ -198,7 +227,7 @@ func (e *PythonDeploymentExecutor) Execute(
 	}
 
 	if result.ExternalRef == "" {
-		result.ExternalRef = fmt.Sprintf("%s-%s", job.Service, job.Environment)
+		result.ExternalRef = fmt.Sprintf("%s-%s", job.ServiceID.String(), job.Environment)
 	}
 
 	return result, nil

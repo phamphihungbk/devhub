@@ -19,10 +19,9 @@ func (r *deploymentRepositoryImpl) CreateOne(ctx context.Context, input *entity.
 	stmt := deploymentsTable.INSERT(
 		deploymentsTable.AllColumns.Except(deploymentsTable.DefaultColumns), // Exclude columns with default values
 	).MODEL(model.Deployments{
-		ProjectID:   input.ProjectID,
+		ServiceID:   input.ServiceID,
 		PluginID:    input.PluginID,
 		Environment: input.Environment.String(),
-		Service:     input.Service,
 		Version:     input.Version,
 		Status:      input.Status.String(),
 		TriggeredBy: input.TriggeredBy,

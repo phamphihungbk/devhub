@@ -18,14 +18,17 @@ type ProjectUsecase interface {
 type projectUsecase struct {
 	appConfig         config.AppConfig
 	projectRepository repository.ProjectRepository
+	userRepository    repository.UserRepository
 }
 
 func NewProjectUsecase(
 	appConfig config.AppConfig,
 	projectRepository repository.ProjectRepository,
+	userRepository repository.UserRepository,
 ) ProjectUsecase {
 	return &projectUsecase{
 		appConfig:         appConfig,
 		projectRepository: projectRepository,
+		userRepository:    userRepository,
 	}
 }

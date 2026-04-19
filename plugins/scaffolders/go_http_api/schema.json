@@ -1,31 +1,74 @@
 {
   "type": "object",
-  "required": ["service_name", "repo_url"],
+  "required": [
+    "environment",
+    "service_name",
+    "port",
+    "database",
+    "image_tag",
+    "module_path",
+    "ci_registry_host",
+    "ci_server_url",
+    "cd_project_name",
+    "cd_repo_url",
+    "cd_target_revision",
+    "cd_namespace",
+    "cd_image_repository"
+  ],
   "properties": {
+    "environment": {
+      "type": "string",
+      "minLength": 1
+    },
     "service_name": {
       "type": "string",
       "pattern": "^[a-z0-9][a-z0-9-]*$",
       "description": "Kebab-case service name."
     },
-    "output_dir": {
-      "type": "string",
-      "minLength": 1,
-      "description": "Optional base directory for generated files. Defaults to /app/generated/<project_id>."
-    },
-    "module_path": {
-      "type": "string",
-      "default": "github.com/acme"
-    },
     "port": {
       "type": "integer",
       "minimum": 1,
-      "maximum": 65535,
-      "default": 8080
+      "maximum": 65535
     },
-    "repo_url": {
+    "database": {
       "type": "string",
-      "minLength": 1,
-      "description": "Required output repo URL returned by the scaffolder."
+      "minLength": 1
+    },
+    "image_tag": {
+      "type": "string",
+      "minLength": 1
+    },
+    "module_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ci_registry_host": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ci_server_url": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cd_project_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cd_repo_url": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cd_target_revision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cd_namespace": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cd_image_repository": {
+       "type": "string",
+      "minLength": 1
     }
   },
   "additionalProperties": true

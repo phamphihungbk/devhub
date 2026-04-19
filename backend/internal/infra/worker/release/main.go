@@ -40,11 +40,11 @@ func (a *ReleaseExecutorAdapter) Execute(ctx context.Context, job *ReleaseJob) (
 func NewReleasePollingRunner(
 	observer core.Observability,
 	pluginRepository repository.PluginRepository,
-	projectRepository repository.ProjectRepository,
+	serviceRepository repository.ServiceRepository,
 	releaseRepository repository.ReleaseRepository,
 	pollDelay time.Duration,
 ) (core.Runner, error) {
-	executor := NewPythonReleaseExecutor(pluginRepository, projectRepository)
+	executor := NewPythonReleaseExecutor(pluginRepository, serviceRepository)
 
 	return core.NewPollingRunner[ReleaseJob, ReleaseExecutionResult](
 		core.PollingRunnerConfig{

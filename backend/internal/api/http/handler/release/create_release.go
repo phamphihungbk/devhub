@@ -21,7 +21,7 @@ type createReleaseRequest struct {
 
 type createReleaseResponse struct {
 	ID          string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	ProjectID   string `json:"project_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ServiceID   string `json:"service_id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	PluginID    string `json:"plugin_id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	Tag         string `json:"tag" example:"v1.0.0"`
 	Target      string `json:"target" example:"main"`
@@ -42,7 +42,7 @@ type createReleaseResponse struct {
 // @Failure		400		{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
 // @Failure		409		{object}	httpresponse.ErrorResponse{data=nil}									"Conflict"
 // @Failure		500		{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
-// @Router			/projects/:project/releases [post]
+// @Router			/services/:service/releases [post]
 func (h *releaseHandler) CreateRelease(c *gin.Context) {
 	userID, exists := c.Get("user_id")
 	if !exists {
@@ -50,7 +50,7 @@ func (h *releaseHandler) CreateRelease(c *gin.Context) {
 		return
 	}
 
-	projectID := c.Param("project")
+	serviceID := c.Param("service")
 	var input createReleaseRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		err = misc.WrapError(err, errs.NewBadRequestError("unable to parse request", map[string]string{"details": err.Error()}))
@@ -59,7 +59,7 @@ func (h *releaseHandler) CreateRelease(c *gin.Context) {
 	}
 
 	release, err := h.releaseUsecase.CreateRelease(c.Request.Context(), releaseUsecase.CreateReleaseInput{
-		ProjectID:   projectID,
+		ServiceID:   serviceID,
 		PluginID:    input.PluginID,
 		Tag:         input.Tag,
 		Target:      input.Target,
@@ -82,7 +82,7 @@ func (h *releaseHandler) newCreateReleaseResponse(release *entity.Release) creat
 
 	return createReleaseResponse{
 		ID:          release.ID.String(),
-		ProjectID:   release.ProjectID.String(),
+		ServiceID:   release.ServiceID.String(),
 		PluginID:    release.PluginID.String(),
 		Tag:         release.Tag,
 		Target:      release.Target,

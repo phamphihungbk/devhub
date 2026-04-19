@@ -11,7 +11,7 @@ import (
 )
 
 type CreateReleaseInput struct {
-	ProjectID   string `json:"project_id" validate:"required,uuid"`
+	ServiceID   string `json:"service_id" validate:"required,uuid"`
 	PluginID    string `json:"plugin_id" validate:"required,uuid"`
 	Tag         string `json:"tag" validate:"required,git_revision,startswith=v"`
 	Target      string `json:"target" validate:"omitempty,git_revision"`
@@ -45,7 +45,7 @@ func (u *releaseUsecase) CreateRelease(ctx context.Context, input CreateReleaseI
 	}
 
 	release = &entity.Release{
-		ProjectID:   uuid.MustParse(input.ProjectID),
+		ServiceID:   uuid.MustParse(input.ServiceID),
 		PluginID:    uuid.MustParse(input.PluginID),
 		Tag:         input.Tag,
 		Target:      input.Target,

@@ -18,7 +18,7 @@ func (r *releaseRepositoryImpl) CreateOne(ctx context.Context, input *entity.Rel
 	stmt := releasesTable.INSERT(
 		releasesTable.AllColumns.Except(releasesTable.DefaultColumns),
 	).MODEL(model.Releases{
-		ProjectID:   input.ProjectID,
+		ServiceID:   input.ServiceID,
 		PluginID:    input.PluginID,
 		Tag:         input.Tag,
 		Target:      input.Target,

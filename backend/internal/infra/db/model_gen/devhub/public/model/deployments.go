@@ -14,10 +14,9 @@ import (
 
 type Deployments struct {
 	ID          uuid.UUID  `sql:"primary_key" db:"deployments.id"`
-	ProjectID   uuid.UUID  `db:"deployments.project_id"`
+	ServiceID   uuid.UUID  `db:"deployments.service_id"`
 	PluginID    uuid.UUID  `db:"deployments.plugin_id"`
 	Environment string     `db:"deployments.environment"`
-	Service     string     `db:"deployments.service"`
 	Version     string     `db:"deployments.version"`
 	Status      string     `db:"deployments.status"`
 	ExternalRef *string    `db:"deployments.external_ref"`

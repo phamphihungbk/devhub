@@ -23,8 +23,7 @@ func (r *projectRepositoryImpl) CreateOne(ctx context.Context, input *entity.Pro
 		Description:  misc.ToPointer(input.Description),
 		Status:       input.Status.String(),
 		OwnerTeam:    input.OwnerTeam,
-		RepoURL:      input.RepoURL,
-		RepoProvider: input.RepoProvider,
+		ScmProvider:  input.ScmProvider,
 		OwnerContact: input.OwnerContact,
 		CreatedBy:    input.CreatedBy,
 		Environments: func() []string {

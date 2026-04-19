@@ -18,7 +18,7 @@ func (r *deploymentRepositoryImpl) FindAll(ctx context.Context, filter repositor
 
 	// Build WHERE conditions for filtering
 	whereClauses := []postgres.BoolExpression{}
-	whereClauses = append(whereClauses, table.Deployments.ProjectID.EQ((postgres.UUID(filter.ProjectID))))
+	whereClauses = append(whereClauses, table.Deployments.ServiceID.EQ((postgres.UUID(filter.ServiceID))))
 
 	if filter.StartDate != nil {
 		whereClauses = append(whereClauses, table.Deployments.CreatedAt.GT_EQ(postgres.TimestampT(*filter.StartDate)))
@@ -64,11 +64,7 @@ func (r *deploymentRepositoryImpl) FindAll(ctx context.Context, filter repositor
 		}
 		switch *filter.SortBy {
 		case "name":
-			if *filter.SortOrder == entity.SortOrderDesc {
-				stmt = stmt.ORDER_BY(table.Deployments.Service.DESC())
-			} else {
-				stmt = stmt.ORDER_BY(table.Deployments.Service.ASC())
-			}
+			fallthrough
 		case "date":
 			if *filter.SortOrder == entity.SortOrderDesc {
 				stmt = stmt.ORDER_BY(table.Deployments.CreatedAt.DESC())

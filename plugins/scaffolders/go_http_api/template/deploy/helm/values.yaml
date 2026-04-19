@@ -1,16 +1,16 @@
+appProject: "[[ CD_PROJECT_NAME ]]"
 appName: "[[ SERVICE_NAME ]]" 
 appEnvironment: "[[ ENVIRONMENT ]]" 
-appRepoURL: "[[ REPO_URL ]]"
-appTargetRevision: "[[ TARGET_REVISION ]]"
-appNamespace: "[[ NAMESPACE ]]"
-appProject: "[[ ARGOCD_PROJECT ]]"
+appRepoURL: "[[ CD_REPO_URL ]]"
+appTargetRevision: "[[ CD_TARGET_REVISION ]]"
+appNamespace: "[[ CD_NAMESPACE ]]"
 nameOverride: "[[ SERVICE_NAME ]]"
 fullnameOverride: "[[ SERVICE_NAME ]]"
 
 replicaCount: 1
 
 image:
-  repository: "[[ IMAGE_REPOSITORY ]]"
+  repository: "[[ CD_IMAGE_REPOSITORY ]]"
   tag: "[[ IMAGE_TAG ]]"
   pullPolicy: IfNotPresent
 

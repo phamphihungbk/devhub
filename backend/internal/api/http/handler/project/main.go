@@ -20,7 +20,10 @@ type projectHandler struct {
 	projectUsecase projectUsecase.ProjectUsecase
 }
 
-func NewProjectHandler(appConfig config.AppConfig, projectUsecase projectUsecase.ProjectUsecase) ProjectHandler {
+func NewProjectHandler(
+	appConfig config.AppConfig,
+	projectUsecase projectUsecase.ProjectUsecase,
+) ProjectHandler {
 	return &projectHandler{
 		appConfig:      appConfig,
 		projectUsecase: projectUsecase,

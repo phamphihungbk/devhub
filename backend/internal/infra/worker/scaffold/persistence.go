@@ -3,6 +3,7 @@ package scaffold
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/domain/repository"
@@ -13,12 +14,16 @@ import (
 
 type ScaffoldStatePersistence struct {
 	scaffoldRequestRepository repository.ScaffoldRequestRepository
+	serviceRepository         repository.ServiceRepository
 }
 
 var _ core.StatePersistence[ScaffoldExecutionResult] = (*ScaffoldStatePersistence)(nil)
 
-func NewScaffoldStatePersistence(scaffoldRequestRepository repository.ScaffoldRequestRepository) *ScaffoldStatePersistence {
-	return &ScaffoldStatePersistence{scaffoldRequestRepository: scaffoldRequestRepository}
+func NewScaffoldStatePersistence(
+	scaffoldRequestRepository repository.ScaffoldRequestRepository,
+	serviceRepository repository.ServiceRepository,
+) *ScaffoldStatePersistence {
+	return &ScaffoldStatePersistence{scaffoldRequestRepository: scaffoldRequestRepository, serviceRepository: serviceRepository}
 }
 
 func (p *ScaffoldStatePersistence) MarkRunning(ctx context.Context, id uuid.UUID) error {
@@ -65,6 +70,29 @@ func (p *ScaffoldStatePersistence) MarkCompleted(ctx context.Context, id uuid.UU
 	}); err != nil {
 		return fmt.Errorf("mark scaffold request completed: %w", err)
 	}
+
+	if result.ProjectID == uuid.Nil {
+		return fmt.Errorf("project id is required")
+	}
+
+	serviceName := strings.TrimSpace(result.ServiceName)
+	if serviceName == "" {
+		return fmt.Errorf("service name is required")
+	}
+
+	repoURL := strings.TrimSpace(result.RepoURL)
+	if repoURL == "" {
+		return fmt.Errorf("repo url is required")
+	}
+
+	if _, err := p.serviceRepository.CreateOne(ctx, &entity.Service{
+		ProjectID: result.ProjectID,
+		Name:      serviceName,
+		RepoURL:   repoURL,
+	}); err != nil {
+		return err
+	}
+
 	return nil
 }
 

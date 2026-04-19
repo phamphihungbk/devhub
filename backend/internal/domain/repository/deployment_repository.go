@@ -19,7 +19,7 @@ type DeploymentRepository interface {
 }
 
 type FindAllDeploymentsFilter struct {
-	ProjectID uuid.UUID
+	ServiceID uuid.UUID
 	StartDate *time.Time
 	EndDate   *time.Time
 	Limit     *int64
@@ -33,7 +33,6 @@ type UpdateDeploymentInput struct {
 	Environment *entity.ProjectEnvironment
 	Status      *entity.DeploymentStatus
 	Version     *string
-	Service     *string
 	ExternalRef *string
 	CommitSHA   *string
 	FinishedAt  *time.Time

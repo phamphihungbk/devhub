@@ -52,7 +52,7 @@ func (s ReleaseStatus) Parse(status string) (ReleaseStatus, error) {
 
 type Release struct {
 	ID          uuid.UUID
-	ProjectID   uuid.UUID
+	ServiceID   uuid.UUID
 	PluginID    uuid.UUID
 	Tag         string
 	Target      string

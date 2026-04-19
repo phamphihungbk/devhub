@@ -54,10 +54,9 @@ func (s DeploymentStatus) Parse(status string) (DeploymentStatus, error) {
 
 type Deployment struct {
 	ID          uuid.UUID
-	ProjectID   uuid.UUID
+	ServiceID   uuid.UUID
 	PluginID    uuid.UUID
 	Environment ProjectEnvironment
-	Service     string
 	Version     string
 	Status      DeploymentStatus
 	ExternalRef string

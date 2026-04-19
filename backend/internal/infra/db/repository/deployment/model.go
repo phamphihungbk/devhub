@@ -22,10 +22,9 @@ func (c *Deployment) ToEntity() *entity.Deployment {
 
 	return &entity.Deployment{
 		ID:          c.ID,
-		ProjectID:   c.ProjectID,
+		ServiceID:   c.ServiceID,
 		PluginID:    c.PluginID,
 		Environment: env,
-		Service:     c.Service,
 		Version:     c.Version,
 		Status:      status,
 		ExternalRef: misc.GetValue(c.ExternalRef),

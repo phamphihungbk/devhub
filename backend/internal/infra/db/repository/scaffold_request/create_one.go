@@ -20,7 +20,6 @@ func (r *scaffoldRequestRepositoryImpl) CreateOne(ctx context.Context, input *en
 		scaffoldRequestsTable.AllColumns.Except(scaffoldRequestsTable.DefaultColumns),
 	).MODEL(model.ScaffoldRequests{
 		PluginID:    input.PluginID,
-		Template:    input.Template,
 		RequestedBy: input.RequestedBy,
 		Status:      input.Status.String(),
 		ProjectID:   input.ProjectID,

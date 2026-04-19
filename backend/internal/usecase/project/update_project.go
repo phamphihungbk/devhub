@@ -20,8 +20,7 @@ type UpdateProjectInput struct {
 	Environments *[]string `json:"environments" validate:"dive,required"`
 	Status       *string   `json:"status" validate:"required,oneof=draft active archived deprecated"`
 	OwnerTeam    *string   `json:"owner_team" validate:"required,min=1,max=255"`
-	RepoURL      *string   `json:"repo_url" validate:"required,max=2048"`
-	RepoProvider *string   `json:"repo_provider" validate:"required,min=1,max=32"`
+	ScmProvider  *string   `json:"scm_provider" validate:"required,min=1,max=32"`
 	OwnerContact *string   `json:"owner_contact" validate:"required,min=1,max=255"`
 }
 
@@ -60,8 +59,7 @@ func (u *projectUsecase) UpdateProject(ctx context.Context, input UpdateProjectI
 		Environments: input.Environments,
 		Status:       status,
 		OwnerTeam:    input.OwnerTeam,
-		RepoURL:      input.RepoURL,
-		RepoProvider: input.RepoProvider,
+		ScmProvider:  input.ScmProvider,
 		OwnerContact: input.OwnerContact,
 	})
 

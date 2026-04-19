@@ -35,10 +35,6 @@ func (r *deploymentRepositoryImpl) UpdateOne(ctx context.Context, input reposito
 		updateModel.Version = string(*input.Version)
 		columns = append(columns, deploymentsTable.Version)
 	}
-	if input.Service != nil {
-		updateModel.Service = string(*input.Service)
-		columns = append(columns, deploymentsTable.Service)
-	}
 	if input.ExternalRef != nil {
 		updateModel.ExternalRef = input.ExternalRef
 		columns = append(columns, deploymentsTable.ExternalRef)

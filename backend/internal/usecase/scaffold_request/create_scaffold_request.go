@@ -16,13 +16,13 @@ type CreateScaffoldRequestInput struct {
 	PluginID    string                   `json:"plugin_id" validate:"required,uuid"`
 	ProjectID   string                   `json:"project_id" validate:"required,uuid"`
 	RequestedBy string                   `json:"requested_by" validate:"required,uuid"`
-	Template    string                   `json:"template" validate:"required,min=2,max=100"`
 	Environment string                   `json:"environment" validate:"required,oneof=dev staging prod"`
 	Variables   ScaffoldRequestVariables `json:"variables" validate:"required"`
 }
 
 type ScaffoldRequestVariables struct {
 	ServiceName   string `json:"service_name" validate:"required"`
+	ModulePath    string `json:"module_path" validate:"required"`
 	Port          int    `json:"port" validate:"required"`
 	Database      string `json:"database" validate:"required"`
 	EnableLogging bool   `json:"enable_logging" validate:"required"`
@@ -67,7 +67,6 @@ func (u *scaffoldRequestUsecase) CreateScaffoldRequest(ctx context.Context, inpu
 		PluginID:    pluginID,
 		ProjectID:   projectID,
 		RequestedBy: requestedBy,
-		Template:    input.Template,
 		Status:      entity.ScaffoldRequestPending,
 		Environment: new(entity.ProjectEnvironment).MustParse(input.Environment),
 		Variables:   entity.ScaffoldRequestVariables(input.Variables),

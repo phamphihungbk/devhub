@@ -4,6 +4,7 @@ import (
 	"devhub-backend/internal/config"
 	"fmt"
 	"log"
+	"math"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -42,6 +43,7 @@ func runMigrateCmd(cmd *cobra.Command, args []string) error {
 
 	dir, _ := cmd.Flags().GetString("dir")
 	action, _ := cmd.Flags().GetString("action")
+	forceVersion, _ := cmd.Flags().GetInt("force-version")
 
 	m, err := migrate.New(
 		"file://"+dir,
@@ -55,6 +57,15 @@ func runMigrateCmd(cmd *cobra.Command, args []string) error {
 	defer func() {
 		_, _ = m.Close()
 	}()
+
+	if forceVersion != math.MinInt {
+		log.Printf("Forcing migration version to %d", forceVersion)
+		if err := m.Force(forceVersion); err != nil {
+			return fmt.Errorf("failed to force migration version: %w", err)
+		}
+		log.Println("Migration version forced successfully.")
+		return nil
+	}
 
 	switch action {
 	case "up":
@@ -78,4 +89,5 @@ func runMigrateCmd(cmd *cobra.Command, args []string) error {
 func init() {
 	migrateCmd.Flags().String("dir", "./migrations", "Path to the migration files")
 	migrateCmd.Flags().String("action", "up", "Migration action: up or down")
+	migrateCmd.Flags().Int("force-version", math.MinInt, "Force-set the migration version and clear dirty state")
 }

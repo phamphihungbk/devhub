@@ -31,7 +31,6 @@ type UpdateScaffoldRequestInput struct {
 	PluginID      *uuid.UUID
 	ProjectID     *uuid.UUID
 	RequestedBy   *uuid.UUID
-	Template      *string
 	Status        *entity.ScaffoldRequestStatus
 	Environment   *entity.ProjectEnvironment
 	Variables     *entity.ScaffoldRequestVariables

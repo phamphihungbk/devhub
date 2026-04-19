@@ -10,6 +10,7 @@ import (
 
 type ScaffoldRequestVariables struct {
 	ServiceName   string `json:"service_name"`
+	ModulePath    string `json:"module_path"`
 	Port          int    `json:"port"`
 	Database      string `json:"database"`
 	EnableLogging bool   `json:"enable_logging"`
@@ -86,7 +87,6 @@ type ScaffoldRequest struct {
 	PluginID      uuid.UUID
 	ProjectID     uuid.UUID
 	RequestedBy   uuid.UUID
-	Template      string
 	Status        ScaffoldRequestStatus
 	Environment   ProjectEnvironment
 	Variables     ScaffoldRequestVariables
