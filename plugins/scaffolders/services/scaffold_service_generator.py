@@ -31,7 +31,7 @@ class ScaffoldServiceGenerator:
         scaffold_from_directory(
             service_dir,
             self.template_dir,
-            self.build_template_context(payload.to_template()),
+            payload.to_template(),
         )
         self.remove_repo_values_file(service_dir)
         return temp_dir, service_dir

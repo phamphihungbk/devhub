@@ -25,6 +25,7 @@ class ScaffoldPayload:
     cd_repo_url: str
     cd_target_revision: str
     cd_namespace: str
+    cd_image_repository: str
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]):
@@ -41,15 +42,8 @@ class ScaffoldPayload:
             cd_repo_url=read_required_str(payload, "cd_repo_url"),
             cd_target_revision=read_required_str(payload, "cd_target_revision"),
             cd_namespace=read_required_str(payload, "cd_namespace"),
+            cd_image_repository=read_required_str(payload, "cd_image_repository"),
         )
-
-    @property
-    def cd_image_repository(self) -> str:
-        registry_host = self.ci_registry_host.strip().rstrip("/")
-        service_name = self.service_name.strip()
-        if not registry_host:
-            return service_name
-        return f"{registry_host}/{service_name}"
     
     def to_template(self):
         return {
@@ -81,6 +75,7 @@ class ScaffoldPayload:
             "cd_repo_url": self.cd_repo_url,
             "cd_target_revision": self.cd_target_revision,
             "cd_namespace": self.cd_namespace,
+            "cd_image_repository": self.cd_image_repository,
         }
 
 

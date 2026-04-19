@@ -12,7 +12,8 @@
     "cd_project_name",
     "cd_repo_url",
     "cd_target_revision",
-    "cd_namespace"
+    "cd_namespace",
+    "cd_image_repository"
   ],
   "properties": {
     "environment": {
@@ -63,6 +64,10 @@
     },
     "cd_namespace": {
       "type": "string",
+      "minLength": 1
+    },
+    "cd_image_repository": {
+       "type": "string",
       "minLength": 1
     }
   },

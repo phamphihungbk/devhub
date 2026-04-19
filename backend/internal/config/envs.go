@@ -31,12 +31,15 @@ const (
 
 // Argo CD configuration environment variable keys
 const (
-	ArgoCDServerKey         = "ARGOCD_SERVER"
-	ArgoCDAuthTokenKey      = "ARGOCD_AUTH_TOKEN"
-	ArgoCDInsecureKey       = "ARGOCD_INSECURE"
-	ArgoCDTimeoutKey        = "ARGOCD_TIMEOUT"
-	ArgoCDAppNamespaceKey   = "ARGOCD_APP_NAMESPACE"
-	ArgoCDTargetRevisionKey = "ARGOCD_TARGET_REVISION"
+	ArgoCDServerKey              = "ARGOCD_SERVER"
+	ArgoCDAuthTokenKey           = "ARGOCD_AUTH_TOKEN"
+	ArgoCDInsecureKey            = "ARGOCD_INSECURE"
+	ArgoCDTimeoutKey             = "ARGOCD_TIMEOUT"
+	ArgoCDAppProjectKey          = "ARGOCD_APP_PROJECT"
+	ArgoCDAppNamespaceKey        = "ARGOCD_APP_NAMESPACE"
+	ArgoCDTargetRevisionKey      = "ARGOCD_TARGET_REVISION"
+	ArgoCDRepoURLKey             = "ARGOCD_REPO_URL"
+	ArgoCDRepositoryRegistryHost = "ARGOCD_REPOSITORY_REGISTRY_HOST"
 )
 
 const (
@@ -83,12 +86,15 @@ var configDefaults = map[string]any{
 	DatabaseConnMaxIdleTimeKey: "5m",
 
 	// Argo CD configuration
-	ArgoCDServerKey:         "argocd-server.argocd.svc.cluster.local:443",
-	ArgoCDAuthTokenKey:      "your-token",
-	ArgoCDInsecureKey:       true,
-	ArgoCDTimeoutKey:        "10m",
-	ArgoCDAppNamespaceKey:   "devhub",
-	ArgoCDTargetRevisionKey: "main",
+	ArgoCDServerKey:              "argocd-server.argocd.svc.cluster.local:443",
+	ArgoCDAuthTokenKey:           "your-token",
+	ArgoCDInsecureKey:            true,
+	ArgoCDTimeoutKey:             "10m",
+	ArgoCDAppProjectKey:          "default",
+	ArgoCDAppNamespaceKey:        "devhub",
+	ArgoCDTargetRevisionKey:      "main",
+	ArgoCDRepoURLKey:             "http://host.minikube.internal:3000",
+	ArgoCDRepositoryRegistryHost: "host.minikube.internal:5001",
 
 	// CI configuration
 	CIImageRegistryHostKey: "host.docker.internal:5001",
