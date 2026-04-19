@@ -16,17 +16,12 @@ import { useRouter } from 'vue-router'
 import PageHeader from '@/components/page-header.vue'
 import { createProject } from '@/services/api'
 import { ApiError } from '@/services/request'
+import { environmentOptions } from '@/theme/environment'
 import type { ProjectPayload } from '@/services/api'
 
 const router = useRouter()
 const message = useMessage()
 const saving = ref(false)
-
-const environmentOptions = [
-  { label: 'Development', value: 'dev' },
-  { label: 'Staging', value: 'staging' },
-  { label: 'Production', value: 'prod' },
-]
 
 const statusOptions = [
   { label: 'Draft', value: 'draft' },

@@ -7,6 +7,7 @@ export interface ScaffoldRequestListQuery {
 
 export interface ScaffoldRequestVariables {
   service_name: string
+  module_path: string
   port: number
   database: string
   enable_logging: boolean

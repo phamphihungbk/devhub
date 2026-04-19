@@ -8,6 +8,7 @@ export interface Release {
   notes: string
   html_url: string
   external_ref: string
+  status?: string
   triggered_by: string
 }
 

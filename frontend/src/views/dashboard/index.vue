@@ -15,6 +15,8 @@ import { computed, h, onMounted, ref } from 'vue'
 import PageHeader from '@/components/page-header.vue'
 import { fetchPlugins, fetchProjects, fetchUsers } from '@/services/api'
 import { ApiError } from '@/services/request'
+import { getEnvironmentTagColor } from '@/theme/environment'
+import { getPluginTypeTagColor } from '@/theme/plugin'
 import type { PluginRecord, Project, UserRecord } from '@/services/api'
 
 const message = useMessage()
@@ -58,7 +60,7 @@ const projectColumns = [
             NTag,
             {
               bordered: false,
-              color: { color: '#eff6ff', textColor: '#1d4ed8' },
+              color: getEnvironmentTagColor(value),
             },
             { default: () => value },
           ),
@@ -74,7 +76,19 @@ const projectColumns = [
 
 const pluginColumns = [
   { title: 'Plugin', key: 'name' },
-  { title: 'Type', key: 'type' },
+  {
+    title: 'Type',
+    key: 'type',
+    render: (row: PluginRecord) =>
+      h(
+        NTag,
+        {
+          bordered: false,
+          color: getPluginTypeTagColor(row.type),
+        },
+        { default: () => row.type },
+      ),
+  },
   { title: 'Runtime', key: 'runtime' },
   { title: 'Scope', key: 'scope' },
 ]
