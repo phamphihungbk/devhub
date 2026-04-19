@@ -92,25 +92,27 @@ class SCMRepositoryClient:
 
         return owner, repo_name
 
-    def build_authenticated_remote_url(self, repo_name: str) -> str:
+    def build_authenticated_remote_url(self, owner: str, repo_name: str) -> str:
+        username = self.config.gitops_owner
+        if not owner:
+            fail(f"invalid owner: {owner}")
+
         if not repo_name:
             fail("repo_name is required")
 
-        if not self.config.username:
+        if not username:
             fail("SCM_USERNAME (username) is required")
 
         if not self.config.token:
             fail("SCM_TOKEN is required")
 
         parsed = urllib.parse.urlparse(self.config.api_base_url)
-
-        safe_username = urllib.parse.quote(self.config.username, safe="")
+        safe_username = urllib.parse.quote(username, safe="")
         safe_token = urllib.parse.quote(self.config.token, safe="")
-
         netloc = f"{safe_username}:{safe_token}@{parsed.netloc}"
 
         return urllib.parse.urlunparse(
-            (parsed.scheme, netloc, f"/{safe_username}/{repo_name}.git", "", "", "")
+            (parsed.scheme, netloc, f"/{owner}/{repo_name}.git", "", "", "")
         )
 
     def _build_file_body(self, content: str, message: str) -> dict[str, Any]:
@@ -136,7 +138,7 @@ class SCMRepositoryClient:
     ) -> tuple[int, str]:
         return self._request(
             method,
-            f"/repos/{urllib.parse.quote(self.config.owner)}/{urllib.parse.quote(self.config.repo_name)}/contents/{path}",
+            f"/repos/{urllib.parse.quote(self.config.gitops_owner)}/{urllib.parse.quote(self.config.gitops_repo)}/contents/{path}",
             body,
         )
 
