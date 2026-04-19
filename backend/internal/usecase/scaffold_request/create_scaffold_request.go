@@ -22,6 +22,7 @@ type CreateScaffoldRequestInput struct {
 
 type ScaffoldRequestVariables struct {
 	ServiceName   string `json:"service_name" validate:"required"`
+	ModulePath    string `json:"module_path" validate:"required"`
 	Port          int    `json:"port" validate:"required"`
 	Database      string `json:"database" validate:"required"`
 	EnableLogging bool   `json:"enable_logging" validate:"required"`

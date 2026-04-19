@@ -52,7 +52,7 @@ def run() -> None:
 
         response = ScaffoldResponse.from_dict(
             {
-                "repo_url": payload.repo_url,
+                "repo_url": payload.cd_repo_url,
                 "path": str(service_dir),
             }
         )

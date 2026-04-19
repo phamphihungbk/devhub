@@ -7,6 +7,7 @@ import (
 type Config struct {
 	App       AppConfig      // Application-level settings such as API keys or feature flags
 	ArgoCD    ArgoCDConfig   // Argo CD client settings used by deployment workers
+	CI        CIConfig       // Argo CD client settings used by deployment workers
 	Gitops    GitOpsConfig   // Gitops client settings used by release flows
 	ScmConfig SCMConfig      // ScmConfig client settings used by release flows
 	Service   ServiceConfig  // Infrastructure-level service settings like name, port, and environment
@@ -31,6 +32,7 @@ func Configure() (*Config, error) {
 	return &Config{
 		App:       LoadAppConfig(cfg),
 		ArgoCD:    LoadArgoCDConfig(cfg),
+		CI:        LoadCIConfig(cfg),
 		Gitops:    LoadGitOpsConfig(cfg),
 		ScmConfig: LoadSCMConfig(cfg),
 		Service:   LoadServiceConfig(cfg),

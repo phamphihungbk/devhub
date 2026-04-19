@@ -10,6 +10,7 @@ import (
 
 type ScaffoldRequestVariables struct {
 	ServiceName   string `json:"service_name"`
+	ModulePath    string `json:"module_path"`
 	Port          int    `json:"port"`
 	Database      string `json:"database"`
 	EnableLogging bool   `json:"enable_logging"`

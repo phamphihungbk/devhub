@@ -22,6 +22,8 @@ import (
 	"github.com/google/uuid"
 )
 
+const DEFAULT_IMAGE_TAG = "latest"
+
 type PythonScaffoldExecutor struct {
 	PythonBin         string
 	Timeout           time.Duration
@@ -37,21 +39,18 @@ type ScaffoldExecutionResult struct {
 }
 
 type scaffoldPluginPayload struct {
-	ScaffoldRequestID string `json:"scaffold_request_id"`
-	ProjectID         string `json:"project_id"`
-	Environment       string `json:"environment"`
-	ServiceName       string `json:"service_name"`
-	Port              int    `json:"port"`
-	Database          string `json:"database"`
-	EnableLogging     bool   `json:"enable_logging"`
-	RepoURL           string `json:"repo_url"`
-	Namespace         string `json:"namespace"`
-	TargetRevision    string `json:"target_revision"`
-	ArgocdProject     string `json:"argocd_project"`
-	RegistryURL       string `json:"registry_url"`
-	ServerURL         string `json:"server_url"`
-	ModulePath        string `json:"module_path"`
-	Image             string `json:"image"`
+	Environment      string `json:"environment"`
+	ServiceName      string `json:"service_name"`
+	Port             int    `json:"port"`
+	Database         string `json:"database"`
+	ImageTag         string `json:"image_tag"`
+	ModulePath       string `json:"module_path"`
+	CIRegistryHost   string `json:"ci_registry_host"`
+	CIServerURL      string `json:"ci_server_url"`
+	CDProjectName    string `json:"cd_project_name"`
+	CDRepoURL        string `json:"cd_repo_url"`
+	CDTargetRevision string `json:"cd_target_revision"`
+	CDNamespace      string `json:"cd_namespace"`
 }
 
 type scaffoldPluginInput struct {
@@ -122,7 +121,7 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 	}
 
 	repoURL, err := buildScaffoldRepoURL(
-		strings.TrimSpace(e.cfg.ArgoCD.RepoBaseURL),
+		strings.TrimSpace(e.cfg.ScmConfig.ExternalURL),
 		project.OwnerTeam,
 		job.Variables.ServiceName,
 		project.ScmProvider,
@@ -131,12 +130,9 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 		return ScaffoldExecutionResult{}, fmt.Errorf("build scaffold repo url: %w", err)
 	}
 
-	modulePath, err := inferModuleBaseFromRepoURL(repoURL)
 	if err != nil {
 		return ScaffoldExecutionResult{}, fmt.Errorf("infer module path from repo url: %w", err)
 	}
-
-	image := buildScaffoldImage(e.cfg.ArgoCD.ImageRegistryURL, job.Variables.ServiceName)
 
 	scriptPath := strings.TrimSpace(plugin.Entrypoint)
 
@@ -151,21 +147,18 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 	}
 
 	payload := scaffoldPluginPayload{
-		ScaffoldRequestID: job.ID.String(),
-		ProjectID:         job.ProjectID.String(),
-		Environment:       job.Environment.String(),
-		ServiceName:       job.Variables.ServiceName,
-		Port:              job.Variables.Port,
-		Database:          job.Variables.Database,
-		EnableLogging:     job.Variables.EnableLogging,
-		RepoURL:           repoURL,
-		Namespace:         strings.TrimSpace(e.cfg.ArgoCD.AppNamespace),
-		TargetRevision:    strings.TrimSpace(e.cfg.Gitops.Branch),
-		ArgocdProject:     strings.TrimSpace(e.cfg.ArgoCD.AppProject),
-		RegistryURL:       strings.TrimSpace(e.cfg.ArgoCD.ImageRegistryHost),
-		ServerURL:         strings.TrimSpace(e.cfg.ArgoCD.RepoBaseURL),
-		ModulePath:        modulePath,
-		Image:             image,
+		Environment:      job.Environment.String(),
+		ServiceName:      job.Variables.ServiceName,
+		Port:             job.Variables.Port,
+		Database:         job.Variables.Database,
+		ImageTag:         DEFAULT_IMAGE_TAG,
+		ModulePath:       job.Variables.ModulePath,
+		CIRegistryHost:   strings.TrimSpace(e.cfg.CI.ImageRegistryHost),
+		CIServerURL:      strings.TrimSpace(e.cfg.CI.ServerURL),
+		CDProjectName:    project.Name,
+		CDRepoURL:        repoURL,
+		CDTargetRevision: strings.TrimSpace(e.cfg.ArgoCD.TargetRevision),
+		CDNamespace:      strings.TrimSpace(e.cfg.ArgoCD.AppNamespace),
 	}
 
 	// TODO: use enum instead
@@ -255,40 +248,4 @@ func buildScaffoldRepoURL(baseURL string, owner string, serviceName string, scmP
 	parsed.Path = path.Join(parsed.Path, owner, serviceName+".git")
 
 	return parsed.String(), nil
-}
-
-func inferModuleBaseFromRepoURL(repoURL string) (string, error) {
-	parsed, err := url.Parse(strings.TrimSpace(repoURL))
-	if err != nil {
-		return "", err
-	}
-
-	host := strings.TrimSpace(parsed.Host)
-	repoPath := strings.Trim(parsed.Path, "/")
-	if host == "" || repoPath == "" {
-		return "", errors.New("repo url must include host and path")
-	}
-
-	segments := strings.Split(repoPath, "/")
-	if len(segments) == 0 {
-		return "", errors.New("repo url must include owner path")
-	}
-
-	ownerSegments := segments[:len(segments)-1]
-	if len(ownerSegments) == 0 {
-		return host, nil
-	}
-
-	return path.Join(append([]string{host}, ownerSegments...)...), nil
-}
-
-func buildScaffoldImage(registryURL string, serviceName string) string {
-	registryURL = strings.TrimRight(strings.TrimSpace(registryURL), "/")
-	serviceName = strings.TrimSpace(serviceName)
-
-	if registryURL == "" {
-		return serviceName + ":latest"
-	}
-
-	return registryURL + "/" + serviceName + ":latest"
 }

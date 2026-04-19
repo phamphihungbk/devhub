@@ -2,7 +2,7 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
-from scaffolders import read_int, read_required_str  # noqa: E402
+from scaffolders import read_int, read_optional_str, read_required_str  # noqa: E402
 
 
 DEFAULT_GITOPS_BRANCH = "main"
@@ -13,50 +13,74 @@ DEFAULT_GITOPS_COMMIT_USER_EMAIL = "devhub-bot@local"
 
 @dataclass(frozen=True)
 class ScaffoldPayload:
-    service_name: str
-    project_id: str
-    repo_url: str
     environment: str
-    namespace: str
-    target_revision: str
-    argocd_project: str
-    registry_url: str
-    server_url: str
-    module_path: str
+    service_name: str
     port: int
-    image: str
+    database: str
+    image_tag: str
+    module_path: str
+    ci_registry_host: str
+    ci_server_url: str
+    cd_project_name: str
+    cd_repo_url: str
+    cd_target_revision: str
+    cd_namespace: str
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]):
         return cls(
-            service_name=read_required_str(payload, "service_name"),
-            project_id=read_required_str(payload, "project_id"),
-            repo_url=read_required_str(payload, "repo_url"),
             environment=read_required_str(payload, "environment"),
-            namespace=read_required_str(payload, "namespace"),
-            target_revision=read_required_str(payload, "target_revision"),
-            argocd_project=read_required_str(payload, "argocd_project"),
-            registry_url=read_required_str(payload, "registry_url"),
-            server_url=read_required_str(payload, "server_url"),
-            module_path=read_required_str(payload, "module_path"),
+            service_name=read_required_str(payload, "service_name"),
             port=read_int(payload, "port", default=0, min_value=1, max_value=65535),
-            image=read_required_str(payload, "image"),
+            database=read_required_str(payload, "database"),
+            image_tag=read_optional_str(payload, "image_tag", "latest"),
+            module_path=read_required_str(payload, "module_path"),
+            ci_registry_host=read_required_str(payload, "ci_registry_host"),
+            ci_server_url=read_required_str(payload, "ci_server_url"),
+            cd_project_name=read_required_str(payload, "cd_project_name"),
+            cd_repo_url=read_required_str(payload, "cd_repo_url"),
+            cd_target_revision=read_required_str(payload, "cd_target_revision"),
+            cd_namespace=read_required_str(payload, "cd_namespace"),
         )
+
+    @property
+    def cd_image_repository(self) -> str:
+        registry_host = self.ci_registry_host.strip().rstrip("/")
+        service_name = self.service_name.strip()
+        if not registry_host:
+            return service_name
+        return f"{registry_host}/{service_name}"
+    
+    def to_template(self):
+        return {
+            "SERVICE_NAME": self.service_name,
+            "MODULE_PATH": self.module_path,
+            "PORT": str(self.port),
+            "IMAGE_TAG": self.image_tag,
+            "ENVIRONMENT": self.environment,
+            "CD_PROJECT_NAME": self.cd_project_name,
+            "CD_IMAGE_REPOSITORY": self.cd_image_repository,
+            "CD_REPO_URL": self.cd_repo_url,
+            "CD_TARGET_REVISION": self.cd_target_revision,
+            "CD_NAMESPACE": self.cd_namespace,
+            "CI_REGISTRY_HOST": self.ci_registry_host,
+            "CI_SERVER_URL": self.ci_server_url,
+        }
 
     def to_dict(self):
         return {
-            "service_name": self.service_name,
-            "project_id": self.project_id,
-            "repo_url": self.repo_url,
             "environment": self.environment,
-            "namespace": self.namespace,
-            "target_revision": self.target_revision,
-            "argocd_project": self.argocd_project,
-            "registry_url": self.registry_url,
-            "server_url": self.server_url,
-            "module_path": self.module_path,
+            "service_name": self.service_name,
             "port": self.port,
-            "image": self.image,
+            "database": self.database,
+            "image_tag": self.image_tag,
+            "module_path": self.module_path,
+            "ci_registry_host": self.ci_registry_host,
+            "ci_server_url": self.ci_server_url,
+            "cd_project_name": self.cd_project_name,
+            "cd_repo_url": self.cd_repo_url,
+            "cd_target_revision": self.cd_target_revision,
+            "cd_namespace": self.cd_namespace,
         }
 
 

@@ -9,7 +9,7 @@ class ScaffoldBootstrapper:
         self.gitops_values_publisher = gitops_values_publisher
 
     def bootstrap(self, payload: ScaffoldPayload, service_dir, values_content: str) -> None:
-        owner, repo_name = self.scm_client.parse_repo_coordinates(payload.repo_url)
+        owner, repo_name = self.scm_client.parse_repo_coordinates(payload.cd_repo_url)
 
         if self.scm_client.repo_exists(owner, repo_name):
             fail(f"repository {owner}/{repo_name} already exists")
