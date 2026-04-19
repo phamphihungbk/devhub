@@ -29,6 +29,12 @@ The current control-plane UI is organized around this lifecycle:
    - deploy based on that release version
    - inspect deployments filtered by the selected release tag
 
+## Demo
+
+The current DevHub console looks like this:
+
+![DevHub dashboard demo](./docs/assets/demo.png)
+
 ## Documentation
 
 Detailed docs live in [`docs/`](./docs):
