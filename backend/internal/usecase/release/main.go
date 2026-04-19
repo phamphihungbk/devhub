@@ -9,6 +9,7 @@ import (
 
 type ReleaseUsecase interface {
 	CreateRelease(ctx context.Context, input CreateReleaseInput) (*entity.Release, error)
+	FindAllReleases(ctx context.Context, input FindAllReleasesInput) (entity.Releases, error)
 }
 
 type releaseUsecase struct {

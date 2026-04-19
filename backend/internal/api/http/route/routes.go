@@ -109,6 +109,7 @@ func (r *router) applyProjectRoutes(router *gin.Engine) {
 	{
 		serviceRoute.GET("/:service/deployments", r.DeploymentHandler.FindAllDeployments)
 		serviceRoute.POST("/:service/deployments", r.Middleware.Auth(r.tokenCfg.Secret), r.DeploymentHandler.CreateDeployment)
+		serviceRoute.GET("/:service/releases", r.ReleaseHandler.FindAllReleases)
 		serviceRoute.POST("/:service/releases", r.Middleware.Auth(r.tokenCfg.Secret), r.ReleaseHandler.CreateRelease)
 	}
 }

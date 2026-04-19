@@ -22,6 +22,7 @@ import {
   createScaffoldRequest,
   fetchPlugins,
   fetchProjectById,
+  fetchServiceReleases,
   fetchProjectServices,
   fetchProjectScaffoldRequests,
   fetchServiceDeployments,
@@ -33,6 +34,7 @@ import type {
   Deployment,
   PluginRecord,
   Project,
+  Release,
   ScaffoldRequestRecord,
   Service,
 } from '@/services/api'
@@ -51,6 +53,7 @@ const project = ref<Project | null>(null)
 const services = ref<Service[]>([])
 const plugins = ref<PluginRecord[]>([])
 const deployments = ref<Deployment[]>([])
+const releases = ref<Release[]>([])
 const scaffoldRequests = ref<ScaffoldRequestRecord[]>([])
 const selectedServiceId = ref('')
 
@@ -95,6 +98,13 @@ const pluginNameById = computed(() =>
 
 const serviceOptions = computed(() =>
   services.value.map(service => ({ label: service.name, value: service.id })),
+)
+
+const releaseOptions = computed(() =>
+  releases.value.map(release => ({
+    label: release.name?.trim() ? `${release.tag} - ${release.name}` : release.tag,
+    value: release.tag,
+  })),
 )
 
 const deploymentColumns = [
@@ -165,9 +175,17 @@ async function loadProjectOperations() {
     plugins.value = pluginData
     scaffoldRequests.value = scaffoldData
     selectedServiceId.value = serviceData[0]?.id || ''
-    deployments.value = selectedServiceId.value
-      ? await fetchServiceDeployments(selectedServiceId.value)
-      : []
+    if (selectedServiceId.value) {
+      const [deploymentData, releaseData] = await Promise.all([
+        fetchServiceDeployments(selectedServiceId.value),
+        fetchServiceReleases(selectedServiceId.value),
+      ])
+      deployments.value = deploymentData
+      releases.value = releaseData
+    } else {
+      deployments.value = []
+      releases.value = []
+    }
   } catch (error) {
     message.error(error instanceof ApiError ? error.message : 'Unable to load project operations.')
   } finally {
@@ -178,7 +196,7 @@ async function loadProjectOperations() {
 function resetDeploymentForm() {
   deploymentForm.plugin_id = ''
   deploymentForm.environment = project.value?.environments?.[0] || 'dev'
-  deploymentForm.version = ''
+  deploymentForm.version = releases.value[0]?.tag || ''
 }
 
 function resetScaffoldForm() {
@@ -215,7 +233,21 @@ async function submitDeployment() {
 
 async function handleServiceChange(serviceId: string) {
   selectedServiceId.value = serviceId
-  deployments.value = serviceId ? await fetchServiceDeployments(serviceId) : []
+  if (!serviceId) {
+    deployments.value = []
+    releases.value = []
+    deploymentForm.version = ''
+    return
+  }
+
+  const [deploymentData, releaseData] = await Promise.all([
+    fetchServiceDeployments(serviceId),
+    fetchServiceReleases(serviceId),
+  ])
+
+  deployments.value = deploymentData
+  releases.value = releaseData
+  deploymentForm.version = releaseData[0]?.tag || ''
 }
 
 async function submitScaffoldRequest() {
@@ -313,7 +345,11 @@ onMounted(async () => {
             </NFormItem>
 
             <NFormItem label="Version" class="md:col-span-2">
-              <NInput v-model:value="deploymentForm.version" placeholder="v1.0.0" />
+              <NSelect
+                v-model:value="deploymentForm.version"
+                :options="releaseOptions"
+                placeholder="Select release version"
+              />
             </NFormItem>
           </div>
         </NForm>
