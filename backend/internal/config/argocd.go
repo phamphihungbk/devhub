@@ -23,7 +23,7 @@ func LoadArgoCDConfig(cfg *ViperConfig) ArgoCDConfig {
 		AppProject:             cfg.GetString(ArgoCDAppProjectKey),
 		AppNamespace:           cfg.GetString(ArgoCDAppNamespaceKey),
 		TargetRevision:         cfg.GetString(ArgoCDTargetRevisionKey),
-		RepoURL:                cfg.GetString(ArgoCDTargetRevisionKey),
+		RepoURL:                cfg.GetString(ArgoCDRepoURLKey),
 		RepositoryRegistryHost: cfg.GetString(ArgoCDRepositoryRegistryHost),
 	}
 }

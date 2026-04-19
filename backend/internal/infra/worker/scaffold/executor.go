@@ -159,7 +159,7 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 		CDRepoURL:         CDRepoURL,
 		CDTargetRevision:  strings.TrimSpace(e.cfg.ArgoCD.TargetRevision),
 		CDNamespace:       strings.TrimSpace(e.cfg.ArgoCD.AppNamespace),
-		CDImageRepository: strings.TrimSpace(e.cfg.ArgoCD.RepositoryRegistryHost),
+		CDImageRepository: strings.TrimSpace(e.cfg.ArgoCD.RepositoryRegistryHost) + "/" + job.Variables.ServiceName,
 	}
 
 	// TODO: use enum instead
@@ -206,8 +206,6 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 	if strings.ToLower(out.Status) != "ok" {
 		return ScaffoldExecutionResult{}, fmt.Errorf("plugin returned non-ok status")
 	}
-
-	scaffoldRepoURL = strings.TrimSpace(out.Output.RepoURL)
 
 	if scaffoldRepoURL == "" {
 		return ScaffoldExecutionResult{}, errors.New("plugin output missing repo_url/path")
