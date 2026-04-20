@@ -33,7 +33,7 @@ The current control-plane UI is organized around this lifecycle:
 
 The current DevHub console looks like this:
 
-![DevHub dashboard demo](./docs/assets/demo.png)
+![DevHub dashboard demo](./docs/assets/demo.gif)
 
 ## Documentation
 
