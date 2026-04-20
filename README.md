@@ -1,433 +1,116 @@
 # DevHub
 
-**DevHub** is an Internal Developer Platform (IDP) that streamlines the developer experience inside an organization. It allows engineers to **scaffold**, **deploy**, and **manage** cloud-native services with a unified interface.
+**DevHub** is an internal developer platform control plane for scaffolding services, creating releases, and deploying those releases through a plugin-driven workflow.
 
-> Built with Go, Vue.js, TypeScript, Kubernetes, Docker, and Python.
+> Built with Go, Vue 3, TypeScript, Python plugins, PostgreSQL, Redis, Gitea, and Argo CD.
 
+## What It Does
 
-## 🔧 Features
+- Register projects with environment ownership and lifecycle metadata
+- Scaffold new services from platform templates
+- Create releases for a selected service
+- Deploy a chosen release version into `dev`, `staging`, or `prod`
+- Track deployment and release history from the control plane UI
+- Drive automation through plugin types:
+  - `scaffolder`
+  - `releaser`
+  - `deployer`
 
-- 🧱 Service scaffolding from templates (REST, gRPC, cron jobs, etc.)
-- 🚀 One-click deployment to Kubernetes clusters
-- 📦 CI/CD pipeline integration
-- 📊 Dashboard for runtime metrics and deployment history
-- 🔐 Role-based access controls for different teams
-- 📁 Git integration (GitHub/GitLab/Bitbucket)
-- 🧪 API testing and endpoint validation
-- 🔄 Background job management
-- 🧭 Plugin system for extending features
+## Frontend Flow
 
----
+The current control-plane UI is organized around this lifecycle:
 
-## 🛠 Tech Stack
+1. `Projects` lists registered projects with ownership and environment filters.
+2. Clicking a project opens project details with services, recent releases, and recent deployments.
+3. From project details, you can open a service.
+4. From service details, you can:
+   - create a release
+   - select a release
+   - deploy based on that release version
+   - inspect deployments filtered by the selected release tag
 
-| Layer         | Tech                                                                 |
-|---------------|----------------------------------------------------------------------|
-| Frontend      | Vue 3 + TypeScript + Headless UI + Tailwind CSS                      |
-| Backend       | Go (REST API & scaffolding), Python (automation tasks & plugins)     |
-| DevOps        | Docker, Kubernetes, Helm, GitHub Actions                             |
-| CI/CD         | ArgoCD or GitHub Actions                                             |
-| Storage       | PostgreSQL / Redis / Object Storage                                  |
+## Demo
 
+The current DevHub console looks like this:
 
-## 🚀 Getting Started
+![DevHub dashboard demo](./docs/assets/demo.png)
+
+## Documentation
+
+Detailed docs live in [`docs/`](./docs):
+
+- [Getting Started](./docs/getting-started.md)
+- [Architecture](./docs/architecture.md)
+- [API Docs](./docs/api.md)
+- [Roadmap](./docs/roadmap.md)
+
+This keeps the main project page readable on GitHub while still exposing the deeper documentation from the README.
+
+## Quick Start
 
 ```bash
 # Clone the repo
-git clone https://github.com/yourusername/devhub.git && cd devhub
+git clone https://github.com/phamphihungbk/devhub.git
+cd devhub
 
-# Prepare local environment
-./scripts/bootstrap.sh
+# Discover available commands
+make help
 
-# Start the full local stack
-./scripts/dev.sh up --build
+# Prepare local environment files
+make bootstrap
+
+# Start the local platform stack
+make up
 
 # Run database migrations
-./scripts/migrate.sh up
-
-# Postgres is exposed on localhost:5433 by default to avoid
-# colliding with an existing local Postgres on 5432
+make migrate
 ```
 
+Local access points after startup:
 
-## 🧩 Project Structure
+- DevHub UI: [https://devhub.local](https://devhub.local)
+- DevHub API host: [https://api.devhub.local](https://api.devhub.local)
+- Gitea UI: [https://gitea.devhub.local](https://gitea.devhub.local)
+- Argo CD UI: [https://argocd.devhub.local](https://argocd.devhub.local)
 
-```markdown
-devhub/
-├── backend/                # Go backend service
-│   ├── cmd/                # Application entry points (e.g. main.go)
-│   ├── internal/           # Private application logic
-│   │   ├── api/            # Route handlers (REST/gRPC)
-│   │   ├── config/         # Configuration management
-│   │   ├── domain/         # Core domain models and services
-│   │   ├── infra/          # Infrastructure integrations (DB, external APIs)
-│   │   ├── server/         # Server setup and lifecycle
-│   │   ├── usecase/        # Business use cases
-│   │   └── util/           # Utility functions
-│   ├── migrations/         # Database schema migrations
-│   ├── pkg/                # Shared public packages
-│   ├── go.mod              # Go module definition
-│   ├── go.sum              # Go module checksums
-│   └── main.go             # Main application entry
-│
-├── frontend/               # Vue 3 + Tailwind dashboard
-│   ├── src/
-│   │   ├── components/     # Shared UI components
-│   │   ├── layouts/        # Layout wrappers
-│   │   ├── pages/          # Route-based views
-│   │   ├── composables/    # Reusable logic (e.g. useFetch)
-│   │   ├── stores/         # Pinia/Vuex state management
-│   │   ├── assets/         # Static files, images
-│   │   └── main.ts         # Entry point
-│   └── vite.config.ts      # Build config
-│
-├── plugins/                # Optional Python plugin system
-│   ├── scaffolders/        # Python service scaffolding logic
-│   ├── runners/            # Background job executors
-│   └── utils/              # Helpers for Python tasks
-│
-├── infra/                  # Infrastructure
-│   ├── kubernetes/         # K8s manifests, Helm charts
-│   ├── docker/             # Dockerfiles, entrypoints
-│   └── terraform/          # Optional Terraform infra
-│
-├── scripts/                # Thin wrappers around common docker/go workflows
-│   ├── dev.sh              # Start the local compose stack
-│   ├── bootstrap.sh        # Create local env files for first run
-│   ├── migrate.sh          # Run database migrations inside the backend container
-│   ├── generate.sh         # Run backend code generation commands
-│   └── docker-build-and-run.sh # Shared docker compose wrapper
-│
-├── templates/              # Service templates
-│   ├── go-http/
-│   ├── node-api/
-│   └── python-worker/
-│
-├── workflows/                # CI/CD and automation scripts
-│   ├── deploy.yaml           # Deployment workflow
-│   ├── resource-provision.yaml # Infrastructure provisioning workflow
-│   ├── rollback.yaml         # Rollback workflow
-│   └── service-create.sh     # Service creation helper script
-│
-├── docs/                     # Markdown docs (API, onboarding, etc)
-│   ├── architecture.md
-│   ├── getting-started.md
-│   └── roadmap.md
-│
-├── .github/                # GitHub Actions CI/CD workflows
-│   └── workflows/
-        ├── portal-ci.yaml
-        ├── control-plane-ci.yaml
-        ├── actions-ci.yaml
-        └── infra-ci.yaml
-│
-├── docker-compose.yml      # Shared compose services and defaults
-├── docker-compose.dev.yml  # Development overrides
-├── docker-compose.prod.yml # Production overrides
-├── README.md
-└── LICENSE
-```
-
-## Helm And Argo CD
-
-The repo includes a deployable Helm chart for the DevHub platform at [infra/kubernetes/helm/devhub/values.yaml](/Users/hungpham/workspace/personal/devhub/infra/kubernetes/helm/devhub/values.yaml) and an Argo CD `ApplicationSet` template at [infra/kubernetes/argocd/devhub.yaml](/Users/hungpham/workspace/personal/devhub/infra/kubernetes/argocd/devhub.yaml).
-
-The chart deploys:
-
-- `api`: the Go HTTP server
-- `worker`: a separate `Deployment` that runs `/app/devhub sync-worker`
-
-The Helm chart is still needed. It deploys the DevHub API and worker themselves. The Argo CD manifest is separate: it watches `gitops-repo` and creates one Argo CD app per `envs/dev/*.yaml` file.
-
-The backend worker now includes a real deployment runner that executes an Argo CD sync for each pending deployment. It invokes:
-
-Example:
-
-```bash
-argocd app sync <service> --revision <version> --server <argocd-server> --auth-token <token>
-```
-
-It uses a hardcoded timeout of `10m`. The worker expects `ARGOCD_SERVER` and `ARGOCD_AUTH_TOKEN` in its runtime environment. The Helm chart sets `ARGOCD_SERVER` for the worker by default and exposes `secrets.argocdAuthToken`.
-
-To run only the deployment worker:
-
-```bash
-go run ./backend sync-worker --types deployment
-```
-
-For local Docker Compose runs, the worker reads Argo CD credentials from `.env` via the `backend` service. Set:
-
-```bash
-ARGOCD_AUTH_TOKEN=<token>
-```
-
-Each GitOps values file is expected to include service metadata and Helm values, for example:
-
-```yaml
-appName: "payment-service"
-appEnvironment: "dev"
-appRepoURL: "https://gitea.devhub.local/phamphihungbk/payment-service.git"
-appTargetRevision: "main"
-appNamespace: "devhub"
-appProject: "default"
-
-nameOverride: "payment-service"
-fullnameOverride: "payment-service"
-...
-```
-
-When `gitops-repo/envs/dev/payment-service.yaml` appears, the `ApplicationSet` creates an Argo CD app named `payment-service-dev` that deploys the chart from `deploy/helm` in the service repo and uses that GitOps file as its Helm values file.
-
-Example:
-
-```bash
-helm upgrade --install devhub infra/kubernetes/helm/devhub \
-  --namespace devhub \
-  --create-namespace \
-  --set image.repository=ghcr.io/phamphihungbk/devhub-backend \
-  --set image.tag=latest \
-  --set secrets.tokenSecret="$TOKEN_SECRET"
-
-GITOPS_REPO_URL=https://gitea.devhub.local/phamphihungbk/gitops-repo.git \
-GITOPS_REPO_BRANCH=main \
-GITOPS_ENV_GLOB='envs/dev/*.yaml' \
-./scripts/argocd.sh app
-```
-
-### Local Argo CD UI With Minikube
-
-If you want to use the Argo CD web UI locally, the repo now includes [scripts/argocd.sh](/Users/hungpham/workspace/personal/devhub/scripts/argocd.sh).
-
-Typical flow:
-
-```bash
-minikube start
-./scripts/argocd.sh all
-```
-
-That command will:
-
-- install Argo CD into the current cluster
-  - apply the DevHub Argo CD `ApplicationSet`
-- start a local port-forward for the UI on `http://127.0.0.1:8081`
-- print the default `admin` password from `argocd-initial-admin-secret`
-
-The install step uses server-side apply to avoid the Kubernetes annotation-size error that can happen with Argo CD CRDs such as `applicationsets.argoproj.io`.
-
-You can also run the steps individually:
-
-```bash
-./scripts/argocd.sh install
-./scripts/argocd.sh app
-./scripts/argocd.sh ingress
-./scripts/argocd.sh domain
-./scripts/argocd.sh configure
-./scripts/argocd.sh ui
-./scripts/argocd.sh password
-./scripts/argocd.sh token
-```
-
-Or via Make:
-
-```bash
-make argocd-ui
-make argocd-token
-```
-
-Note: the included Argo CD `ApplicationSet` manifest is parameterized with `GITOPS_REPO_URL`, `GITOPS_REPO_BRANCH`, and `GITOPS_ENV_GLOB`. Make sure Argo CD can reach that Git remote and has credentials configured for both the GitOps repo and the generated service repos.
-
-## Local Gitea For Multi-Repo Testing
-
-If you want a lightweight local Git server on your MacBook for testing many repositories, tags, and branches, Gitea is now included in the main Docker Compose stack and built from [infra/docker/gitea.Dockerfile](/Users/hungpham/workspace/personal/devhub/infra/docker/gitea.Dockerfile).
-
-Start Gitea:
-
-```bash
-./scripts/dev.sh up -d gitea
-```
-
-Open the UI at [http://localhost:3000](http://localhost:3000).
-
-To expose Gitea on the same local-domain setup as DevHub, run:
+To configure those local domains and trust the generated certificate on macOS:
 
 ```bash
 make setup-local-https
 ```
 
-Then open [https://gitea.devhub.local](https://gitea.devhub.local).
-
-Recommended first-run settings:
-
-- database: `SQLite3`
-- instance URL: `https://gitea.devhub.local/`
-- SSH server domain: `gitea.devhub.local`
-- SSH server port: `2222`
-
-The compose file exposes:
-
-- HTTP on `localhost:3000`
-- SSH Git access on `localhost:2222`
-- HTTPS via NGINX on `https://gitea.devhub.local`
-
-Common commands:
+Useful follow-up commands:
 
 ```bash
-./scripts/dev.sh ps gitea
-./scripts/dev.sh logs -f gitea
-./scripts/dev.sh stop gitea
+# Backend with file watch
+make backend-watch
+
+# Frontend watch
+make frontend-watch
+
+# Argo CD local UI
+make argocd-ui
+
+# Recreate minikube with the local registry enabled
+make minikube-registry
 ```
 
-To clone over HTTP after creating a repo:
+`make minikube-registry` starts `devhub-registry`, recreates the Minikube cluster with `host.minikube.internal:5001` allowed as an insecure registry, and verifies the registry is reachable from inside Minikube.
 
-```bash
-git clone https://gitea.devhub.local/<user>/<repo>.git
-```
-
-To clone over SSH, add your SSH key in Gitea and use port `2222`:
-
-```bash
-git clone ssh://git@gitea.devhub.local:2222/<user>/<repo>.git
-```
-
-For Argo CD inside Minikube, prefer the HTTP repo URL using `host.minikube.internal`, for example:
+## Project Layout
 
 ```text
-http://host.minikube.internal:3000/<user>/<repo>.git
+devhub/
+├── backend/      # Go API, workers, domain logic, migrations
+├── frontend/     # Vue admin console
+├── plugins/      # Python scaffold, release, and deploy plugins
+├── infra/        # Helm charts, Argo CD manifests, Docker assets
+├── scripts/      # Local development helpers
+└── docs/         # Project documentation
 ```
 
-To make scaffold requests publish directly into Gitea instead of returning a local `file://` path, set these values in [.env.example](/Users/hungpham/workspace/personal/devhub/.env.example) / `.env`:
+## Notes
 
-```bash
-GITEA_URL=http://gitea:3000
-GITEA_EXTERNAL_URL=https://gitea.devhub.local
-GITEA_USERNAME=<your-gitea-user>
-GITEA_TOKEN=<your-gitea-token>
-GITEA_OWNER=<optional-org-or-user>
-```
-
-When `GITEA_USERNAME` and `GITEA_TOKEN` are present, scaffold plugins will:
-
-- generate the service locally
-- create a repository in Gitea
-- commit the generated files
-- push the initial `main` branch
-- store the Gitea clone URL as the scaffold result
-
-To generate a token for the deployment worker after the Argo CD server is reachable locally:
-
-```bash
-./scripts/argocd.sh token
-```
-
-The helper ensures the `admin` account has `apiKey, login` enabled and grants local admin RBAC before generating the token. It prints an `export ARGOCD_AUTH_TOKEN=...` line you can paste into your shell or `.env`.
-
-The local HTTPS helper [scripts/setup-local-https.sh](/Users/hungpham/workspace/personal/devhub/scripts/setup-local-https.sh) now also updates `/etc/hosts` for `argocd.devhub.local` when Minikube is running. You can override the detected IP with `DEVHUB_ARGOCD_IP`.
-
-### Domain Access Through NGINX Ingress
-
-For Minikube, the repo also includes [infra/kubernetes/argocd/argocd-ui-ingress.yaml](/Users/hungpham/workspace/personal/devhub/infra/kubernetes/argocd/argocd-ui-ingress.yaml), which exposes the Argo CD UI through the NGINX ingress addon at `argocd.devhub.local`.
-
-Run:
-
-```bash
-./scripts/argocd.sh ingress
-./scripts/argocd.sh domain
-```
-
-Then add the printed `minikube ip` entry to your local `/etc/hosts`, for example:
-
-```text
-192.168.49.2 argocd.devhub.local
-```
-
-After that, open:
-
-```text
-https://argocd.devhub.local
-```
-
-The ingress forwards traffic to the Argo CD server service over HTTPS, while keeping browser access simple for local development.
-
-## 🛣️ `ROADMAP.md`
-
-```markdown
-# 📍 DevHub Roadmap
-
-This roadmap outlines the key milestones for DevHub from MVP to full internal platform.
-
----
-
-## ✅ Phase 1: MVP (Core Features)
-- [x] Vue + Tailwind UI dashboard
-- [x] Go-based backend API
-- [x] Scaffold service templates (REST, cron jobs)
-- [x] Kubernetes deployment integration
-- [x] Dockerized frontend/backend
-- [x] Local dev environment (Docker Compose)
-
----
-
-## 🚧 Phase 2: Developer Experience
-- [ ] Add form-based UI for service scaffolding
-- [ ] GitHub/GitLab repo scaffolding & commit hooks
-- [ ] Deployment logs + terminal access
-- [ ] Add background job template
-- [ ] JWT or OAuth2 authentication
-
----
-
-## 🔜 Phase 3: DevOps Automation
-- [ ] CI/CD pipeline templates (GitHub Actions, ArgoCD)
-- [ ] Service status overview panel (health checks)
-- [ ] Helm chart management UI
-- [ ] Automatic rollback on failed deploy
-
----
-
-## 🧠 Phase 4: Extensibility & Insights
-- [ ] Plugin system (Python modules or Webhooks)
-- [ ] Metrics via Prometheus + Grafana
-- [ ] Usage tracking (most active projects, teams)
-- [ ] Notifications (Slack, Email, Discord)
-
----
-
-## 🧪 Future Ideas
-- [ ] Internal ChatGPT plugin integration
-- [ ] AI-assisted scaffold suggestion
-- [ ] Secret manager integration (Vault / SOPS)
-- [ ] Feature flag UI
-
-
----
-
-
-┌───────────────────────────────────────────────────────────────────┐
-│                           FRONTEND UI                             │
-│     Create Service | Deploy | View Metrics | Manage Plugins       │
-└───────────────────────────────┬───────────────────────────────────┘
-                                │
-                                ▼
-┌───────────────────────────────────────────────────────────────────┐
-│                      GO CONTROL PLANE API                         │
-│                                                                   │
-│  Scaffold API   Deploy API   Metrics API   RBAC   Plugin API      │
-└───────────────┬──────────────┬─────────────┬──────────────────────┘
-                │              │             │
-                ▼              ▼             ▼
-         ┌────────────┐  ┌────────────┐  ┌──────────────┐
-         │ PostgreSQL │  │   Worker   │  │ Plugin Reg.  │
-         │            │  │   System   │  │              │
-         └─────┬──────┘  └─────┬──────┘  └──────┬───────┘
-               │               │                │
-               ▼               ▼                ▼
-     scaffold_requests   ScaffoldWorker     Scaffold Plugins
-     deployments         DeploymentWorker   Deploy Plugins
-     test jobs           TestWorker         Test Plugins
-     audit/history       PluginWorker       Integration Plugins
-               │               │                │
-               └───────────────┴────────────────┘
-                               │
-                               ▼
-                    External Systems / Runtime
-            Git + CI/CD + Kubernetes + Metrics + APIs
+- Local Postgres is exposed on `localhost:5433` by default.
+- The backend and worker rely on `.env` for Argo CD, SCM, and CI/CD integration settings.
+- GitOps and Argo CD setup details are documented in [Getting Started](./docs/getting-started.md).
