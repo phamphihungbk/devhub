@@ -14,9 +14,10 @@ import (
 )
 
 type UpdateUserInput struct {
-	ID   string  `json:"id" validate:"required,uuid"`
-	Name *string `json:"name" validate:"min=2,max=100"`
-	Role *string `json:"role" validate:"omitempty,oneof=platform_admin org_admin team_lead developer viewer"`
+	ID     string  `json:"id" validate:"required,uuid"`
+	Name   *string `json:"name" validate:"min=2,max=100"`
+	Role   *string `json:"role" validate:"omitempty,oneof=platform_admin org_admin team_lead developer viewer"`
+	TeamID *string `json:"team_id" validate:"omitempty,uuid"`
 }
 
 func (u *userUsecase) UpdateUser(ctx context.Context, input UpdateUserInput) (user *entity.User, err error) {
@@ -50,6 +51,13 @@ func (u *userUsecase) UpdateUser(ctx context.Context, input UpdateUserInput) (us
 				return nil
 			}
 			return &role
+		}(),
+		TeamID: func() *uuid.UUID {
+			if input.TeamID == nil {
+				return nil
+			}
+			parsed := uuid.MustParse(*input.TeamID)
+			return &parsed
 		}(),
 	})
 

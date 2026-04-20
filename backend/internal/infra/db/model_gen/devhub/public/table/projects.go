@@ -22,9 +22,8 @@ type projectsTable struct {
 	Description  postgres.ColumnString
 	Environments postgres.ColumnStringArray
 	Status       postgres.ColumnString
-	OwnerTeam    postgres.ColumnString
+	TeamID       postgres.ColumnString
 	ScmProvider  postgres.ColumnString
-	OwnerContact postgres.ColumnString
 	CreatedBy    postgres.ColumnString
 	CreatedAt    postgres.ColumnTimestamp
 	UpdatedAt    postgres.ColumnTimestamp
@@ -75,15 +74,14 @@ func newProjectsTableImpl(schemaName, tableName, alias string) projectsTable {
 		DescriptionColumn  = postgres.StringColumn("description")
 		EnvironmentsColumn = postgres.StringArrayColumn("environments")
 		StatusColumn       = postgres.StringColumn("status")
-		OwnerTeamColumn    = postgres.StringColumn("owner_team")
+		TeamIDColumn       = postgres.StringColumn("team_id")
 		ScmProviderColumn  = postgres.StringColumn("scm_provider")
-		OwnerContactColumn = postgres.StringColumn("owner_contact")
 		CreatedByColumn    = postgres.StringColumn("created_by")
 		CreatedAtColumn    = postgres.TimestampColumn("created_at")
 		UpdatedAtColumn    = postgres.TimestampColumn("updated_at")
 		DeletedAtColumn    = postgres.TimestampColumn("deleted_at")
-		allColumns         = postgres.ColumnList{IDColumn, NameColumn, DescriptionColumn, EnvironmentsColumn, StatusColumn, OwnerTeamColumn, ScmProviderColumn, OwnerContactColumn, CreatedByColumn, CreatedAtColumn, UpdatedAtColumn, DeletedAtColumn}
-		mutableColumns     = postgres.ColumnList{NameColumn, DescriptionColumn, EnvironmentsColumn, StatusColumn, OwnerTeamColumn, ScmProviderColumn, OwnerContactColumn, CreatedByColumn, CreatedAtColumn, UpdatedAtColumn, DeletedAtColumn}
+		allColumns         = postgres.ColumnList{IDColumn, NameColumn, DescriptionColumn, EnvironmentsColumn, StatusColumn, TeamIDColumn, ScmProviderColumn, CreatedByColumn, CreatedAtColumn, UpdatedAtColumn, DeletedAtColumn}
+		mutableColumns     = postgres.ColumnList{NameColumn, DescriptionColumn, EnvironmentsColumn, StatusColumn, TeamIDColumn, ScmProviderColumn, CreatedByColumn, CreatedAtColumn, UpdatedAtColumn, DeletedAtColumn}
 		defaultColumns     = postgres.ColumnList{IDColumn, CreatedAtColumn, UpdatedAtColumn}
 	)
 
@@ -96,9 +94,8 @@ func newProjectsTableImpl(schemaName, tableName, alias string) projectsTable {
 		Description:  DescriptionColumn,
 		Environments: EnvironmentsColumn,
 		Status:       StatusColumn,
-		OwnerTeam:    OwnerTeamColumn,
+		TeamID:       TeamIDColumn,
 		ScmProvider:  ScmProviderColumn,
-		OwnerContact: OwnerContactColumn,
 		CreatedBy:    CreatedByColumn,
 		CreatedAt:    CreatedAtColumn,
 		UpdatedAt:    UpdatedAtColumn,

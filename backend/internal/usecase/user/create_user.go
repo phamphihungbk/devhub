@@ -8,6 +8,7 @@ import (
 	"devhub-backend/internal/util/misc"
 
 	"devhub-backend/pkg/validator"
+	"github.com/google/uuid"
 )
 
 type CreateUserInput struct {
@@ -15,6 +16,7 @@ type CreateUserInput struct {
 	Email    string  `json:"email" validate:"required,email"`
 	Password string  `json:"password" validate:"required,min=8,max=100"`
 	Role     string  `json:"role" validate:"required,oneof=platform_admin org_admin team_lead developer viewer"`
+	TeamID   string  `json:"team_id" validate:"required,uuid"`
 }
 
 func (u *userUsecase) CreateUser(ctx context.Context, input CreateUserInput) (user *entity.User, err error) {
@@ -47,6 +49,7 @@ func (u *userUsecase) CreateUser(ctx context.Context, input CreateUserInput) (us
 		Email:        input.Email,
 		Role:         new(entity.UserRole).MustParse(input.Role),
 		PasswordHash: passwordHash,
+		TeamID:       uuid.MustParse(input.TeamID),
 	}
 
 	created, err := u.userRepository.CreateOne(ctx, user)

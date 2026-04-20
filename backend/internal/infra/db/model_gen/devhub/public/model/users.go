@@ -18,6 +18,7 @@ type Users struct {
 	Email        string     `db:"users.email"`
 	PasswordHash string     `db:"users.password_hash"`
 	Role         string     `db:"users.role"`
+	TeamID       uuid.UUID  `db:"users.team_id"`
 	CreatedAt    time.Time  `db:"users.created_at"`
 	UpdatedAt    time.Time  `db:"users.updated_at"`
 	DeletedAt    *time.Time `db:"users.deleted_at"`

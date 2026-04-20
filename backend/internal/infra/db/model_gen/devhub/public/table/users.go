@@ -22,6 +22,7 @@ type usersTable struct {
 	Email        postgres.ColumnString
 	PasswordHash postgres.ColumnString
 	Role         postgres.ColumnString
+	TeamID       postgres.ColumnString
 	CreatedAt    postgres.ColumnTimestamp
 	UpdatedAt    postgres.ColumnTimestamp
 	DeletedAt    postgres.ColumnTimestamp
@@ -71,11 +72,12 @@ func newUsersTableImpl(schemaName, tableName, alias string) usersTable {
 		EmailColumn        = postgres.StringColumn("email")
 		PasswordHashColumn = postgres.StringColumn("password_hash")
 		RoleColumn         = postgres.StringColumn("role")
+		TeamIDColumn       = postgres.StringColumn("team_id")
 		CreatedAtColumn    = postgres.TimestampColumn("created_at")
 		UpdatedAtColumn    = postgres.TimestampColumn("updated_at")
 		DeletedAtColumn    = postgres.TimestampColumn("deleted_at")
-		allColumns         = postgres.ColumnList{IDColumn, NameColumn, EmailColumn, PasswordHashColumn, RoleColumn, CreatedAtColumn, UpdatedAtColumn, DeletedAtColumn}
-		mutableColumns     = postgres.ColumnList{NameColumn, EmailColumn, PasswordHashColumn, RoleColumn, CreatedAtColumn, UpdatedAtColumn, DeletedAtColumn}
+		allColumns         = postgres.ColumnList{IDColumn, NameColumn, EmailColumn, PasswordHashColumn, RoleColumn, TeamIDColumn, CreatedAtColumn, UpdatedAtColumn, DeletedAtColumn}
+		mutableColumns     = postgres.ColumnList{NameColumn, EmailColumn, PasswordHashColumn, RoleColumn, TeamIDColumn, CreatedAtColumn, UpdatedAtColumn, DeletedAtColumn}
 		defaultColumns     = postgres.ColumnList{IDColumn, CreatedAtColumn, UpdatedAtColumn}
 	)
 
@@ -88,6 +90,7 @@ func newUsersTableImpl(schemaName, tableName, alias string) usersTable {
 		Email:        EmailColumn,
 		PasswordHash: PasswordHashColumn,
 		Role:         RoleColumn,
+		TeamID:       TeamIDColumn,
 		CreatedAt:    CreatedAtColumn,
 		UpdatedAt:    UpdatedAtColumn,
 		DeletedAt:    DeletedAtColumn,

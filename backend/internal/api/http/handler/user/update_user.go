@@ -12,14 +12,16 @@ import (
 )
 
 type updateUserRequest struct {
-	Name *string `json:"name" example:"User Name" binding:"required"`
-	Role *string `json:"role" example:"developer" binding:"required"`
+	Name   *string `json:"name" example:"User Name" binding:"required"`
+	Role   *string `json:"role" example:"developer" binding:"required"`
+	TeamID *string `json:"team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
 type updateUserResponse struct {
-	ID    string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name  string `json:"name" example:"User Name"`
-	Email string `json:"email" example:"user@example.com"`
+	ID     string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name   string `json:"name" example:"User Name"`
+	Email  string `json:"email" example:"user@example.com"`
+	TeamID string `json:"team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
 // @Summary		Update User
@@ -44,9 +46,10 @@ func (h *userHandler) UpdateUser(c *gin.Context) {
 	}
 
 	updatedUser, err := h.userUsecase.UpdateUser(c.Request.Context(), userUsecase.UpdateUserInput{
-		ID:   userID,
-		Name: input.Name,
-		Role: input.Role,
+		ID:     userID,
+		Name:   input.Name,
+		Role:   input.Role,
+		TeamID: input.TeamID,
 	})
 
 	if err != nil {
@@ -63,8 +66,9 @@ func (h *userHandler) newUpdateUserResponse(user *entity.User) updateUserRespons
 	}
 
 	return updateUserResponse{
-		ID:    user.ID.String(),
-		Name:  user.Name,
-		Email: user.Email,
+		ID:     user.ID.String(),
+		Name:   user.Name,
+		Email:  user.Email,
+		TeamID: user.TeamID.String(),
 	}
 }

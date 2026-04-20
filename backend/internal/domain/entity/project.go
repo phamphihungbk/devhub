@@ -121,19 +121,18 @@ func (s ProjectStatus) MustParse(status string) ProjectStatus {
 }
 
 type Project struct {
-	ID           uuid.UUID
-	Name         string
-	Description  string
-	Environments []ProjectEnvironment
-	Status       ProjectStatus
-	OwnerTeam    string
-	ScmProvider  string
-	OwnerContact string
-	CreatedBy    uuid.UUID
+	ID            uuid.UUID
+	Name          string
+	Description   string
+	Environments  []ProjectEnvironment
+	Status        ProjectStatus
+	TeamID        uuid.UUID
+	ScmProvider   string
+	CreatedBy     uuid.UUID
 	CreatedByName string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    time.Time
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	DeletedAt     time.Time
 }
 
 type Projects []Project

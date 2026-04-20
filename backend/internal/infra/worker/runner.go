@@ -28,6 +28,7 @@ type Dependencies struct {
 	logger                    infraLogger.Logger
 	pluginRepository          repository.PluginRepository
 	projectRepository         repository.ProjectRepository
+	teamRepository            repository.TeamRepository
 	scaffoldRequestRepository repository.ScaffoldRequestRepository
 	deploymentRepository      repository.DeploymentRepository
 	releaseRepository         repository.ReleaseRepository
@@ -39,6 +40,7 @@ func NewDependencies(
 	logger infraLogger.Logger,
 	pluginRepository repository.PluginRepository,
 	projectRepository repository.ProjectRepository,
+	teamRepository repository.TeamRepository,
 	scaffoldRequestRepository repository.ScaffoldRequestRepository,
 	deploymentRepository repository.DeploymentRepository,
 	releaseRepository repository.ReleaseRepository,
@@ -49,6 +51,7 @@ func NewDependencies(
 		logger:                    logger,
 		pluginRepository:          pluginRepository,
 		projectRepository:         projectRepository,
+		teamRepository:            teamRepository,
 		scaffoldRequestRepository: scaffoldRequestRepository,
 		deploymentRepository:      deploymentRepository,
 		releaseRepository:         releaseRepository,
@@ -127,6 +130,7 @@ func buildScaffoldRunner(deps *Dependencies, observer Observability, cfg Factory
 		deps.cfg,
 		deps.pluginRepository,
 		deps.projectRepository,
+		deps.teamRepository,
 		deps.scaffoldRequestRepository,
 		deps.serviceRepository,
 		cfg.PollDelay,

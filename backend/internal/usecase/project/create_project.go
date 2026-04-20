@@ -17,9 +17,8 @@ type CreateProjectInput struct {
 	Description  *string  `json:"description" validate:"min=0,max=500"`
 	Environments []string `json:"environments" validate:"required,dive,required,oneof=prod dev staging"`
 	Status       string   `json:"status" validate:"required,oneof=draft active archived deprecated"`
-	OwnerTeam    string   `json:"owner_team" validate:"required,min=1,max=255"`
+	TeamID       string   `json:"team_id" validate:"required,uuid"`
 	ScmProvider  string   `json:"scm_provider" validate:"required,min=1,max=32"`
-	OwnerContact string   `json:"owner_contact" validate:"required,min=1,max=255"`
 	CreatedBy    string   `json:"created_by" validate:"required,uuid"`
 }
 
@@ -51,15 +50,18 @@ func (u *projectUsecase) CreateProject(ctx context.Context, input CreateProjectI
 	if err != nil {
 		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid project status", map[string]string{"details": err.Error()}))
 	}
+	teamID, err := uuid.Parse(input.TeamID)
+	if err != nil {
+		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid team id", nil))
+	}
 
 	project = &entity.Project{
 		Name:         input.Name,
 		Description:  misc.GetValue(input.Description),
 		Environments: envs,
 		Status:       status,
-		OwnerTeam:    input.OwnerTeam,
+		TeamID:       teamID,
 		ScmProvider:  input.ScmProvider,
-		OwnerContact: input.OwnerContact,
 		CreatedBy:    uuid.MustParse(input.CreatedBy),
 	}
 

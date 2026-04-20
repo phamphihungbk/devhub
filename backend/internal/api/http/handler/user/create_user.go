@@ -16,13 +16,15 @@ type createUserRequest struct {
 	Email    string  `json:"email" example:"user@example.com" binding:"required"`
 	Password string  `json:"password" example:"password123" binding:"required"`
 	Role     string  `json:"role" example:"developer" binding:"required"`
+	TeamID   string  `json:"team_id" example:"123e4567-e89b-12d3-a456-426614174000" binding:"required"`
 }
 
 type createUserResponse struct {
-	ID    string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name  string `json:"name" example:"User Name"`
-	Email string `json:"email" example:"user@example.com"`
-	Role  string `json:"role" example:"platform_admin"`
+	ID     string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name   string `json:"name" example:"User Name"`
+	Email  string `json:"email" example:"user@example.com"`
+	Role   string `json:"role" example:"platform_admin"`
+	TeamID string `json:"team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
 // @Summary		Create User
@@ -49,6 +51,7 @@ func (h *userHandler) CreateUser(c *gin.Context) {
 		Email:    input.Email,
 		Role:     input.Role,
 		Password: input.Password,
+		TeamID:   input.TeamID,
 	})
 
 	if err != nil {
@@ -65,9 +68,10 @@ func (h *userHandler) newCreateUserResponse(user *entity.User) createUserRespons
 	}
 
 	return createUserResponse{
-		ID:    user.ID.String(),
-		Name:  user.Name,
-		Email: user.Email,
-		Role:  user.Role.String(),
+		ID:     user.ID.String(),
+		Name:   user.Name,
+		Email:  user.Email,
+		Role:   user.Role.String(),
+		TeamID: user.TeamID.String(),
 	}
 }

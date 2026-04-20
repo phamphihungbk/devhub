@@ -28,7 +28,8 @@ type FindAllUsersFilter struct {
 }
 
 type UpdateUserInput struct {
-	ID   uuid.UUID
-	Name *string
-	Role *entity.UserRole
+	ID     uuid.UUID
+	Name   *string
+	Role   *entity.UserRole
+	TeamID *uuid.UUID
 }

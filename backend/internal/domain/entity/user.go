@@ -65,6 +65,7 @@ type User struct {
 	Email        string
 	PasswordHash string
 	Role         UserRole
+	TeamID       uuid.UUID
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    time.Time
