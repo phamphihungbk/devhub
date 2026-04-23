@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	ErrInvalidPluginType  = fmt.Errorf("invalid plugin type")
-	ErrInvalidPluginScope = fmt.Errorf("invalid plugin scope")
+	ErrInvalidPluginType    = fmt.Errorf("invalid plugin type")
+	ErrInvalidPluginScope   = fmt.Errorf("invalid plugin scope")
 	ErrInvalidPluginRuntime = fmt.Errorf("invalid plugin runtime")
 )
 

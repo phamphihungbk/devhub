@@ -7,6 +7,10 @@ import {
 } from '@vicons/carbon'
 import { h } from 'vue'
 import {
+  canAccessMeta,
+  permission,
+} from '@/access/rbac'
+import {
   createRouter,
   createWebHistory,
   type NavigationGuardNext,
@@ -15,6 +19,7 @@ import {
 } from 'vue-router'
 
 import { TOKEN_STORAGE_KEY } from '@/stores/modules/auth'
+import { useAuthStore } from '@/stores/modules/auth'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -50,11 +55,39 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'approvals',
+        name: 'approvals',
+        component: () => import('@/views/approvals/index.vue'),
+        meta: {
+          title: 'Approvals',
+          icon: Document,
+          permissions: [permission.scaffoldRequestWrite],
+        },
+      },
+      {
         path: 'projects',
         name: 'projects',
         component: () => import('@/views/projects/index.vue'),
         meta: {
           title: 'Project List',
+          icon: Document,
+        },
+      },
+      {
+        path: 'services',
+        name: 'services',
+        component: () => import('@/views/services/index.vue'),
+        meta: {
+          title: 'Services',
+          icon: Document,
+        },
+      },
+      {
+        path: 'releases',
+        name: 'releases',
+        component: () => import('@/views/releases/index.vue'),
+        meta: {
+          title: 'Releases',
           icon: Document,
         },
       },
@@ -65,6 +98,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: 'Create Project',
           icon: Document,
+          permissions: [permission.projectWrite],
         },
       },
       {
@@ -105,6 +139,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: 'Users',
           icon: UserAvatar,
+          permissions: [permission.userRead],
         },
       },
     ],
@@ -117,8 +152,9 @@ export const router = createRouter({
   scrollBehavior: () => ({ top: 0 }),
 })
 
-router.beforeEach((to: RouteLocationNormalized, _from: RouteLocationNormalized, next: NavigationGuardNext) => {
-  const hasToken = Boolean(localStorage.getItem(TOKEN_STORAGE_KEY))
+router.beforeEach(async (to: RouteLocationNormalized, _from: RouteLocationNormalized, next: NavigationGuardNext) => {
+  const authStore = useAuthStore()
+  const hasToken = Boolean(authStore.accessToken || localStorage.getItem(TOKEN_STORAGE_KEY))
 
   if (to.meta.requiresAuth && !hasToken) {
     next({ name: 'login', query: { redirect: to.fullPath } })
@@ -126,6 +162,20 @@ router.beforeEach((to: RouteLocationNormalized, _from: RouteLocationNormalized, 
   }
 
   if (to.meta.guestOnly && hasToken) {
+    next({ name: 'dashboard' })
+    return
+  }
+
+  if (to.meta.requiresAuth && hasToken && !authStore.profile) {
+    try {
+      await authStore.loadProfile()
+    } catch {
+      next({ name: 'login', query: { redirect: to.fullPath } })
+      return
+    }
+  }
+
+  if (to.meta.requiresAuth && !canAccessMeta(authStore.profile, to.meta as Record<string, unknown>)) {
     next({ name: 'dashboard' })
     return
   }

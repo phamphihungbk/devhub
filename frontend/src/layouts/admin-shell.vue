@@ -5,6 +5,9 @@ import {
   UserAvatar,
 } from '@vicons/carbon'
 import {
+  canAccessMeta,
+} from '@/access/rbac'
+import {
   NAvatar,
   NButton,
   NBreadcrumb,
@@ -16,12 +19,14 @@ import {
   NLayoutHeader,
   NLayoutSider,
   NMenu,
+  NTag,
 } from 'naive-ui'
 import { computed, h, onMounted, ref } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 
 import { renderRouteIcon } from '@/router'
 import { useAuthStore } from '@/stores/modules/auth'
+import { getRoleTagColor } from '@/theme/role'
 
 const route = useRoute()
 const router = useRouter()
@@ -44,6 +49,7 @@ const menuOptions = computed<MenuOption[]>(() =>
     .filter((item) => !item.meta.guestOnly)
     .filter((item) => !item.meta.hideInMenu)
     .filter((item) => item.path !== '/')
+    .filter((item) => canAccessMeta(authStore.profile, item.meta as Record<string, unknown>))
     .map((item) => ({
       key: item.name as string,
       icon: renderRouteIcon(item.meta.icon as never),
@@ -144,7 +150,18 @@ async function handleUserAction(key: string) {
           <div class="flex items-center gap-3">
             <div class="hidden text-right sm:block">
               <p class="text-sm font-700 text-ink-900">{{ authStore.profile?.name || 'Operator' }}</p>
-              <p class="text-xs text-ink-500">{{ authStore.profile?.email || 'Signed session' }}</p>
+              <div class="mt-1 flex items-center justify-end gap-2">
+                <p class="text-xs text-ink-500">{{ authStore.profile?.email || 'Signed session' }}</p>
+                <NTag
+                  v-if="authStore.profile?.role"
+                  size="small"
+                  round
+                  :bordered="false"
+                  :color="getRoleTagColor(authStore.profile.role)"
+                >
+                  {{ authStore.profile.role }}
+                </NTag>
+              </div>
             </div>
 
             <NDropdown :options="userMenu" @select="handleUserAction">

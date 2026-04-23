@@ -1,0 +1,42 @@
+name: Refresh Release Notes
+
+on:
+  release:
+    types:
+      - published
+      - edited
+
+permissions:
+  contents: write
+
+jobs:
+  update-release-notes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Regenerate GitHub release notes
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const release = context.payload.release;
+            const { owner, repo } = context.repo;
+
+            const generated = await github.rest.repos.generateReleaseNotes({
+              owner,
+              repo,
+              tag_name: release.tag_name,
+              target_commitish: release.target_commitish || undefined,
+              previous_tag_name: release.prerelease ? undefined : undefined,
+            });
+
+            await github.rest.repos.updateRelease({
+              owner,
+              repo,
+              release_id: release.id,
+              tag_name: release.tag_name,
+              target_commitish: release.target_commitish || undefined,
+              name: release.name || release.tag_name,
+              draft: release.draft,
+              prerelease: release.prerelease,
+              body: generated.data.body,
+            });

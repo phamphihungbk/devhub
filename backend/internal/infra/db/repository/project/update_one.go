@@ -43,19 +43,14 @@ func (r *projectRepositoryImpl) UpdateOne(ctx context.Context, input repository.
 		columns = append(columns, projectsTable.Status)
 	}
 
-	if input.OwnerTeam != nil {
-		updateModel.OwnerTeam = misc.GetValue(input.OwnerTeam)
-		columns = append(columns, projectsTable.OwnerTeam)
+	if input.TeamID != nil {
+		updateModel.TeamID = *input.TeamID
+		columns = append(columns, projectsTable.TeamID)
 	}
 
 	if input.ScmProvider != nil {
 		updateModel.ScmProvider = misc.GetValue(input.ScmProvider)
 		columns = append(columns, projectsTable.ScmProvider)
-	}
-
-	if input.OwnerContact != nil {
-		updateModel.OwnerContact = misc.GetValue(input.OwnerContact)
-		columns = append(columns, projectsTable.OwnerContact)
 	}
 
 	if len(columns) == 0 {

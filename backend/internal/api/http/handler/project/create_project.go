@@ -16,9 +16,8 @@ type createProjectRequest struct {
 	Description  *string  `json:"description" example:"Project Description"`
 	Environments []string `json:"environments" example:"[dev, prod, staging]" binding:"required"`
 	Status       string   `json:"status" example:"active" binding:"required"`
-	OwnerTeam    string   `json:"owner_team" example:"platform" binding:"required"`
+	TeamID       string   `json:"team_id" example:"123e4567-e89b-12d3-a456-426614174000" binding:"required"`
 	ScmProvider  string   `json:"scm_provider" example:"gitea" binding:"required"`
-	OwnerContact string   `json:"owner_contact" example:"team@example.com" binding:"required"`
 }
 
 type createProjectResponse struct {
@@ -27,9 +26,8 @@ type createProjectResponse struct {
 	Description  string   `json:"description" example:"Project Description"`
 	Environments []string `json:"environments" example:"[dev, prod, staging]"`
 	Status       string   `json:"status" example:"active"`
-	OwnerTeam    string   `json:"owner_team" example:"platform"`
+	TeamID       string   `json:"team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	ScmProvider  string   `json:"scm_provider" example:"gitea"`
-	OwnerContact string   `json:"owner_contact" example:"team@example.com"`
 	CreatedBy    string   `json:"created_by" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
@@ -64,9 +62,8 @@ func (h *projectHandler) CreateProject(c *gin.Context) {
 		Description:  input.Description,
 		Environments: input.Environments,
 		Status:       input.Status,
-		OwnerTeam:    input.OwnerTeam,
+		TeamID:       input.TeamID,
 		ScmProvider:  input.ScmProvider,
-		OwnerContact: input.OwnerContact,
 		CreatedBy:    userID.(string),
 	})
 
@@ -94,9 +91,8 @@ func (h *projectHandler) newCreateProjectResponse(project *entity.Project) creat
 		Description:  project.Description,
 		Environments: envs,
 		Status:       project.Status.String(),
-		OwnerTeam:    project.OwnerTeam,
+		TeamID:       project.TeamID.String(),
 		ScmProvider:  project.ScmProvider,
-		OwnerContact: project.OwnerContact,
 		CreatedBy:    project.CreatedBy.String(),
 	}
 }

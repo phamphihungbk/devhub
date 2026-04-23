@@ -8,6 +8,9 @@
 - [x] Service scaffolding
 - [x] Release workflow
 - [x] Service-scoped deployments
+- [x] Approval request inbox
+- [x] Service inventory page
+- [x] Release timeline view
 - [x] Dockerized local environment
 
 ## Phase 2: Developer Experience
@@ -15,6 +18,7 @@
 - [ ] Deployment logs and runner output in UI
 - [ ] Better validation and guided forms for scaffold variables
 - [ ] Service health and runtime status panels
+- [ ] Approval request detail pages and richer audit history
 - [ ] Stronger auth and SSO flows
 - [ ] More plugin management controls from the UI
 

@@ -34,9 +34,21 @@ Frontend UI
 
 The admin console is route-first and centered around these flows:
 
+- `Dashboard`
+  - team-focused overview cards
+  - plugin, project, and member summary
+- `Approvals`
+  - list pending and resolved approval requests
+  - approve or reject with a required comment
 - `Projects`
   - list projects
   - filter by environment, status, owner team
+- `Services`
+  - aggregate services across projects
+  - jump directly into service detail workflows
+- `Releases`
+  - aggregate releases across services
+  - visualize release activity with a timeline chart
 - `Project details`
   - inspect services
   - open scaffold request modal
@@ -67,7 +79,9 @@ The Go backend follows a layered structure:
 Key domains currently include:
 
 - auth
+- approvals
 - users
+- teams
 - projects
 - services
 - scaffold requests
@@ -84,6 +98,8 @@ Async job types map to plugin families:
 - deployments -> deployer plugins
 
 The worker builds a payload, executes the plugin, then persists the result back into DevHub state.
+
+Approval policies can gate selected actions such as scaffold requests or deployments. When a matching approval policy exists, the backend creates an approval request and waits for operator decisions before the gated resource is fully approved.
 
 ## GitOps And Delivery
 

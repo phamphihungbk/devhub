@@ -23,6 +23,7 @@ func (r *userRepositoryImpl) CreateOne(ctx context.Context, input *entity.User) 
 		Email:        input.Email,
 		Role:         input.Role.String(),
 		PasswordHash: input.PasswordHash,
+		TeamID:       input.TeamID,
 	}).RETURNING(usersTable.AllColumns)
 	query, args := stmt.Sql()
 

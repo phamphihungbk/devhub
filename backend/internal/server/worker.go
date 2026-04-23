@@ -17,6 +17,7 @@ import (
 	dbReleaseRepo "devhub-backend/internal/infra/db/repository/release"
 	dbScaffoldRequestRepo "devhub-backend/internal/infra/db/repository/scaffold_request"
 	dbServiceRepo "devhub-backend/internal/infra/db/repository/service"
+	dbTeamRepo "devhub-backend/internal/infra/db/repository/team"
 	infraLogger "devhub-backend/internal/infra/logger"
 	infraWorker "devhub-backend/internal/infra/worker"
 )
@@ -102,6 +103,7 @@ func (w *Worker) Start() error {
 	dbDeploymentRepo := dbDeploymentRepo.NewDeploymentRepository(db)
 	dbPluginRepo := dbPluginRepo.NewPluginRepository(db)
 	dbProjectRepo := dbProjectRepo.NewProjectRepository(db)
+	dbTeamRepo := dbTeamRepo.NewTeamRepository(db)
 	dbScaffoldRequestRepo := dbScaffoldRequestRepo.NewScaffoldRequestRepository(db)
 	dbReleaseRepo := dbReleaseRepo.NewReleaseRepository(db)
 	dbServiceRepo := dbServiceRepo.NewServiceRepository(db)
@@ -112,6 +114,7 @@ func (w *Worker) Start() error {
 		appLogger,
 		dbPluginRepo,
 		dbProjectRepo,
+		dbTeamRepo,
 		dbScaffoldRequestRepo,
 		dbDeploymentRepo,
 		dbReleaseRepo,

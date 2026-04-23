@@ -25,6 +25,7 @@ func init() {
 	rootCmd.AddCommand(
 		generateSQLBuilderCmd,
 		newMigrationCmd,
+		seedCmd,
 		pluginScanCmd,
 		syncWorkerCmd,
 		migrateCmd,

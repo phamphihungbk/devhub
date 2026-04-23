@@ -30,6 +30,7 @@ type PythonScaffoldExecutor struct {
 	cfg               *config.Config
 	pluginRepository  repository.PluginRepository
 	projectRepository repository.ProjectRepository
+	teamRepository    repository.TeamRepository
 }
 
 type ScaffoldExecutionResult struct {
@@ -74,12 +75,14 @@ func NewPythonScaffoldExecutor(
 	cfg *config.Config,
 	pluginRepository repository.PluginRepository,
 	projectRepository repository.ProjectRepository,
+	teamRepository repository.TeamRepository,
 ) *PythonScaffoldExecutor {
 	return &PythonScaffoldExecutor{
 		PythonBin:         "python3",
 		cfg:               cfg,
 		pluginRepository:  pluginRepository,
 		projectRepository: projectRepository,
+		teamRepository:    teamRepository,
 		Timeout:           5 * time.Minute,
 	}
 }
@@ -95,6 +98,9 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 
 	if e.projectRepository == nil {
 		return ScaffoldExecutionResult{}, errors.New("project repository is required")
+	}
+	if e.teamRepository == nil {
+		return ScaffoldExecutionResult{}, errors.New("team repository is required")
 	}
 
 	if e.cfg == nil {
@@ -120,17 +126,27 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 	if project == nil {
 		return ScaffoldExecutionResult{}, errors.New("project is required")
 	}
+	team, err := e.teamRepository.FindOne(ctx, project.TeamID)
+	if err != nil {
+		if !errors.As(err, &errs.NotFoundError{}) {
+			return ScaffoldExecutionResult{}, misc.WrapError(err, errs.NewInternalServerError("failed to find team by ID", nil))
+		}
+		return ScaffoldExecutionResult{}, err
+	}
+	if team == nil {
+		return ScaffoldExecutionResult{}, errors.New("team is required")
+	}
 
 	scaffoldRepoURL, _ := buildScaffoldRepoURL(
 		strings.TrimSpace(e.cfg.ScmConfig.ExternalURL),
-		project.OwnerTeam,
+		strings.ToLower(team.Name),
 		job.Variables.ServiceName,
 		project.ScmProvider,
 	)
 
 	CDRepoURL, _ := buildCDRepoURL(
 		strings.TrimSpace(e.cfg.ArgoCD.RepoURL),
-		project.OwnerTeam,
+		team.Name,
 		job.Variables.ServiceName,
 	)
 

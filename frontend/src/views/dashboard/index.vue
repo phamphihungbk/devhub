@@ -15,15 +15,22 @@ import { computed, h, onMounted, ref } from 'vue'
 import PageHeader from '@/components/page-header.vue'
 import { fetchPlugins, fetchProjects, fetchUsers } from '@/services/api'
 import { ApiError } from '@/services/request'
+import { useAuthStore } from '@/stores/modules/auth'
 import { getEnvironmentTagColor } from '@/theme/environment'
 import { getPluginTypeTagColor } from '@/theme/plugin'
+import { getRoleTagColor } from '@/theme/role'
 import type { PluginRecord, Project, UserRecord } from '@/services/api'
 
 const message = useMessage()
+const authStore = useAuthStore()
 const loading = ref(false)
 const projects = ref<Project[]>([])
 const plugins = ref<PluginRecord[]>([])
 const users = ref<UserRecord[]>([])
+
+const teamMembers = computed(() =>
+  users.value.filter(user => user.team_id === authStore.profile?.team_id),
+)
 
 const stats = computed(() => [
   {
@@ -38,8 +45,8 @@ const stats = computed(() => [
   },
   {
     label: 'Users',
-    value: users.value.length,
-    caption: 'Operators with console access',
+    value: teamMembers.value.length,
+    caption: 'People in your team',
   },
 ])
 
@@ -159,10 +166,10 @@ onMounted(load)
     </div>
 
     <NCard class="mt-6 rounded-3xl border border-[var(--app-border)] shadow-[var(--app-shadow)]" title="Team footprint">
-      <template v-if="users.length > 0">
+      <template v-if="teamMembers.length > 0">
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <div
-            v-for="user in users"
+            v-for="user in teamMembers"
             :key="user.id"
             class="rounded-3xl border border-[var(--app-border)] bg-white/86 px-4 py-4"
           >
@@ -174,7 +181,7 @@ onMounted(load)
               <NTag
                 round
                 :bordered="false"
-                :color="{ color: '#e0f2fe', textColor: '#0369a1' }"
+                :color="getRoleTagColor(user.role)"
               >
                 {{ user.role }}
               </NTag>
@@ -182,7 +189,7 @@ onMounted(load)
           </div>
         </div>
       </template>
-      <NEmpty v-else description="No users returned yet." />
+      <NEmpty v-else description="No team members returned yet." />
     </NCard>
   </div>
 </template>

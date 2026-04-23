@@ -26,9 +26,8 @@ type findAllProjectsResponse struct {
 	Description  string   `json:"description" example:"Project Description"`
 	Environments []string `json:"environments" example:"[development, production]"`
 	Status       string   `json:"status" example:"active"`
-	OwnerTeam    string   `json:"owner_team" example:"platform"`
+	TeamID       string   `json:"team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	ScmProvider  string   `json:"scm_provider" example:"gitea"`
-	OwnerContact string   `json:"owner_contact" example:"team@example.com"`
 	CreatedBy    string   `json:"created_by" example:"Hung Pham"`
 }
 
@@ -113,9 +112,8 @@ func (h *projectHandler) newFindAllProjectsResponse(projects entity.Projects) []
 			Description:  project.Description,
 			Environments: envs,
 			Status:       project.Status.String(),
-			OwnerTeam:    project.OwnerTeam,
+			TeamID:       project.TeamID.String(),
 			ScmProvider:  project.ScmProvider,
-			OwnerContact: project.OwnerContact,
 			CreatedBy:    project.CreatedByName,
 		})
 	}

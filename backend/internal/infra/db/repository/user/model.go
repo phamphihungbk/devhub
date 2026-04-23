@@ -22,6 +22,7 @@ func (c *User) ToEntity() *entity.User {
 		PasswordHash: c.PasswordHash,
 		Name:         c.Name,
 		Role:         userRole,
+		TeamID:       c.TeamID,
 		CreatedAt:    c.CreatedAt,
 		UpdatedAt:    c.UpdatedAt,
 		DeletedAt:    misc.DerefTime(c.DeletedAt),

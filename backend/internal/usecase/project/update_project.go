@@ -19,9 +19,8 @@ type UpdateProjectInput struct {
 	Description  *string   `json:"description" validate:"min=0,max=100"`
 	Environments *[]string `json:"environments" validate:"dive,required"`
 	Status       *string   `json:"status" validate:"required,oneof=draft active archived deprecated"`
-	OwnerTeam    *string   `json:"owner_team" validate:"required,min=1,max=255"`
+	TeamID       *string   `json:"team_id" validate:"omitempty,uuid"`
 	ScmProvider  *string   `json:"scm_provider" validate:"required,min=1,max=32"`
-	OwnerContact *string   `json:"owner_contact" validate:"required,min=1,max=255"`
 }
 
 func (u *projectUsecase) UpdateProject(ctx context.Context, input UpdateProjectInput) (project *entity.Project, err error) {
@@ -44,12 +43,20 @@ func (u *projectUsecase) UpdateProject(ctx context.Context, input UpdateProjectI
 	}
 
 	var status *entity.ProjectStatus
+	var teamID *uuid.UUID
 	if input.Status != nil {
 		parsedStatus, parseErr := new(entity.ProjectStatus).Parse(*input.Status)
 		if parseErr != nil {
 			return nil, misc.WrapError(parseErr, errs.NewBadRequestError("invalid project status", map[string]string{"details": parseErr.Error()}))
 		}
 		status = &parsedStatus
+	}
+	if input.TeamID != nil {
+		parsedTeamID, parseErr := uuid.Parse(*input.TeamID)
+		if parseErr != nil {
+			return nil, misc.WrapError(parseErr, errs.NewBadRequestError("invalid team id", nil))
+		}
+		teamID = &parsedTeamID
 	}
 
 	updated, err := u.projectRepository.UpdateOne(ctx, repository.UpdateProjectInput{
@@ -58,9 +65,8 @@ func (u *projectUsecase) UpdateProject(ctx context.Context, input UpdateProjectI
 		Description:  input.Description,
 		Environments: input.Environments,
 		Status:       status,
-		OwnerTeam:    input.OwnerTeam,
+		TeamID:       teamID,
 		ScmProvider:  input.ScmProvider,
-		OwnerContact: input.OwnerContact,
 	})
 
 	if err != nil {

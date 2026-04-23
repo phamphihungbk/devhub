@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"devhub-backend/internal/api/http/approvaltarget"
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/domain/errs"
 	deploymentUsecase "devhub-backend/internal/usecase/deployment"
@@ -56,13 +57,20 @@ func (h *deploymentHandler) CreateDeployment(c *gin.Context) {
 		return
 	}
 
-	createdDeployment, err := h.deploymentUsecase.CreateDeployment(c.Request.Context(), deploymentUsecase.CreateDeploymentInput{
+	usecaseInput := deploymentUsecase.CreateDeploymentInput{
 		ServiceID:   serviceID,
 		PluginID:    input.PluginID,
 		Environment: input.Environment,
 		Version:     input.Version,
 		TriggeredBy: userID.(string),
-	})
+	}
+
+	if approvalTarget, ok := approvaltarget.ApprovalTargetFromContext(c); ok {
+		usecaseInput.ApprovalResource = approvalTarget.Resource.String()
+		usecaseInput.ApprovalAction = approvalTarget.Action.String()
+	}
+
+	createdDeployment, err := h.deploymentUsecase.CreateDeployment(c.Request.Context(), usecaseInput)
 
 	if err != nil {
 		httpresponse.Error(c, err)

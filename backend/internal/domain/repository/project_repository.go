@@ -32,7 +32,6 @@ type UpdateProjectInput struct {
 	Description  *string
 	Environments *[]string
 	Status       *entity.ProjectStatus
-	OwnerTeam    *string
+	TeamID       *uuid.UUID
 	ScmProvider  *string
-	OwnerContact *string
 }

@@ -11,6 +11,9 @@
 - Create releases for a selected service
 - Deploy a chosen release version into `dev`, `staging`, or `prod`
 - Track deployment and release history from the control plane UI
+- Review approval requests before gated scaffold and deployment actions proceed
+- Browse services across projects from a dedicated service inventory page
+- Inspect cross-service release activity from a dedicated releases page with a timeline view
 - Drive automation through plugin types:
   - `scaffolder`
   - `releaser`
@@ -20,14 +23,24 @@
 
 The current control-plane UI is organized around this lifecycle:
 
-1. `Projects` lists registered projects with ownership and environment filters.
-2. Clicking a project opens project details with services, recent releases, and recent deployments.
-3. From project details, you can open a service.
-4. From service details, you can:
+1. `Dashboard` surfaces team members, project counts, and plugin inventory.
+2. `Approvals` lists pending approval requests and lets operators approve or reject with a required comment.
+3. `Projects` lists registered projects with ownership and environment filters.
+4. `Services` aggregates services across projects.
+5. `Releases` aggregates release activity across services and shows a release timeline chart.
+6. Clicking a project opens project details with services, recent releases, and recent deployments.
+7. From project details, you can open a service.
+8. From service details, you can:
    - create a release
    - select a release
    - deploy based on that release version
    - inspect deployments filtered by the selected release tag
+
+## Release Notes Automation
+
+GitHub release notes can be refreshed automatically through the workflow at [release-notes.yml](./.github/workflows/release-notes.yml).
+
+When a GitHub Release is published or edited, the workflow regenerates the release body from GitHub's generated release notes API and updates the release in place.
 
 ## Demo
 

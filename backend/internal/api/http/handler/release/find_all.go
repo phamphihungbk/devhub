@@ -4,6 +4,7 @@ import (
 	"devhub-backend/internal/domain/entity"
 	releaseUsecase "devhub-backend/internal/usecase/release"
 	"devhub-backend/internal/util/httpresponse"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,6 +21,7 @@ type findAllReleasesResponse struct {
 	ExternalRef string `json:"external_ref" example:"123"`
 	Status      string `json:"status" example:"completed"`
 	TriggeredBy string `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 // @Summary		List Releases
@@ -63,6 +65,7 @@ func (h *releaseHandler) newFindAllReleasesResponse(releases entity.Releases) []
 			ExternalRef: release.ExternalRef,
 			Status:      release.Status.String(),
 			TriggeredBy: release.TriggeredBy.String(),
+			CreatedAt:   release.CreatedAt,
 		})
 	}
 

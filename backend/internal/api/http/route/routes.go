@@ -1,6 +1,7 @@
 package httproute
 
 import (
+	approvalHandler "devhub-backend/internal/api/http/handler/approval"
 	authHandler "devhub-backend/internal/api/http/handler/auth"
 	deploymentHandler "devhub-backend/internal/api/http/handler/deployment"
 	pluginHandler "devhub-backend/internal/api/http/handler/plugin"
@@ -8,9 +9,11 @@ import (
 	releaseHandler "devhub-backend/internal/api/http/handler/release"
 	scaffoldRequestHandler "devhub-backend/internal/api/http/handler/scaffold_request"
 	serviceHandler "devhub-backend/internal/api/http/handler/service"
+	teamHandler "devhub-backend/internal/api/http/handler/team"
 	userHandler "devhub-backend/internal/api/http/handler/user"
 	"devhub-backend/internal/api/http/middleware"
 	"devhub-backend/internal/config"
+	"devhub-backend/internal/domain/entity"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,6 +26,7 @@ type router struct {
 	appCfg                 config.AppConfig                              // Configuration for the application
 	tokenCfg               config.TokenConfig                            // Configuration for the application
 	Middleware             middleware.Middleware                         // Middleware for handling requests
+	ApprovalHandler        approvalHandler.ApprovalHandler               // Handler for approval routes
 	UserHandler            userHandler.UserHandler                       // Handler for user routes
 	AuthHandler            authHandler.AuthHandler                       // Handler for auth routes
 	PluginHandler          pluginHandler.PluginHandler                   // Handler for plugin request routes
@@ -31,10 +35,12 @@ type router struct {
 	ReleaseHandler         releaseHandler.ReleaseHandler                 // Handler for release routes
 	ScaffoldRequestHandler scaffoldRequestHandler.ScaffoldRequestHandler // Handler for scaffold request routes
 	ServiceHandler         serviceHandler.ServiceHandler                 // Handler for service routes
+	TeamHandler            teamHandler.TeamHandler                       // Handler for team routes
 }
 
 type Dependency struct {
 	Middleware             middleware.Middleware
+	ApprovalHandler        approvalHandler.ApprovalHandler
 	UserHandler            userHandler.UserHandler
 	AuthHandler            authHandler.AuthHandler
 	PluginHandler          pluginHandler.PluginHandler
@@ -43,6 +49,7 @@ type Dependency struct {
 	ReleaseHandler         releaseHandler.ReleaseHandler
 	ScaffoldRequestHandler scaffoldRequestHandler.ScaffoldRequestHandler
 	ServiceHandler         serviceHandler.ServiceHandler
+	TeamHandler            teamHandler.TeamHandler
 }
 
 func NewHTTPRoutes(appCfg config.AppConfig, tokenCfg config.TokenConfig, dep Dependency) Router {
@@ -50,6 +57,7 @@ func NewHTTPRoutes(appCfg config.AppConfig, tokenCfg config.TokenConfig, dep Dep
 		appCfg:                 appCfg,
 		tokenCfg:               tokenCfg,
 		Middleware:             dep.Middleware,
+		ApprovalHandler:        dep.ApprovalHandler,
 		UserHandler:            dep.UserHandler,
 		AuthHandler:            dep.AuthHandler,
 		ScaffoldRequestHandler: dep.ScaffoldRequestHandler,
@@ -58,17 +66,65 @@ func NewHTTPRoutes(appCfg config.AppConfig, tokenCfg config.TokenConfig, dep Dep
 		ProjectHandler:         dep.ProjectHandler,
 		ReleaseHandler:         dep.ReleaseHandler,
 		ServiceHandler:         dep.ServiceHandler,
+		TeamHandler:            dep.TeamHandler,
 	}
 }
 
 // RegisterRoutes registers the routes for the application
 func (r *router) RegisterRoutes(router *gin.Engine) {
 	r.applyAuthRoutes(router)
+	r.applyApprovalRoutes(router)
 	r.applyUserRoutes(router)
+	r.applyTeamRoutes(router)
 	r.applyProjectRoutes(router)
 	r.applyScaffoldRequestRoutes(router)
 	r.applyDeploymentRoutes(router)
 	r.applyPluginRoutes(router)
+}
+
+func (r *router) applyTeamRoutes(router *gin.Engine) {
+	teamRoute := router.Group("/teams")
+	{
+		teamRoute.GET("/",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionUserRead),
+			r.TeamHandler.FindAllTeams,
+		)
+		teamRoute.POST("/",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionProjectWrite),
+			r.TeamHandler.CreateTeam,
+		)
+		teamRoute.PATCH("/:team",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionProjectWrite),
+			r.TeamHandler.UpdateTeam,
+		)
+	}
+}
+
+func (r *router) applyApprovalRoutes(router *gin.Engine) {
+	approvalPolicyRoute := router.Group("/approval-policies")
+	approvalRequestRoute := router.Group("/approval-requests")
+	{
+		approvalRequestRoute.GET("/",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionScaffoldRequestWrite),
+			r.ApprovalHandler.FindAllApprovalRequests,
+		)
+
+		approvalPolicyRoute.POST("/",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionProjectWrite),
+			r.ApprovalHandler.CreateApprovalPolicy,
+		)
+
+		approvalRequestRoute.POST("/:approval-request/decisions",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionScaffoldRequestWrite),
+			r.ApprovalHandler.CreateApprovalDecision,
+		)
+	}
 }
 
 // applyAuthRoutes applies the auth routes to the provided router
@@ -76,7 +132,7 @@ func (r *router) applyAuthRoutes(router *gin.Engine) {
 	authRoute := router.Group("/auth")
 	{
 		authRoute.POST("/login", r.AuthHandler.Login)
-		authRoute.POST("/logout", r.AuthHandler.Logout)
+		authRoute.POST("/logout", r.Middleware.Auth(r.tokenCfg.Secret), r.AuthHandler.Logout)
 		authRoute.GET("/me", r.Middleware.Auth(r.tokenCfg.Secret), r.AuthHandler.GetMe)
 	}
 }
@@ -85,11 +141,31 @@ func (r *router) applyAuthRoutes(router *gin.Engine) {
 func (r *router) applyUserRoutes(router *gin.Engine) {
 	userRoute := router.Group("/users")
 	{
-		userRoute.GET("/", r.UserHandler.FindAllUsers)
-		userRoute.POST("/", r.UserHandler.CreateUser)
-		userRoute.GET("/:user", r.UserHandler.FindUserByID)
-		userRoute.DELETE("/:user", r.UserHandler.DeleteUser)
-		userRoute.PATCH("/:user", r.UserHandler.UpdateUser)
+		userRoute.GET("/",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionUserRead),
+			r.UserHandler.FindAllUsers,
+		)
+		userRoute.POST("/",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionUserWrite),
+			r.UserHandler.CreateUser,
+		)
+		userRoute.GET("/:user",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionUserRead),
+			r.UserHandler.FindUserByID,
+		)
+		userRoute.DELETE("/:user",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionUserWrite),
+			r.UserHandler.DeleteUser,
+		)
+		userRoute.PATCH("/:user",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionUserWrite),
+			r.UserHandler.UpdateUser,
+		)
 	}
 }
 
@@ -98,19 +174,39 @@ func (r *router) applyProjectRoutes(router *gin.Engine) {
 	projectRoute := router.Group("/projects")
 	{
 		projectRoute.GET("/", r.ProjectHandler.FindAllProjects)
-		projectRoute.POST("/", r.Middleware.Auth(r.tokenCfg.Secret), r.ProjectHandler.CreateProject)
+		projectRoute.POST("/",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionProjectWrite),
+			r.ProjectHandler.CreateProject,
+		)
 		projectRoute.GET("/:project", r.ProjectHandler.FindProjectByID)
 		projectRoute.GET("/:project/services", r.ServiceHandler.FindAllServices)
-		projectRoute.DELETE("/:project", r.ProjectHandler.DeleteProject)
-		projectRoute.PATCH("/:project", r.ProjectHandler.UpdateProject)
+		projectRoute.DELETE("/:project",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionProjectWrite),
+			r.ProjectHandler.DeleteProject,
+		)
+		projectRoute.PATCH("/:project",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionProjectWrite),
+			r.ProjectHandler.UpdateProject,
+		)
 	}
 
 	serviceRoute := router.Group("/services")
 	{
 		serviceRoute.GET("/:service/deployments", r.DeploymentHandler.FindAllDeployments)
-		serviceRoute.POST("/:service/deployments", r.Middleware.Auth(r.tokenCfg.Secret), r.DeploymentHandler.CreateDeployment)
+		serviceRoute.POST("/:service/deployments",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionDeploymentWrite),
+			r.DeploymentHandler.CreateDeployment,
+		)
 		serviceRoute.GET("/:service/releases", r.ReleaseHandler.FindAllReleases)
-		serviceRoute.POST("/:service/releases", r.Middleware.Auth(r.tokenCfg.Secret), r.ReleaseHandler.CreateRelease)
+		serviceRoute.POST("/:service/releases",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionReleaseWrite),
+			r.ReleaseHandler.CreateRelease,
+		)
 	}
 }
 
@@ -120,10 +216,18 @@ func (r *router) applyScaffoldRequestRoutes(router *gin.Engine) {
 	projectRoute := router.Group("/projects/:project")
 	{
 		projectRoute.GET("/scaffold-requests", r.ScaffoldRequestHandler.FindAllScaffoldRequests)
-		projectRoute.POST("/scaffold-requests", r.Middleware.Auth(r.tokenCfg.Secret), r.ScaffoldRequestHandler.CreateScaffoldRequest)
+		projectRoute.POST("/scaffold-requests",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionScaffoldRequestWrite),
+			r.ScaffoldRequestHandler.CreateScaffoldRequest,
+		)
 
 		scaffoldRequestRoute.GET("/:scaffold-request", r.ScaffoldRequestHandler.FindScaffoldRequestByID)
-		scaffoldRequestRoute.DELETE("/:scaffold-request", r.ScaffoldRequestHandler.DeleteScaffoldRequest)
+		scaffoldRequestRoute.DELETE("/:scaffold-request",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionScaffoldRequestWrite),
+			r.ScaffoldRequestHandler.DeleteScaffoldRequest,
+		)
 	}
 }
 
@@ -132,8 +236,16 @@ func (r *router) applyDeploymentRoutes(router *gin.Engine) {
 	deploymentRoute := router.Group("/deployments")
 	{
 		deploymentRoute.GET("/:deployment", r.DeploymentHandler.FindDeploymentByID)
-		deploymentRoute.DELETE("/:deployment", r.DeploymentHandler.DeleteDeployment)
-		deploymentRoute.PATCH("/:deployment", r.DeploymentHandler.UpdateDeployment)
+		deploymentRoute.DELETE("/:deployment",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionDeploymentWrite),
+			r.DeploymentHandler.DeleteDeployment,
+		)
+		deploymentRoute.PATCH("/:deployment",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionDeploymentWrite),
+			r.DeploymentHandler.UpdateDeployment,
+		)
 	}
 }
 
@@ -142,9 +254,21 @@ func (r *router) applyPluginRoutes(router *gin.Engine) {
 	pluginRoute := router.Group("/plugins")
 	{
 		pluginRoute.GET("/", r.PluginHandler.FindAllPlugins)
-		pluginRoute.POST("/", r.PluginHandler.CreatePlugin)
+		pluginRoute.POST("/",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionPluginWrite),
+			r.PluginHandler.CreatePlugin,
+		)
 		pluginRoute.GET("/:plugin", r.PluginHandler.FindPluginByID)
-		pluginRoute.DELETE("/:plugin", r.PluginHandler.DeletePlugin)
-		pluginRoute.PATCH("/:plugin", r.PluginHandler.UpdatePlugin)
+		pluginRoute.DELETE("/:plugin",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionPluginWrite),
+			r.PluginHandler.DeletePlugin,
+		)
+		pluginRoute.PATCH("/:plugin",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionPluginWrite),
+			r.PluginHandler.UpdatePlugin,
+		)
 	}
 }

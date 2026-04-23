@@ -3,16 +3,20 @@ import { NButton, NCard, NDataTable, NInput, NSelect, NTag, useMessage } from 'n
 import { computed, h, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import { permission } from '@/access/rbac'
 import PageHeader from '@/components/page-header.vue'
-import { fetchProjects } from '@/services/api'
+import { fetchProjects, fetchTeams } from '@/services/api'
 import { ApiError } from '@/services/request'
+import { useAuthStore } from '@/stores/modules/auth'
 import { environmentOptions, getEnvironmentTagColor } from '@/theme/environment'
-import type { Project } from '@/services/api'
+import type { Project, TeamRecord } from '@/services/api'
 
 const message = useMessage()
 const router = useRouter()
+const authStore = useAuthStore()
 const loading = ref(false)
 const rows = ref<Project[]>([])
+const teams = ref<TeamRecord[]>([])
 const filters = reactive({
   keyword: '',
   status: null as string | null,
@@ -27,10 +31,23 @@ const statusOptions = [
   { label: 'Deprecated', value: 'deprecated' },
 ]
 
+const teamNameById = computed(() =>
+  new Map(teams.value.map(team => [team.id, team.name])),
+)
+
+function getOwnerTeamName(teamId?: string) {
+  if (!teamId) return ''
+  return teamNameById.value.get(teamId) || teamId
+}
+
 const ownerTeamOptions = computed(() =>
-  [...new Set(rows.value.map(row => row.owner_team))]
+  [...new Set(rows.value.map(row => getOwnerTeamName(row.team_id)))]
     .filter(Boolean)
     .map(value => ({ label: value, value })),
+)
+
+const canCreateProject = computed(() =>
+  authStore.canAccess({ permissions: [permission.projectWrite] }),
 )
 
 const filteredRows = computed(() => {
@@ -40,13 +57,13 @@ const filteredRows = computed(() => {
     const matchesKeyword = !keyword || [
       row.name,
       row.description,
-      row.owner_team,
+      getOwnerTeamName(row.team_id),
       row.status,
     ].some(value => value?.toLowerCase().includes(keyword))
 
     const matchesStatus = !filters.status || row.status === filters.status
     const matchesEnvironment = !filters.environment || row.environments.includes(filters.environment)
-    const matchesOwnerTeam = !filters.ownerTeam || row.owner_team === filters.ownerTeam
+    const matchesOwnerTeam = !filters.ownerTeam || getOwnerTeamName(row.team_id) === filters.ownerTeam
 
     return matchesKeyword && matchesStatus && matchesEnvironment && matchesOwnerTeam
   })
@@ -94,7 +111,7 @@ const columns = [
         ),
       ),
   },
-  { title: 'Owner Team', key: 'owner_team', render: (row: Project) => row.owner_team || 'Not set' },
+  { title: 'Owner Team', key: 'owner_team', render: (row: Project) => getOwnerTeamName(row.team_id) || 'Not set' },
   { title: 'Description', key: 'description' },
   {
     title: 'Actions',
@@ -118,7 +135,12 @@ const columns = [
 async function load() {
   loading.value = true
   try {
-    rows.value = await fetchProjects()
+    const [projectData, teamData] = await Promise.all([
+      fetchProjects(),
+      fetchTeams(),
+    ])
+    rows.value = projectData
+    teams.value = teamData
   } catch (error) {
     message.error(error instanceof ApiError ? error.message : 'Unable to load projects.')
   } finally {
@@ -137,7 +159,7 @@ onMounted(load)
       description="The service catalog for the platform. Track ownership, deployment targets, and the spaces where scaffolding and lifecycle actions will land."
     >
       <div class="flex flex-wrap gap-3">
-        <NButton type="primary" @click="router.push({ name: 'project-create' })">
+        <NButton v-if="canCreateProject" type="primary" @click="router.push({ name: 'project-create' })">
           New project
         </NButton>
         <NButton @click="load">

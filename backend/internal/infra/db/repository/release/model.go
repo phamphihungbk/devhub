@@ -11,10 +11,6 @@ type Release struct {
 }
 
 func (r *Release) ToEntity() *entity.Release {
-	if r == nil {
-		return nil
-	}
-
 	return &entity.Release{
 		ID:          r.ID,
 		ServiceID:   r.ServiceID,

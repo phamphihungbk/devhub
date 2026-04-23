@@ -5,6 +5,7 @@ import { h, onMounted, ref } from 'vue'
 import PageHeader from '@/components/page-header.vue'
 import { fetchUsers } from '@/services/api'
 import { ApiError } from '@/services/request'
+import { getRoleTagColor } from '@/theme/role'
 import type { UserRecord } from '@/services/api'
 
 const message = useMessage()
@@ -20,7 +21,7 @@ const columns = [
     render: (row: UserRecord) =>
       h(
         NTag,
-        { bordered: false, color: { color: '#dbeafe', textColor: '#1d4ed8' } },
+        { bordered: false, color: getRoleTagColor(row.role) },
         { default: () => row.role },
       ),
   },

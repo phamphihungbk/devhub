@@ -15,6 +15,7 @@ import {
 import { computed, h, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import { permission } from '@/access/rbac'
 import PageHeader from '@/components/page-header.vue'
 import {
   createDeployment,
@@ -26,6 +27,7 @@ import {
   fetchServiceReleases,
 } from '@/services/api'
 import { ApiError } from '@/services/request'
+import { useAuthStore } from '@/stores/modules/auth'
 import { environmentOptions, getEnvironmentTagColor } from '@/theme/environment'
 import type {
   CreateDeploymentPayload,
@@ -40,6 +42,7 @@ import type {
 const route = useRoute()
 const router = useRouter()
 const message = useMessage()
+const authStore = useAuthStore()
 
 const projectId = computed(() => route.params.projectId as string)
 const serviceId = computed(() => route.params.serviceId as string)
@@ -98,6 +101,14 @@ const deployerOptions = computed(() =>
     .map(plugin => ({ label: plugin.name, value: plugin.id })),
 )
 
+const canCreateRelease = computed(() =>
+  authStore.canAccess({ permissions: [permission.releaseWrite] }),
+)
+
+const canCreateDeployment = computed(() =>
+  authStore.canAccess({ permissions: [permission.deploymentWrite] }),
+)
+
 const selectedRelease = computed(() =>
   releases.value.find(item => item.tag === selectedReleaseTag.value) || null,
 )
@@ -145,78 +156,85 @@ function clearReleaseSelection() {
   selectedReleaseTag.value = null
 }
 
-const releaseColumns = [
-  { title: 'Tag', key: 'tag' },
-  { title: 'Target', key: 'target' },
-  {
-    title: 'Status',
-    key: 'status',
-    render: (row: Release) =>
-      h(
-        NTag,
-        {
-          bordered: false,
-          color: row.status === 'failed'
-            ? { color: '#fee2e2', textColor: '#b91c1c' }
-            : { color: '#dbeafe', textColor: '#1d4ed8' },
-        },
-        { default: () => row.status || 'pending' },
-      ),
-  },
-  {
-    title: 'Release',
-    key: 'html_url',
-    render: (row: Release) => row.html_url
-      ? h(
-          'a',
+const releaseColumns = computed(() => {
+  const columns = [
+    { title: 'Tag', key: 'tag' },
+    { title: 'Target', key: 'target' },
+    {
+      title: 'Status',
+      key: 'status',
+      render: (row: Release) =>
+        h(
+          NTag,
           {
-            href: row.html_url,
-            target: '_blank',
-            rel: 'noreferrer',
-            class: 'text-[var(--app-accent)] hover:underline',
+            bordered: false,
+            color: row.status === 'failed'
+              ? { color: '#fee2e2', textColor: '#b91c1c' }
+              : { color: '#dbeafe', textColor: '#1d4ed8' },
           },
-          'Open',
-        )
-      : 'Not set',
-  },
-  {
-    title: 'Actions',
-    key: 'actions',
-    render: (row: Release) =>
-      h(
-        NButton,
-        {
-          size: 'small',
-          onClick: (event: MouseEvent) => {
-            event.stopPropagation()
-            selectRelease(row)
+          { default: () => row.status || 'pending' },
+        ),
+    },
+    {
+      title: 'Release',
+      key: 'html_url',
+      render: (row: Release) => row.html_url
+        ? h(
+            'a',
+            {
+              href: row.html_url,
+              target: '_blank',
+              rel: 'noreferrer',
+              class: 'text-[var(--app-accent)] hover:underline',
+            },
+            'Open',
+          )
+        : 'Not set',
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (row: Release) =>
+        h(
+          NButton,
+          {
+            size: 'small',
+            onClick: (event: MouseEvent) => {
+              event.stopPropagation()
+              selectRelease(row)
+            },
           },
-        },
-        { default: () => 'View deployments' },
-      ),
-  },
-  {
-    title: 'Deploy',
-    key: 'deploy',
-    render: (row: Release) =>
-      h(
-        NButton,
-        {
-          size: 'small',
-          type: 'primary',
-          ghost: true,
-          onClick: (event: MouseEvent) => {
-            event.stopPropagation()
-            selectRelease(row)
-            resetDeploymentForm()
-            deploymentForm.version = row.tag
-            deploymentModalOpen.value = true
+          { default: () => 'View deployments' },
+        ),
+    },
+  ]
+
+  if (canCreateDeployment.value) {
+    columns.push({
+      title: 'Deploy',
+      key: 'deploy',
+      render: (row: Release) =>
+        h(
+          NButton,
+          {
+            size: 'small',
+            type: 'primary',
+            ghost: true,
+            onClick: (event: MouseEvent) => {
+              event.stopPropagation()
+              selectRelease(row)
+              resetDeploymentForm()
+              deploymentForm.version = row.tag
+              deploymentModalOpen.value = true
+            },
           },
-        },
-        { default: () => 'Deploy' },
-      ),
-  },
-]
+          { default: () => 'Deploy' },
+        ),
+    })
+  }
+
+  return columns
+})
 
 const deploymentColumns = [
   {
@@ -353,6 +371,7 @@ onMounted(loadServiceDetails)
           Back to project
         </NButton>
         <NButton
+          v-if="canCreateRelease"
           type="primary"
           @click="openReleaseModal"
         >
@@ -473,6 +492,7 @@ onMounted(loadServiceDetails)
     </div>
 
     <NModal
+      v-if="canCreateRelease"
       v-model:show="releaseModalOpen"
       preset="card"
       title="New release"
@@ -526,6 +546,7 @@ onMounted(loadServiceDetails)
     </NModal>
 
     <NModal
+      v-if="canCreateDeployment"
       v-model:show="deploymentModalOpen"
       preset="card"
       title="New deployment"

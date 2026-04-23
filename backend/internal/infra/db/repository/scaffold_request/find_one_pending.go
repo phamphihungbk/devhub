@@ -22,7 +22,7 @@ func (r *scaffoldRequestRepositoryImpl) FindOnePending(ctx context.Context) (sca
 		scaffoldRequestsTable.AllColumns,
 	).
 		FROM(scaffoldRequestsTable).
-		WHERE(scaffoldRequestsTable.Status.EQ(postgres.String(entity.ScaffoldRequestPending.String()))).
+		WHERE(scaffoldRequestsTable.Status.EQ(postgres.String(entity.ScaffoldRequestApproved.String()))).
 		ORDER_BY(scaffoldRequestsTable.CreatedAt.ASC(), scaffoldRequestsTable.ID.ASC()).
 		LIMIT(1)
 

@@ -12,6 +12,7 @@ export interface UserRecord {
   name: string
   email: string
   role: string
+  team_id: string
 }
 
 export interface CreateUserPayload {

@@ -21,10 +21,11 @@ type FindAllUsersQuery struct {
 }
 
 type findAllUsersResponse struct {
-	ID    string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name  string `json:"name" example:"User Name"`
-	Email string `json:"email" example:"user@example.com"`
-	Role  string `json:"role" example:"platform_admin"`
+	ID     string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name   string `json:"name" example:"User Name"`
+	Email  string `json:"email" example:"user@example.com"`
+	Role   string `json:"role" example:"platform_admin"`
+	TeamID string `json:"team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
 // @Summary		List Users
@@ -96,12 +97,14 @@ func (h *userHandler) newFindAllUsersResponse(users entity.Users) []findAllUsers
 
 	response := make([]findAllUsersResponse, 0, len(users))
 	for _, user := range users {
-		response = append(response, findAllUsersResponse{
-			ID:    user.ID.String(),
-			Name:  user.Name,
-			Email: user.Email,
-			Role:  user.Role.String(),
-		})
+		item := findAllUsersResponse{
+			ID:     user.ID.String(),
+			Name:   user.Name,
+			Email:  user.Email,
+			Role:   user.Role.String(),
+			TeamID: user.TeamID.String(),
+		}
+		response = append(response, item)
 	}
 	return response
 }
