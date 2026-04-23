@@ -16,14 +16,17 @@ type ScaffoldRequestUsecase interface {
 
 type scaffoldRequestUsecase struct {
 	appConfig                 config.AppConfig
+	approvalRepository        repository.ApprovalRepository
 	scaffoldRequestRepository repository.ScaffoldRequestRepository
 }
 
 func NewScaffoldRequestUsecase(
 	appConfig config.AppConfig,
+	approvalRepository repository.ApprovalRepository,
 	scaffoldRequestRepository repository.ScaffoldRequestRepository,
 ) ScaffoldRequestUsecase {
 	return &scaffoldRequestUsecase{
+		approvalRepository:        approvalRepository,
 		appConfig:                 appConfig,
 		scaffoldRequestRepository: scaffoldRequestRepository,
 	}

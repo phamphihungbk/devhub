@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"devhub-backend/internal/api/http/approvaltarget"
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/domain/errs"
 	scaffoldRequestUsecase "devhub-backend/internal/usecase/scaffold_request"
@@ -62,13 +63,19 @@ func (h *scaffoldRequestHandler) CreateScaffoldRequest(c *gin.Context) {
 		return
 	}
 
-	createdScaffoldRequest, err := h.scaffoldRequestUsecase.CreateScaffoldRequest(c.Request.Context(), scaffoldRequestUsecase.CreateScaffoldRequestInput{
-		PluginID:    input.PluginID,
-		ProjectID:   projectID,
-		RequestedBy: userID.(string),
-		Environment: input.Environment,
-		Variables:   scaffoldRequestUsecase.ScaffoldRequestVariables(input.Variables),
-	})
+	approvalResource, approvalAction := approvaltarget.StringsFromContext(c)
+
+	usecaseInput := scaffoldRequestUsecase.CreateScaffoldRequestInput{
+		PluginID:         input.PluginID,
+		ProjectID:        projectID,
+		RequestedBy:      userID.(string),
+		Environment:      input.Environment,
+		Variables:        scaffoldRequestUsecase.ScaffoldRequestVariables(input.Variables),
+		ApprovalResource: approvalResource,
+		ApprovalAction:   approvalAction,
+	}
+
+	createdScaffoldRequest, err := h.scaffoldRequestUsecase.CreateScaffoldRequest(c.Request.Context(), usecaseInput)
 
 	if err != nil {
 		httpresponse.Error(c, err)

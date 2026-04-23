@@ -8,52 +8,50 @@ import (
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/domain/errs"
 	"devhub-backend/internal/domain/repository"
+	table "devhub-backend/internal/infra/db/model_gen/devhub/public/table"
 	"devhub-backend/internal/util/misc"
+
+	postgres "github.com/go-jet/jet/v2/postgres"
 )
 
 func (r *approvalRepositoryImpl) FindMatchingApprovalPolicy(ctx context.Context, input repository.FindMatchingApprovalPolicyInput) (_ *entity.ApprovalPolicy, err error) {
 	const errLocation = "[repository approval/find_matching_policy FindMatchingApprovalPolicy] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
-	query := `
-		SELECT
-			id,
-			resource,
-			action,
-			project_id,
-			service_id,
-			environment,
-			required_approvals,
-			enabled,
-			created_at,
-			updated_at
-		FROM approval_policies
-		WHERE resource = $1
-			AND action = $2
-			AND enabled = TRUE
-			AND (project_id IS NULL OR project_id = $3)
-			AND (service_id IS NULL OR service_id = $4)
-			AND (environment IS NULL OR environment = $5)
-		ORDER BY
-			CASE WHEN service_id IS NULL THEN 0 ELSE 1 END DESC,
-			CASE WHEN project_id IS NULL THEN 0 ELSE 1 END DESC,
-			CASE WHEN environment IS NULL THEN 0 ELSE 1 END DESC,
-			updated_at DESC,
-			created_at DESC
-		LIMIT 1
-	`
+	approvalPoliciesTable := table.ApprovalPolicies
+	stmt := postgres.SELECT(
+		approvalPoliciesTable.AllColumns,
+	).FROM(approvalPoliciesTable).
+		WHERE(
+			approvalPoliciesTable.Resource.EQ(postgres.String(input.Resource)).
+				AND(approvalPoliciesTable.Action.EQ(postgres.String(input.Action))).
+				AND(approvalPoliciesTable.Enabled.EQ(postgres.Bool(true))).
+				AND(
+					approvalPoliciesTable.ProjectID.IS_NULL().
+						OR(approvalPoliciesTable.ProjectID.EQ(postgres.UUID(misc.GetValue(input.ProjectID)))),
+				).
+				AND(
+					approvalPoliciesTable.ServiceID.IS_NULL().
+						OR(approvalPoliciesTable.ServiceID.EQ(postgres.UUID(misc.GetValue(input.ServiceID)))),
+				).
+				AND(
+					approvalPoliciesTable.Environment.IS_NULL().
+						OR(approvalPoliciesTable.Environment.EQ(postgres.String(misc.GetValue(input.Environment)))),
+				),
+		).
+		ORDER_BY(
+			postgres.Raw("CASE WHEN service_id IS NULL THEN 0 ELSE 1 END DESC"),
+			postgres.Raw("CASE WHEN project_id IS NULL THEN 0 ELSE 1 END DESC"),
+			postgres.Raw("CASE WHEN environment IS NULL THEN 0 ELSE 1 END DESC"),
+			approvalPoliciesTable.UpdatedAt.DESC(),
+			approvalPoliciesTable.CreatedAt.DESC(),
+		).
+		LIMIT(1)
+	query, args := stmt.Sql()
 
-	var model approvalPolicyModel
-	if err := r.execer.GetContext(
-		ctx,
-		&model,
-		query,
-		input.Resource,
-		input.Action,
-		input.ProjectID,
-		input.ServiceID,
-		input.Environment,
-	); err != nil {
+	var model ApprovalPolicy
+	err = r.execer.GetContext(ctx, &model, query, args...)
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}

@@ -16,11 +16,13 @@ import { useRouter } from 'vue-router'
 import PageHeader from '@/components/page-header.vue'
 import { createProject } from '@/services/api'
 import { ApiError } from '@/services/request'
+import { useAuthStore } from '@/stores/modules/auth'
 import { environmentOptions } from '@/theme/environment'
 import type { ProjectPayload } from '@/services/api'
 
 const router = useRouter()
 const message = useMessage()
+const authStore = useAuthStore()
 const saving = ref(false)
 
 const statusOptions = [
@@ -42,17 +44,15 @@ const form = reactive<ProjectPayload>({
   description: '',
   environments: ['dev'],
   status: 'draft',
-  owner_team: '',
+  team_id: '',
   scm_provider: 'gitea',
-  owner_contact: '',
 })
 
 function validateForm() {
   if (!form.name.trim()) return 'Project name is required.'
   if (form.environments.length === 0) return 'Select at least one environment.'
-  if (!form.owner_team.trim()) return 'Owner team is required.'
+  if (!authStore.profile?.team_id) return 'Your team information is not available.'
   if (!form.scm_provider.trim()) return 'SCM provider is required.'
-  if (!form.owner_contact.trim()) return 'Owner contact is required.'
   return null
 }
 
@@ -69,11 +69,10 @@ async function submit() {
   try {
     await createProject({
       ...form,
+      team_id: authStore.profile.team_id,
       name: form.name.trim(),
       description: form.description?.trim() || undefined,
-      owner_team: form.owner_team.trim(),
       scm_provider: form.scm_provider.trim(),
-      owner_contact: form.owner_contact.trim(),
     })
 
     message.success('Project created successfully.')
@@ -115,10 +114,6 @@ async function submit() {
               <NInput v-model:value="form.name" placeholder="payments-api" />
             </NFormItem>
 
-            <NFormItem label="Owner team">
-              <NInput v-model:value="form.owner_team" placeholder="platform" />
-            </NFormItem>
-
             <NFormItem label="Status">
               <NSelect
                 v-model:value="form.status"
@@ -133,10 +128,6 @@ async function submit() {
                 :options="scmProviderOptions"
                 placeholder="Select provider"
               />
-            </NFormItem>
-
-            <NFormItem label="Owner contact">
-              <NInput v-model:value="form.owner_contact" placeholder="platform@devhub.local" />
             </NFormItem>
 
             <NFormItem label="Description" class="md:col-span-2">
@@ -173,7 +164,7 @@ async function submit() {
         <NCard class="rounded-3xl border border-[var(--app-border)] shadow-[var(--app-shadow)]" title="What gets registered">
           <div class="space-y-4 text-sm leading-6 text-[var(--app-text-muted)]">
             <p>
-              DevHub will create a project record with team ownership and the environments your operators can act on.
+              DevHub will create a project record under your current team and the environments your operators can act on.
             </p>
             <p>
               This lays the groundwork for deployments, scaffold requests, release automation, and future control-plane workflows tied to this project.

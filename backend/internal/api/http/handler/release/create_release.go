@@ -7,6 +7,7 @@ import (
 	"devhub-backend/internal/util/httpresponse"
 	"devhub-backend/internal/util/misc"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,6 +31,7 @@ type createReleaseResponse struct {
 	HTMLURL     string `json:"html_url" example:"https://gitea.devhub.local/acme/service/releases/tag/v1.0.0"`
 	ExternalRef string `json:"external_ref" example:"123"`
 	TriggeredBy string `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 // @Summary		Create Release
@@ -91,5 +93,6 @@ func (h *releaseHandler) newCreateReleaseResponse(release *entity.Release) creat
 		HTMLURL:     release.HTMLURL,
 		ExternalRef: release.ExternalRef,
 		TriggeredBy: release.TriggeredBy.String(),
+		CreatedAt:   release.CreatedAt,
 	}
 }

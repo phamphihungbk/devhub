@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { reactive } from 'vue';
 
+import { canAccess, resolveProfilePermissions, type AccessRequirement } from '@/access/rbac'
 import { SetupStoreId } from '@/enum'
 import { fetchCurrentUser, loginWithPassword } from '@/services/api'
 import type { Credentials, LoginTokens, UserProfile } from '@/services/api'
@@ -44,6 +45,12 @@ export const useAuthStore = defineStore(SetupStoreId.Auth, {
   getters: {
     isAuthenticated(state: AuthState) {
       return Boolean(state.accessToken)
+    },
+    permissions(state: AuthState) {
+      return resolveProfilePermissions(state.profile)
+    },
+    canAccess(state: AuthState) {
+      return (requirement: AccessRequirement) => canAccess(state.profile, requirement)
     },
   },
   actions: {

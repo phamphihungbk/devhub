@@ -13,6 +13,7 @@ export interface Project {
   description: string
   environments: string[]
   status?: string
+  team_id: string
   owner_team?: string
   scm_provider?: string
   owner_contact?: string
@@ -24,9 +25,8 @@ export interface ProjectPayload {
   description?: string
   environments: string[]
   status: string
-  owner_team: string
+  team_id: string
   scm_provider: string
-  owner_contact: string
 }
 
 export interface UpdateProjectPayload {

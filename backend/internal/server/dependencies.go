@@ -13,6 +13,7 @@ import (
 	releaseHandler "devhub-backend/internal/api/http/handler/release"
 	scaffoldRequestHandler "devhub-backend/internal/api/http/handler/scaffold_request"
 	serviceHandler "devhub-backend/internal/api/http/handler/service"
+	teamHandler "devhub-backend/internal/api/http/handler/team"
 	userHandler "devhub-backend/internal/api/http/handler/user"
 	"devhub-backend/internal/api/http/middleware"
 	httproute "devhub-backend/internal/api/http/route"
@@ -24,6 +25,7 @@ import (
 	dbReleaseRepo "devhub-backend/internal/infra/db/repository/release"
 	dbScaffoldRequestRepo "devhub-backend/internal/infra/db/repository/scaffold_request"
 	dbServiceRepo "devhub-backend/internal/infra/db/repository/service"
+	dbTeamRepo "devhub-backend/internal/infra/db/repository/team"
 	dbUserRepo "devhub-backend/internal/infra/db/repository/user"
 	"devhub-backend/internal/infra/logger"
 	approvalUsecase "devhub-backend/internal/usecase/approval"
@@ -34,6 +36,7 @@ import (
 	releaseUsecase "devhub-backend/internal/usecase/release"
 	scaffoldRequestUsecase "devhub-backend/internal/usecase/scaffold_request"
 	serviceUsecase "devhub-backend/internal/usecase/service"
+	teamUsecase "devhub-backend/internal/usecase/team"
 	userUsecase "devhub-backend/internal/usecase/user"
 )
 
@@ -51,6 +54,7 @@ func (s *Server) setupRouteDependencies(ctx context.Context, appLogger logger.Lo
 	dbScaffoldRequestRepo := dbScaffoldRequestRepo.NewScaffoldRequestRepository(dbConn)
 	dbReleaseRepo := dbReleaseRepo.NewReleaseRepository(dbConn)
 	dbServiceRepo := dbServiceRepo.NewServiceRepository(dbConn)
+	dbTeamRepo := dbTeamRepo.NewTeamRepository(dbConn)
 	dbRefreshTokenRepo := dbRefreshTokenRepo.NewRefreshTokenRepository(dbConn)
 
 	// Query retrier
@@ -64,11 +68,12 @@ func (s *Server) setupRouteDependencies(ctx context.Context, appLogger logger.Lo
 	approvalUsecase := approvalUsecase.NewApprovalUsecase(s.cfg.App, dbApprovalRepo, dbScaffoldRequestRepo)
 	userUsecase := userUsecase.NewUserUsecase(s.cfg.App, dbUserRepo)
 	projectUsecase := projectUsecase.NewProjectUsecase(s.cfg.App, dbProjectRepo, dbUserRepo)
-	deploymentUsecase := deploymentUsecase.NewDeploymentUsecase(s.cfg.App, dbDeploymentRepo)
+	deploymentUsecase := deploymentUsecase.NewDeploymentUsecase(s.cfg.App, dbApprovalRepo, dbDeploymentRepo)
 	releaseUsecase := releaseUsecase.NewReleaseUsecase(s.cfg.App, dbReleaseRepo)
 	pluginUsecase := pluginUsecase.NewPluginUsecase(s.cfg.App, dbPluginRepo)
-	scaffoldRequestUsecase := scaffoldRequestUsecase.NewScaffoldRequestUsecase(s.cfg.App, dbScaffoldRequestRepo)
+	scaffoldRequestUsecase := scaffoldRequestUsecase.NewScaffoldRequestUsecase(s.cfg.App, dbApprovalRepo, dbScaffoldRequestRepo)
 	serviceUsecase := serviceUsecase.NewServiceUsecase(s.cfg.App, dbServiceRepo)
+	teamUsecase := teamUsecase.NewTeamUsecase(s.cfg.App, dbTeamRepo)
 	authUsecase := authUsecase.NewAuthUsecase(s.cfg.Token, dbUserRepo, dbRefreshTokenRepo)
 
 	// Application middleware
@@ -83,6 +88,7 @@ func (s *Server) setupRouteDependencies(ctx context.Context, appLogger logger.Lo
 	pluginHandler := pluginHandler.NewPluginHandler(s.cfg.App, pluginUsecase)
 	scaffoldRequestHandler := scaffoldRequestHandler.NewScaffoldRequestHandler(s.cfg.App, scaffoldRequestUsecase)
 	serviceHandler := serviceHandler.NewServiceHandler(s.cfg.App, serviceUsecase)
+	teamHandler := teamHandler.NewTeamHandler(s.cfg.App, teamUsecase)
 	authHandler := authHandler.NewAuthHandler(s.cfg.App, authUsecase)
 
 	return httproute.Dependency{
@@ -96,5 +102,6 @@ func (s *Server) setupRouteDependencies(ctx context.Context, appLogger logger.Lo
 		AuthHandler:            authHandler,
 		ScaffoldRequestHandler: scaffoldRequestHandler,
 		ServiceHandler:         serviceHandler,
+		TeamHandler:            teamHandler,
 	}, nil
 }

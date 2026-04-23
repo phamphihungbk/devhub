@@ -18,6 +18,9 @@ import { useRoute, useRouter } from 'vue-router'
 
 import PageHeader from '@/components/page-header.vue'
 import {
+  permission,
+} from '@/access/rbac'
+import {
   createScaffoldRequest,
   fetchPlugins,
   fetchProjectById,
@@ -25,8 +28,10 @@ import {
   fetchProjectServices,
   fetchServiceDeployments,
   fetchServiceReleases,
+  fetchTeams,
 } from '@/services/api'
 import { ApiError } from '@/services/request'
+import { useAuthStore } from '@/stores/modules/auth'
 import { environmentOptions, getEnvironmentTagColor } from '@/theme/environment'
 import type {
   CreateScaffoldRequestPayload,
@@ -36,6 +41,7 @@ import type {
   Release,
   ScaffoldRequestRecord,
   Service,
+  TeamRecord,
 } from '@/services/api'
 
 type ServiceReleaseRow = Release & { service_name: string }
@@ -44,6 +50,7 @@ type ServiceDeploymentRow = Deployment & { service_name: string }
 const route = useRoute()
 const router = useRouter()
 const message = useMessage()
+const authStore = useAuthStore()
 
 const projectId = computed(() => route.params.projectId as string)
 
@@ -52,6 +59,7 @@ const scaffoldSubmitting = ref(false)
 const scaffoldModalOpen = ref(false)
 
 const project = ref<Project | null>(null)
+const teams = ref<TeamRecord[]>([])
 const services = ref<Service[]>([])
 const releases = ref<ServiceReleaseRow[]>([])
 const deployments = ref<ServiceDeploymentRow[]>([])
@@ -76,6 +84,10 @@ const scaffolderOptions = computed(() =>
     .map(plugin => ({ label: plugin.name, value: plugin.id })),
 )
 
+const canCreateScaffoldRequest = computed(() =>
+  authStore.canAccess({ permissions: [permission.scaffoldRequestWrite] }),
+)
+
 const successfulReleases = computed(() =>
   releases.value.filter(item => item.status === 'completed').length,
 )
@@ -90,6 +102,22 @@ const successfulDeployments = computed(() =>
 
 const failedDeployments = computed(() =>
   deployments.value.filter(item => item.status === 'failed').length,
+)
+
+const teamNameById = computed(() =>
+  new Map(teams.value.map(team => [team.id, team.name])),
+)
+
+const teamOwnerContactById = computed(() =>
+  new Map(teams.value.map(team => [team.id, team.owner_contact])),
+)
+
+const ownerTeamName = computed(() =>
+  project.value?.team_id ? (teamNameById.value.get(project.value.team_id) || project.value.team_id) : 'Not set',
+)
+
+const ownerContact = computed(() =>
+  project.value?.team_id ? (teamOwnerContactById.value.get(project.value.team_id) || 'Not set') : 'Not set',
 )
 
 function openService(row: Service) {
@@ -211,6 +239,7 @@ async function loadProjectDetails() {
       fetchPlugins(),
       fetchProjectScaffoldRequests(projectId.value),
     ])
+    teams.value = await fetchTeams()
 
     project.value = projectData
     services.value = serviceData
@@ -283,7 +312,7 @@ onMounted(loadProjectDetails)
         <NButton @click="router.push({ name: 'projects' })">
           Back to projects
         </NButton>
-        <NButton type="primary" @click="scaffoldModalOpen = true">
+        <NButton v-if="canCreateScaffoldRequest" type="primary" @click="scaffoldModalOpen = true">
           New scaffold request
         </NButton>
       </div>
@@ -339,7 +368,7 @@ onMounted(loadProjectDetails)
                 Owner team
               </p>
               <p class="mt-1 text-base font-semibold text-[var(--app-text)]">
-                {{ project?.owner_team || 'Not set' }}
+                {{ ownerTeamName }}
               </p>
             </div>
             <div>
@@ -355,7 +384,7 @@ onMounted(loadProjectDetails)
                 Owner contact
               </p>
               <p class="mt-1 text-base font-semibold text-[var(--app-text)]">
-                {{ project?.owner_contact || 'Not set' }}
+                {{ ownerContact }}
               </p>
             </div>
           </div>
@@ -403,6 +432,7 @@ onMounted(loadProjectDetails)
     </div>
 
     <NModal
+      v-if="canCreateScaffoldRequest"
       v-model:show="scaffoldModalOpen"
       preset="card"
       title="New scaffold request"

@@ -7,8 +7,10 @@ import (
 
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/domain/errs"
+	table "devhub-backend/internal/infra/db/model_gen/devhub/public/table"
 	"devhub-backend/internal/util/misc"
 
+	postgres "github.com/go-jet/jet/v2/postgres"
 	"github.com/google/uuid"
 )
 
@@ -16,27 +18,17 @@ func (r *approvalRepositoryImpl) FindApprovalRequest(ctx context.Context, id uui
 	const errLocation = "[repository approval/find_request FindApprovalRequest] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
-	query := `
-		SELECT
-			id,
-			resource,
-			action,
-			resource_id,
-			requested_by,
-			project_id,
-			service_id,
-			environment,
-			status,
-			required_approvals,
-			approved_count,
-			rejected_count,
-			resolved_at
-		FROM approval_requests
-		WHERE id = $1
-	`
+	approvalRequestsTable := table.ApprovalRequests
+	stmt := postgres.SELECT(
+		approvalRequestsTable.AllColumns,
+	).
+		FROM(approvalRequestsTable).
+		WHERE(approvalRequestsTable.ID.EQ(postgres.UUID(id)))
+	query, args := stmt.Sql()
 
-	var model approvalRequestModel
-	if err := r.execer.GetContext(ctx, &model, query, id); err != nil {
+	var model ApprovalRequest
+	err = r.execer.GetContext(ctx, &model, query, args...)
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errs.NewNotFoundError("approval request not found", nil)
 		}

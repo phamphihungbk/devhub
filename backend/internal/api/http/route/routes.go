@@ -9,6 +9,7 @@ import (
 	releaseHandler "devhub-backend/internal/api/http/handler/release"
 	scaffoldRequestHandler "devhub-backend/internal/api/http/handler/scaffold_request"
 	serviceHandler "devhub-backend/internal/api/http/handler/service"
+	teamHandler "devhub-backend/internal/api/http/handler/team"
 	userHandler "devhub-backend/internal/api/http/handler/user"
 	"devhub-backend/internal/api/http/middleware"
 	"devhub-backend/internal/config"
@@ -34,6 +35,7 @@ type router struct {
 	ReleaseHandler         releaseHandler.ReleaseHandler                 // Handler for release routes
 	ScaffoldRequestHandler scaffoldRequestHandler.ScaffoldRequestHandler // Handler for scaffold request routes
 	ServiceHandler         serviceHandler.ServiceHandler                 // Handler for service routes
+	TeamHandler            teamHandler.TeamHandler                       // Handler for team routes
 }
 
 type Dependency struct {
@@ -47,6 +49,7 @@ type Dependency struct {
 	ReleaseHandler         releaseHandler.ReleaseHandler
 	ScaffoldRequestHandler scaffoldRequestHandler.ScaffoldRequestHandler
 	ServiceHandler         serviceHandler.ServiceHandler
+	TeamHandler            teamHandler.TeamHandler
 }
 
 func NewHTTPRoutes(appCfg config.AppConfig, tokenCfg config.TokenConfig, dep Dependency) Router {
@@ -63,6 +66,7 @@ func NewHTTPRoutes(appCfg config.AppConfig, tokenCfg config.TokenConfig, dep Dep
 		ProjectHandler:         dep.ProjectHandler,
 		ReleaseHandler:         dep.ReleaseHandler,
 		ServiceHandler:         dep.ServiceHandler,
+		TeamHandler:            dep.TeamHandler,
 	}
 }
 
@@ -71,16 +75,44 @@ func (r *router) RegisterRoutes(router *gin.Engine) {
 	r.applyAuthRoutes(router)
 	r.applyApprovalRoutes(router)
 	r.applyUserRoutes(router)
+	r.applyTeamRoutes(router)
 	r.applyProjectRoutes(router)
 	r.applyScaffoldRequestRoutes(router)
 	r.applyDeploymentRoutes(router)
 	r.applyPluginRoutes(router)
 }
 
+func (r *router) applyTeamRoutes(router *gin.Engine) {
+	teamRoute := router.Group("/teams")
+	{
+		teamRoute.GET("/",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionUserRead),
+			r.TeamHandler.FindAllTeams,
+		)
+		teamRoute.POST("/",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionProjectWrite),
+			r.TeamHandler.CreateTeam,
+		)
+		teamRoute.PATCH("/:team",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionProjectWrite),
+			r.TeamHandler.UpdateTeam,
+		)
+	}
+}
+
 func (r *router) applyApprovalRoutes(router *gin.Engine) {
 	approvalPolicyRoute := router.Group("/approval-policies")
 	approvalRequestRoute := router.Group("/approval-requests")
 	{
+		approvalRequestRoute.GET("/",
+			r.Middleware.Auth(r.tokenCfg.Secret),
+			r.Middleware.RequirePermissions(entity.PermissionScaffoldRequestWrite),
+			r.ApprovalHandler.FindAllApprovalRequests,
+		)
+
 		approvalPolicyRoute.POST("/",
 			r.Middleware.Auth(r.tokenCfg.Secret),
 			r.Middleware.RequirePermissions(entity.PermissionProjectWrite),

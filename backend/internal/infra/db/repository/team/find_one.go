@@ -18,15 +18,18 @@ func (r *teamRepositoryImpl) FindOne(ctx context.Context, id uuid.UUID) (_ *enti
 	const errLocation = "[repository team/find_one FindOne] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
+	teamsTable := table.Teams
 	stmt := postgres.SELECT(
-		table.Teams.AllColumns,
-	).FROM(table.Teams).
+		teamsTable.AllColumns,
+	).
+		FROM(table.Teams).
 		WHERE(table.Teams.ID.EQ(postgres.UUID(id)))
 
 	query, args := stmt.Sql()
 
 	var model Team
-	if err := r.execer.GetContext(ctx, &model, query, args...); err != nil {
+	err = r.execer.GetContext(ctx, &model, query, args...)
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errs.NewNotFoundError("team not found", nil)
 		}

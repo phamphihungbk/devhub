@@ -2,25 +2,15 @@ package approvalrepo
 
 import (
 	"devhub-backend/internal/domain/entity"
-	"time"
-
-	"github.com/google/uuid"
+	"devhub-backend/internal/infra/db/model_gen/devhub/public/model"
+	"devhub-backend/internal/util/misc"
 )
 
-type approvalPolicyModel struct {
-	ID                uuid.UUID  `db:"id"`
-	Resource          string     `db:"resource"`
-	Action            string     `db:"action"`
-	ProjectID         *uuid.UUID `db:"project_id"`
-	ServiceID         *uuid.UUID `db:"service_id"`
-	Environment       *string    `db:"environment"`
-	RequiredApprovals int        `db:"required_approvals"`
-	Enabled           bool       `db:"enabled"`
-	CreatedAt         time.Time  `db:"created_at"`
-	UpdatedAt         time.Time  `db:"updated_at"`
+type ApprovalPolicy struct {
+	model.ApprovalPolicies
 }
 
-func (m approvalPolicyModel) toEntity() *entity.ApprovalPolicy {
+func (m *ApprovalPolicy) toEntity() *entity.ApprovalPolicy {
 	return &entity.ApprovalPolicy{
 		ID:                m.ID,
 		Resource:          m.Resource,
@@ -28,30 +18,33 @@ func (m approvalPolicyModel) toEntity() *entity.ApprovalPolicy {
 		ProjectID:         m.ProjectID,
 		ServiceID:         m.ServiceID,
 		Environment:       m.Environment,
-		RequiredApprovals: m.RequiredApprovals,
+		RequiredApprovals: int(m.RequiredApprovals),
 		Enabled:           m.Enabled,
 		CreatedAt:         m.CreatedAt,
 		UpdatedAt:         m.UpdatedAt,
 	}
 }
 
-type approvalRequestModel struct {
-	ID                uuid.UUID  `db:"id"`
-	Resource          string     `db:"resource"`
-	Action            string     `db:"action"`
-	ResourceID        uuid.UUID  `db:"resource_id"`
-	RequestedBy       uuid.UUID  `db:"requested_by"`
-	ProjectID         *uuid.UUID `db:"project_id"`
-	ServiceID         *uuid.UUID `db:"service_id"`
-	Environment       *string    `db:"environment"`
-	Status            string     `db:"status"`
-	RequiredApprovals int        `db:"required_approvals"`
-	ApprovedCount     int        `db:"approved_count"`
-	RejectedCount     int        `db:"rejected_count"`
-	ResolvedAt        *time.Time `db:"resolved_at"`
+type ApprovalRequest struct {
+	model.ApprovalRequests
 }
 
-func (m approvalRequestModel) toEntity() *entity.ApprovalRequest {
+type ApprovalRequests []ApprovalRequest
+
+func (m ApprovalRequests) ToEntities() *entity.ApprovalRequests {
+	requests := make(entity.ApprovalRequests, 0, len(m))
+	for _, item := range m {
+		request := item.toEntity()
+		if request == nil {
+			continue
+		}
+		requests = append(requests, *request)
+	}
+
+	return &requests
+}
+
+func (m *ApprovalRequest) toEntity() *entity.ApprovalRequest {
 	status, err := new(entity.ApprovalRequestStatus).Parse(m.Status)
 	if err != nil {
 		return nil
@@ -67,23 +60,20 @@ func (m approvalRequestModel) toEntity() *entity.ApprovalRequest {
 		ServiceID:         m.ServiceID,
 		Environment:       m.Environment,
 		Status:            status,
-		RequiredApprovals: m.RequiredApprovals,
-		ApprovedCount:     m.ApprovedCount,
-		RejectedCount:     m.RejectedCount,
+		RequiredApprovals: int(m.RequiredApprovals),
+		ApprovedCount:     int(m.ApprovedCount),
+		RejectedCount:     int(m.RejectedCount),
 		ResolvedAt:        m.ResolvedAt,
+		CreatedAt:         m.CreatedAt,
+		UpdatedAt:         m.UpdatedAt,
 	}
 }
 
-type approvalDecisionModel struct {
-	ID                uuid.UUID `db:"id"`
-	ApprovalRequestID uuid.UUID `db:"approval_request_id"`
-	DecidedBy         uuid.UUID `db:"decided_by"`
-	Decision          string    `db:"decision"`
-	Comment           string    `db:"comment"`
-	CreatedAt         time.Time `db:"created_at"`
+type ApprovalDecision struct {
+	model.ApprovalDecisions
 }
 
-func (m approvalDecisionModel) toEntity() *entity.ApprovalDecision {
+func (m *ApprovalDecision) toEntity() *entity.ApprovalDecision {
 	decision, err := new(entity.ApprovalDecisionType).Parse(m.Decision)
 	if err != nil {
 		return nil
@@ -94,7 +84,7 @@ func (m approvalDecisionModel) toEntity() *entity.ApprovalDecision {
 		ApprovalRequestID: m.ApprovalRequestID,
 		DecidedBy:         m.DecidedBy,
 		Decision:          decision,
-		Comment:           m.Comment,
+		Comment:           misc.GetValue(m.Comment),
 		CreatedAt:         m.CreatedAt,
 	}
 }

@@ -3,7 +3,7 @@
 .PHONY: help bootstrap generate-dev-cert setup-local-https \
 	backend-up backend-down backend-watch frontend-up frontend-down frontend-watch \
 	build-backend build-frontend up down logs logs-worker logs-runner logs-frontend ps shell \
-	worker-up worker-down runner-up runner-down migrate migrate-down migrate-force new-migration seed-rbac generate sync-worker plugin-scan create-plugin config prod-config argocd-ui argocd-token minikube-registry
+	worker-up worker-down runner-up runner-down migrate migrate-down migrate-force new-migration seed-data generate sync-worker plugin-scan create-plugin config prod-config argocd-ui argocd-token minikube-registry
 
 BACKEND_SERVICES := backend worker db redis devhub-registry gitea gitea-runner
 FRONTEND_SERVICES := frontend nginx
@@ -93,8 +93,8 @@ new-migration: ## Create a new migration pair, e.g. make new-migration NAME=add_
 	@test -n "$(NAME)" || (echo "Usage: make new-migration NAME=add_services_table" && exit 1)
 	@./scripts/dev.sh run --rm backend go run . new-migration "$(NAME)"
 
-seed-rbac: ## Seed RBAC roles, permissions, and role-permission mappings
-	@./scripts/dev.sh run --rm backend go run . seed-rbac
+seed-data: ## Seed RBAC roles, permissions, and role-permission mappings
+	@./scripts/dev.sh run --rm backend go run . seed-data
 
 generate: ## Run backend DB code generation
 	@./scripts/generate.sh

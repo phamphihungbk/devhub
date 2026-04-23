@@ -10,6 +10,7 @@ export interface Release {
   external_ref: string
   status?: string
   triggered_by: string
+  created_at: string
 }
 
 export interface CreateReleasePayload {

@@ -8,50 +8,59 @@ import (
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/domain/errs"
 	"devhub-backend/internal/domain/repository"
+	table "devhub-backend/internal/infra/db/model_gen/devhub/public/table"
 	"devhub-backend/internal/util/misc"
+
+	postgres "github.com/go-jet/jet/v2/postgres"
 )
 
 func (r *approvalRepositoryImpl) UpdateApprovalRequest(ctx context.Context, input repository.UpdateApprovalRequestInput) (_ *entity.ApprovalRequest, err error) {
 	const errLocation = "[repository approval/update_request UpdateApprovalRequest] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
-	query := `
-		UPDATE approval_requests
-		SET
-			status = COALESCE($2, status),
-			approved_count = COALESCE($3, approved_count),
-			rejected_count = COALESCE($4, rejected_count),
-			required_approvals = COALESCE($5, required_approvals),
-			resolved_at = CASE
-				WHEN $6 IS NULL THEN resolved_at
-				ELSE $6
-			END,
-			updated_at = NOW()
-		WHERE id = $1
-		RETURNING id, resource, action, resource_id, requested_by, project_id, service_id, environment, status, required_approvals, approved_count, rejected_count, resolved_at
-	`
-
-	var (
-		statusValue *string
-	)
+	approvalRequestsTable := table.ApprovalRequests
+	var updateModel ApprovalRequest
+	columns := make(postgres.ColumnList, 0)
 
 	if input.Status != nil {
-		value := input.Status.String()
-		statusValue = &value
+		updateModel.Status = input.Status.String()
+		columns = append(columns, approvalRequestsTable.Status)
 	}
 
-	var model approvalRequestModel
-	if err := r.execer.GetContext(
-		ctx,
-		&model,
-		query,
-		input.ID,
-		statusValue,
-		input.ApprovedCount,
-		input.RejectedCount,
-		input.RequiredApprovals,
-		input.ResolvedAt,
-	); err != nil {
+	if input.ApprovedCount != nil {
+		updateModel.ApprovedCount = int32(misc.GetValue(input.ApprovedCount))
+		columns = append(columns, approvalRequestsTable.ApprovedCount)
+	}
+
+	if input.RejectedCount != nil {
+		updateModel.RejectedCount = int32(misc.GetValue(input.RejectedCount))
+		columns = append(columns, approvalRequestsTable.RejectedCount)
+	}
+
+	if input.RequiredApprovals != nil {
+		updateModel.RequiredApprovals = int32(misc.GetValue(input.RequiredApprovals))
+		columns = append(columns, approvalRequestsTable.RequiredApprovals)
+	}
+
+	if input.ResolvedAt != nil {
+		updateModel.ResolvedAt = input.ResolvedAt
+		columns = append(columns, approvalRequestsTable.ResolvedAt)
+	}
+
+	if len(columns) == 0 {
+		return nil, errs.NewBadRequestError("no fields provided to update", nil)
+	}
+
+	stmt := approvalRequestsTable.
+		UPDATE(columns).
+		MODEL(updateModel).
+		WHERE(approvalRequestsTable.ID.EQ(postgres.UUID(input.ID))).
+		RETURNING(approvalRequestsTable.AllColumns)
+	query, args := stmt.Sql()
+
+	var model ApprovalRequest
+	err = r.execer.GetContext(ctx, &model, query, args...)
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errs.NewNotFoundError("approval request not found", nil)
 		}

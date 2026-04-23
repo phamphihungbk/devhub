@@ -139,7 +139,7 @@ func (e *PythonScaffoldExecutor) Execute(ctx context.Context, job *ScaffoldJob) 
 
 	scaffoldRepoURL, _ := buildScaffoldRepoURL(
 		strings.TrimSpace(e.cfg.ScmConfig.ExternalURL),
-		team.Name,
+		strings.ToLower(team.Name),
 		job.Variables.ServiceName,
 		project.ScmProvider,
 	)

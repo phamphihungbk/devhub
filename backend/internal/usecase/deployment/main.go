@@ -16,15 +16,18 @@ type DeploymentUsecase interface {
 }
 
 type deploymentUsecase struct {
+	approvalRepository   repository.ApprovalRepository
 	appConfig            config.AppConfig
 	deploymentRepository repository.DeploymentRepository
 }
 
 func NewDeploymentUsecase(
 	appConfig config.AppConfig,
+	approvalRepository repository.ApprovalRepository,
 	deploymentRepository repository.DeploymentRepository,
 ) DeploymentUsecase {
 	return &deploymentUsecase{
+		approvalRepository:   approvalRepository,
 		appConfig:            appConfig,
 		deploymentRepository: deploymentRepository,
 	}

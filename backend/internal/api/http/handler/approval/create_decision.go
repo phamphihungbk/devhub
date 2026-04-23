@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/domain/errs"
@@ -27,10 +28,17 @@ type approvalRequestResponse struct {
 	Resource          string `json:"resource"`
 	Action            string `json:"action"`
 	ResourceID        string `json:"resource_id"`
+	RequestedBy       string `json:"requested_by"`
+	ProjectID         string `json:"project_id,omitempty"`
+	ServiceID         string `json:"service_id,omitempty"`
+	Environment       string `json:"environment,omitempty"`
 	Status            string `json:"status"`
 	RequiredApprovals int    `json:"required_approvals"`
 	ApprovedCount     int    `json:"approved_count"`
 	RejectedCount     int    `json:"rejected_count"`
+	ResolvedAt        *time.Time `json:"resolved_at,omitempty"`
+	CreatedAt         time.Time  `json:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at"`
 }
 
 type approvalDecisionResponse struct {
@@ -97,16 +105,32 @@ func (h *approvalHandler) newApprovalRequestResponse(request *entity.ApprovalReq
 		return approvalRequestResponse{}
 	}
 
-	return approvalRequestResponse{
+	response := approvalRequestResponse{
 		ID:                request.ID.String(),
 		Resource:          request.Resource,
 		Action:            request.Action,
 		ResourceID:        request.ResourceID.String(),
+		RequestedBy:       request.RequestedBy.String(),
 		Status:            request.Status.String(),
 		RequiredApprovals: request.RequiredApprovals,
 		ApprovedCount:     request.ApprovedCount,
 		RejectedCount:     request.RejectedCount,
+		ResolvedAt:        request.ResolvedAt,
+		CreatedAt:         request.CreatedAt,
+		UpdatedAt:         request.UpdatedAt,
 	}
+
+	if request.ProjectID != nil {
+		response.ProjectID = request.ProjectID.String()
+	}
+	if request.ServiceID != nil {
+		response.ServiceID = request.ServiceID.String()
+	}
+	if request.Environment != nil {
+		response.Environment = *request.Environment
+	}
+
+	return response
 }
 
 func (h *approvalHandler) newApprovalDecisionResponse(decision *entity.ApprovalDecision) approvalDecisionResponse {

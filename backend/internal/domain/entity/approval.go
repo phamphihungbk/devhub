@@ -10,7 +10,98 @@ import (
 var (
 	ErrInvalidApprovalRequestStatus = fmt.Errorf("invalid approval request status")
 	ErrInvalidApprovalDecision      = fmt.Errorf("invalid approval decision")
+	ErrInvalidApprovalResource      = fmt.Errorf("invalid approval resource")
+	ErrInvalidApprovalAction        = fmt.Errorf("invalid approval action")
 )
+
+type ApprovalResource string
+
+const (
+	ApprovalResourceScaffoldRequest ApprovalResource = "scaffold_request"
+	ApprovalResourceDeployment      ApprovalResource = "deployment"
+	ApprovalResourceRelease         ApprovalResource = "release"
+)
+
+func (r ApprovalResource) IsValid() bool {
+	switch r {
+	case ApprovalResourceScaffoldRequest, ApprovalResourceDeployment, ApprovalResourceRelease:
+		return true
+	default:
+		return false
+	}
+}
+
+func (r ApprovalResource) String() string {
+	return string(r)
+}
+
+func (r ApprovalResource) Parse(resource string) (ApprovalResource, error) {
+	parsed := ApprovalResource(resource)
+	if !parsed.IsValid() {
+		return "", fmt.Errorf("%w: %s", ErrInvalidApprovalResource, resource)
+	}
+	return parsed, nil
+}
+
+func ParseOptionalApprovalResource(resource string) (*ApprovalResource, error) {
+	if resource == "" {
+		return nil, nil
+	}
+
+	parsed, err := new(ApprovalResource).Parse(resource)
+	if err != nil {
+		return nil, err
+	}
+
+	return &parsed, nil
+}
+
+type ApprovalAction string
+
+const (
+	ApprovalActionCreate ApprovalAction = "create"
+	ApprovalActionUpdate ApprovalAction = "update"
+	ApprovalActionDelete ApprovalAction = "delete"
+)
+
+func (a ApprovalAction) IsValid() bool {
+	switch a {
+	case ApprovalActionCreate, ApprovalActionUpdate, ApprovalActionDelete:
+		return true
+	default:
+		return false
+	}
+}
+
+func (a ApprovalAction) String() string {
+	return string(a)
+}
+
+func (a ApprovalAction) Parse(action string) (ApprovalAction, error) {
+	parsed := ApprovalAction(action)
+	if !parsed.IsValid() {
+		return "", fmt.Errorf("%w: %s", ErrInvalidApprovalAction, action)
+	}
+	return parsed, nil
+}
+
+func ParseOptionalApprovalAction(action string) (*ApprovalAction, error) {
+	if action == "" {
+		return nil, nil
+	}
+
+	parsed, err := new(ApprovalAction).Parse(action)
+	if err != nil {
+		return nil, err
+	}
+
+	return &parsed, nil
+}
+
+type ApprovalTarget struct {
+	Resource ApprovalResource
+	Action   ApprovalAction
+}
 
 type ApprovalRequestStatus string
 
@@ -100,6 +191,8 @@ type ApprovalRequest struct {
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 }
+
+type ApprovalRequests []ApprovalRequest
 
 type ApprovalDecision struct {
 	ID                uuid.UUID

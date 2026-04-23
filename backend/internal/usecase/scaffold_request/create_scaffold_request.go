@@ -5,6 +5,7 @@ import (
 	"devhub-backend/internal/domain/entity"
 
 	"devhub-backend/internal/domain/errs"
+	"devhub-backend/internal/domain/repository"
 	"devhub-backend/internal/util/misc"
 
 	"devhub-backend/pkg/validator"
@@ -13,11 +14,13 @@ import (
 )
 
 type CreateScaffoldRequestInput struct {
-	PluginID    string                   `json:"plugin_id" validate:"required,uuid"`
-	ProjectID   string                   `json:"project_id" validate:"required,uuid"`
-	RequestedBy string                   `json:"requested_by" validate:"required,uuid"`
-	Environment string                   `json:"environment" validate:"required,oneof=dev staging prod"`
-	Variables   ScaffoldRequestVariables `json:"variables" validate:"required"`
+	PluginID         string                   `json:"plugin_id" validate:"required,uuid"`
+	ProjectID        string                   `json:"project_id" validate:"required,uuid"`
+	RequestedBy      string                   `json:"requested_by" validate:"required,uuid"`
+	Environment      string                   `json:"environment" validate:"required,oneof=dev staging prod"`
+	ApprovalResource string                   `json:"approval_resource" validate:"omitempty"`
+	ApprovalAction   string                   `json:"approval_action" validate:"omitempty"`
+	Variables        ScaffoldRequestVariables `json:"variables" validate:"required"`
 }
 
 type ScaffoldRequestVariables struct {
@@ -63,6 +66,16 @@ func (u *scaffoldRequestUsecase) CreateScaffoldRequest(ctx context.Context, inpu
 		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid requested by user ID", nil))
 	}
 
+	approvalResource, err := new(entity.ApprovalResource).Parse(input.ApprovalResource)
+	if err != nil {
+		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid approval resource", nil))
+	}
+
+	approvalAction, err := new(entity.ApprovalAction).Parse(input.ApprovalAction)
+	if err != nil {
+		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid approval action", nil))
+	}
+
 	scaffoldRequest = &entity.ScaffoldRequest{
 		PluginID:    pluginID,
 		ProjectID:   projectID,
@@ -74,6 +87,31 @@ func (u *scaffoldRequestUsecase) CreateScaffoldRequest(ctx context.Context, inpu
 	created, err := u.scaffoldRequestRepository.CreateOne(ctx, scaffoldRequest)
 	if err != nil {
 		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to create scaffold request", nil))
+	}
+
+	policy, err := u.approvalRepository.FindMatchingApprovalPolicy(ctx, repository.FindMatchingApprovalPolicyInput{
+		Resource:    approvalResource.String(),
+		Action:      approvalAction.String(),
+		ProjectID:   misc.ToPointer(projectID),
+		Environment: misc.ToPointer(input.Environment),
+	})
+	if err != nil {
+		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to find approval policy", nil))
+	}
+
+	if _, err := u.approvalRepository.CreateApprovalRequest(ctx, &entity.ApprovalRequest{
+		Resource:          policy.Resource,
+		Action:            policy.Action,
+		ResourceID:        created.ID,
+		RequestedBy:       requestedBy,
+		ProjectID:         misc.ToPointer(projectID),
+		Environment:       misc.ToPointer(input.Environment),
+		Status:            entity.ApprovalRequestStatusPending,
+		RequiredApprovals: policy.RequiredApprovals,
+		ApprovedCount:     0,
+		RejectedCount:     0,
+	}); err != nil {
+		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to create approval request", nil))
 	}
 
 	return created, nil
