@@ -42,6 +42,18 @@ Run the frontend in watch mode:
 make frontend-watch
 ```
 
+## Frontend Navigation
+
+Once the UI is running, the main operator paths are:
+
+- `Dashboard` for the team-scoped overview
+- `Approvals` for approval requests that require operator comments
+- `Projects` for project ownership and lifecycle state
+- `Services` for a cross-project service inventory
+- `Releases` for release history and the release timeline view
+
+The `Approvals`, `Services`, and `Releases` pages build on the same service-scoped lifecycle that powers project details and service details.
+
 ## Minikube With Local Registry
 
 To connect the local `devhub-registry` to Minikube, use:
@@ -197,3 +209,9 @@ When `GITEA_USERNAME` and `GITEA_TOKEN` are present, scaffold plugins will:
 - commit the generated files
 - push the initial `main` branch
 - store the clone URL as the scaffold result
+
+## GitHub Release Notes Automation
+
+This repository includes a GitHub Actions workflow at [`release-notes.yml`](../.github/workflows/release-notes.yml).
+
+It is triggered when a GitHub Release is published or edited and refreshes the GitHub release body using generated release notes. This keeps the GitHub release page aligned with the current change set without requiring a manual copy-paste step.

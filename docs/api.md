@@ -4,6 +4,7 @@
 
 The DevHub API is organized around the control-plane lifecycle:
 
+- approval policies and approval requests
 - projects
 - services
 - scaffold requests
@@ -30,8 +31,23 @@ Scaffold requests belong to a project and are one path to creating a new service
 ### Auth
 
 - `POST /auth/login`
-- `POST /auth/refresh`
 - `POST /auth/logout`
+- `GET /auth/me`
+
+### Approval
+
+- `POST /approval-policies`
+- `GET /approval-requests`
+- `POST /approval-requests/:approval-request/decisions`
+
+Approval decisions accept both a decision and a comment:
+
+```json
+{
+  "decision": "approve",
+  "comment": "Validated rollout prerequisites and approved for execution."
+}
+```
 
 ### Projects
 
@@ -46,6 +62,12 @@ Scaffold requests belong to a project and are one path to creating a new service
 - `GET /projects/:project/services`
 
 Service state is consumed by the frontend service details page and by service-scoped release and deployment flows.
+
+### Teams
+
+- `GET /teams`
+- `POST /teams`
+- `PATCH /teams/:team`
 
 ### Scaffold Requests
 
@@ -125,7 +147,11 @@ Plugin types in active use:
 
 The Vue UI uses these route-level flows:
 
+- `Dashboard` -> team overview and quick health snapshot
+- `Approvals` -> review approval requests and leave decision comments
 - `Projects` -> list and filter projects
+- `Services` -> browse services across projects
+- `Releases` -> browse release history and release timeline
 - `Project details` -> inspect services and scaffold
 - `Service details` -> create release and deploy selected release versions
 - `Plugins` -> inspect plugin registry
