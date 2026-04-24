@@ -149,9 +149,9 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
-        path: 'users',
-        name: 'users',
-        component: () => import('@/views/users/index.vue'),
+        path: 'team-members',
+        name: 'team-members',
+        component: () => import('@/views/team-members/index.vue'),
         meta: {
           title: 'Team members',
           icon: UserAvatar,
