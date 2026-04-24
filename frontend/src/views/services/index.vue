@@ -36,7 +36,6 @@ function openService(row: ServiceRow) {
   router.push({
     name: 'service-details',
     params: {
-      projectId: row.project_id,
       serviceId: row.id,
     },
   })

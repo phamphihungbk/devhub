@@ -16,13 +16,15 @@ import (
 )
 
 type UpdateDeploymentInput struct {
-	ID          string  `json:"id" validate:"required,uuid"`
-	Environment *string `json:"environment" validate:"omitempty,oneof=dev staging prod"`
-	Version     *string `json:"version" validate:"omitempty,min=1,max=50"`
-	Status      *string `json:"status" validate:"omitempty,oneof=pending running completed failed rolled_back"`
-	ExternalRef *string `json:"external_ref" validate:"omitempty,max=255"`
-	CommitSHA   *string `json:"commit_sha" validate:"omitempty,max=64"`
-	FinishedAt  *string `json:"finished_at" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
+	ID           string  `json:"id" validate:"required,uuid"`
+	Environment  *string `json:"environment" validate:"omitempty,oneof=dev staging prod"`
+	Version      *string `json:"version" validate:"omitempty,min=1,max=50"`
+	Status       *string `json:"status" validate:"omitempty,oneof=pending running completed failed rolled_back"`
+	ExternalRef  *string `json:"external_ref" validate:"omitempty,max=255"`
+	CommitSHA    *string `json:"commit_sha" validate:"omitempty,max=64"`
+	RunnerOutput *string `json:"runner_output"`
+	RunnerError  *string `json:"runner_error"`
+	FinishedAt   *string `json:"finished_at" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
 }
 
 func (u *deploymentUsecase) UpdateDeployment(ctx context.Context, input UpdateDeploymentInput) (deployment *entity.Deployment, err error) {
@@ -54,13 +56,15 @@ func (u *deploymentUsecase) UpdateDeployment(ctx context.Context, input UpdateDe
 	}
 
 	updated, err := u.deploymentRepository.UpdateOne(ctx, repository.UpdateDeploymentInput{
-		ID:          uuid.MustParse(input.ID),
-		Environment: (*entity.ProjectEnvironment)(input.Environment),
-		Status:      (*entity.DeploymentStatus)(input.Status),
-		Version:     input.Version,
-		ExternalRef: input.ExternalRef,
-		CommitSHA:   input.CommitSHA,
-		FinishedAt:  finishedAt,
+		ID:           uuid.MustParse(input.ID),
+		Environment:  (*entity.ProjectEnvironment)(input.Environment),
+		Status:       (*entity.DeploymentStatus)(input.Status),
+		Version:      input.Version,
+		ExternalRef:  input.ExternalRef,
+		CommitSHA:    input.CommitSHA,
+		RunnerOutput: input.RunnerOutput,
+		RunnerError:  input.RunnerError,
+		FinishedAt:   finishedAt,
 	})
 
 	if err != nil {

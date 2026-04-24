@@ -13,16 +13,18 @@ import (
 )
 
 type Deployments struct {
-	ID          uuid.UUID  `sql:"primary_key" db:"deployments.id"`
-	ServiceID   uuid.UUID  `db:"deployments.service_id"`
-	PluginID    uuid.UUID  `db:"deployments.plugin_id"`
-	Environment string     `db:"deployments.environment"`
-	Version     string     `db:"deployments.version"`
-	Status      string     `db:"deployments.status"`
-	ExternalRef *string    `db:"deployments.external_ref"`
-	CommitSha   *string    `db:"deployments.commit_sha"`
-	TriggeredBy uuid.UUID  `db:"deployments.triggered_by"`
-	CreatedAt   time.Time  `db:"deployments.created_at"`
-	UpdatedAt   time.Time  `db:"deployments.updated_at"`
-	FinishedAt  *time.Time `db:"deployments.finished_at"`
+	ID           uuid.UUID  `sql:"primary_key" db:"deployments.id"`
+	ServiceID    uuid.UUID  `db:"deployments.service_id"`
+	PluginID     uuid.UUID  `db:"deployments.plugin_id"`
+	Environment  string     `db:"deployments.environment"`
+	Version      string     `db:"deployments.version"`
+	Status       string     `db:"deployments.status"`
+	ExternalRef  *string    `db:"deployments.external_ref"`
+	CommitSha    *string    `db:"deployments.commit_sha"`
+	TriggeredBy  uuid.UUID  `db:"deployments.triggered_by"`
+	CreatedAt    time.Time  `db:"deployments.created_at"`
+	UpdatedAt    time.Time  `db:"deployments.updated_at"`
+	FinishedAt   *time.Time `db:"deployments.finished_at"`
+	RunnerOutput *string    `db:"deployments.runner_output"`
+	RunnerError  *string    `db:"deployments.runner_error"`
 }

@@ -64,11 +64,13 @@ func (p *StatePersistence) MarkCompleted(ctx context.Context, id uuid.UUID, resu
 	}
 
 	if _, err := p.deploymentRepository.UpdateOne(ctx, repository.UpdateDeploymentInput{
-		ID:          id,
-		Status:      &status,
-		ExternalRef: optionalString(result.ExternalRef),
-		CommitSHA:   optionalString(result.CommitSHA),
-		FinishedAt:  &finishedAt,
+		ID:           id,
+		Status:       &status,
+		ExternalRef:  optionalString(result.ExternalRef),
+		CommitSHA:    optionalString(result.CommitSHA),
+		RunnerOutput: optionalString(result.RunnerOutput),
+		RunnerError:  optionalString(result.RunnerError),
+		FinishedAt:   &finishedAt,
 	}); err != nil {
 		return fmt.Errorf("mark deployment completed: %w", err)
 	}
@@ -92,14 +94,14 @@ func (p *StatePersistence) MarkFailed(ctx context.Context, id uuid.UUID, reason 
 	finishedAt := time.Now().UTC()
 
 	if _, err := p.deploymentRepository.UpdateOne(ctx, repository.UpdateDeploymentInput{
-		ID:         id,
-		Status:     &status,
-		FinishedAt: &finishedAt,
+		ID:          id,
+		Status:      &status,
+		RunnerError: optionalString(reason),
+		FinishedAt:  &finishedAt,
 	}); err != nil {
 		return fmt.Errorf("mark deployment failed: %w", err)
 	}
 
-	_ = reason
 	return nil
 }
 

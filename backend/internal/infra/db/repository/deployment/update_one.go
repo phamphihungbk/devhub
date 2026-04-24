@@ -43,6 +43,14 @@ func (r *deploymentRepositoryImpl) UpdateOne(ctx context.Context, input reposito
 		updateModel.CommitSha = input.CommitSHA
 		columns = append(columns, deploymentsTable.CommitSha)
 	}
+	if input.RunnerOutput != nil {
+		updateModel.RunnerOutput = input.RunnerOutput
+		columns = append(columns, deploymentsTable.RunnerOutput)
+	}
+	if input.RunnerError != nil {
+		updateModel.RunnerError = input.RunnerError
+		columns = append(columns, deploymentsTable.RunnerError)
+	}
 	if input.FinishedAt != nil {
 		updateModel.FinishedAt = input.FinishedAt
 		columns = append(columns, deploymentsTable.FinishedAt)

@@ -1,17 +1,23 @@
 <script setup lang="ts">
-import { NButton, NCard, NDataTable, NEmpty, NInput, NTag, useMessage } from 'naive-ui'
+import { NButton, NCard, NDataTable, NEmpty, NForm, NFormItem, NInput, NModal, NSelect, NTag, useMessage } from 'naive-ui'
 import { computed, h, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import { permission } from '@/access/rbac'
 import PageHeader from '@/components/page-header.vue'
-import { fetchProjects, fetchProjectServices, fetchServiceReleases } from '@/services/api'
+import { createRelease, fetchPlugins, fetchProjects, fetchProjectServices, fetchServiceReleases } from '@/services/api'
 import { ApiError } from '@/services/request'
-import type { Project, Release, Service } from '@/services/api'
+import { useAuthStore } from '@/stores/modules/auth'
+import type { CreateReleasePayload, PluginRecord, Project, Release, Service } from '@/services/api'
 
 type ReleaseRow = Release & {
   project_id: string
   project_name: string
   service_name: string
+}
+
+type ServiceOptionRecord = Service & {
+  project_name: string
 }
 
 type ReleaseTimelineBucket = {
@@ -25,11 +31,41 @@ type ReleaseTimelineBucket = {
 
 const message = useMessage()
 const router = useRouter()
+const authStore = useAuthStore()
 const loading = ref(false)
+const releaseSubmitting = ref(false)
+const releaseModalOpen = ref(false)
 const rows = ref<ReleaseRow[]>([])
+const services = ref<ServiceOptionRecord[]>([])
+const plugins = ref<PluginRecord[]>([])
 const filters = reactive({
   keyword: '',
 })
+const releaseForm = reactive<CreateReleasePayload & { service_id: string }>({
+  service_id: '',
+  plugin_id: '',
+  tag: '',
+  target: 'main',
+  name: '',
+  notes: '',
+})
+
+const canCreateRelease = computed(() =>
+  authStore.canAccess({ permissions: [permission.releaseWrite] }),
+)
+
+const serviceOptions = computed(() =>
+  services.value.map(service => ({
+    label: `${service.name} · ${service.project_name}`,
+    value: service.id,
+  })),
+)
+
+const releaserOptions = computed(() =>
+  plugins.value
+    .filter(plugin => plugin.type === 'releaser')
+    .map(plugin => ({ label: plugin.name, value: plugin.id })),
+)
 
 function getReleaseStatusTagColor(status?: string) {
   switch (status) {
@@ -114,10 +150,23 @@ function openService(row: ReleaseRow) {
   router.push({
     name: 'service-details',
     params: {
-      projectId: row.project_id,
       serviceId: row.service_id,
     },
   })
+}
+
+function resetReleaseForm() {
+  releaseForm.service_id = serviceOptions.value[0]?.value || ''
+  releaseForm.plugin_id = releaserOptions.value[0]?.value || ''
+  releaseForm.tag = ''
+  releaseForm.target = 'main'
+  releaseForm.name = ''
+  releaseForm.notes = ''
+}
+
+function openReleaseModal() {
+  resetReleaseForm()
+  releaseModalOpen.value = true
 }
 
 const columns = [
@@ -175,13 +224,20 @@ const columns = [
 async function load() {
   loading.value = true
   try {
-    const projects = await fetchProjects()
-    const releaseGroups = await Promise.all(
+    const [projects, pluginRows] = await Promise.all([
+      fetchProjects(),
+      fetchPlugins(),
+    ])
+    const projectGroups = await Promise.all(
       projects.map(async (project: Project) => {
-        const services = await fetchProjectServices(project.id)
+        const projectServices = await fetchProjectServices(project.id)
+        const serviceRows = projectServices.map(service => ({
+          ...service,
+          project_name: project.name,
+        }))
 
-        return Promise.all(
-          services.map(async (service: Service) => {
+        const releaseRows = await Promise.all(
+          projectServices.map(async (service: Service) => {
             const releases = await fetchServiceReleases(service.id)
 
             return releases.map((release: Release) => ({
@@ -192,14 +248,46 @@ async function load() {
             }))
           }),
         )
+
+        return {
+          services: serviceRows,
+          releases: releaseRows.flat(),
+        }
       }),
     )
 
-    rows.value = releaseGroups.flatMap(group => group.flat())
+    services.value = projectGroups.flatMap(group => group.services)
+    plugins.value = pluginRows
+    rows.value = projectGroups.flatMap(group => group.releases)
   } catch (error) {
     message.error(error instanceof ApiError ? error.message : 'Unable to load releases.')
   } finally {
     loading.value = false
+  }
+}
+
+async function submitRelease() {
+  if (!releaseForm.service_id || !releaseForm.plugin_id || !releaseForm.tag.trim() || !releaseForm.target.trim()) {
+    message.warning('Complete the release form before submitting.')
+    return
+  }
+
+  releaseSubmitting.value = true
+  try {
+    await createRelease(releaseForm.service_id, {
+      plugin_id: releaseForm.plugin_id,
+      tag: releaseForm.tag.trim(),
+      target: releaseForm.target.trim(),
+      name: releaseForm.name?.trim() || undefined,
+      notes: releaseForm.notes?.trim() || undefined,
+    })
+    message.success('Release created successfully.')
+    releaseModalOpen.value = false
+    await load()
+  } catch (error) {
+    message.error(error instanceof ApiError ? error.message : 'Unable to create release.')
+  } finally {
+    releaseSubmitting.value = false
   }
 }
 
@@ -213,9 +301,14 @@ onMounted(load)
       title="Releases"
       description="Track release activity across services, scan the most recent tags, and use the timeline chart to see how release volume moved over time."
     >
-      <NButton @click="load">
-        Refresh
-      </NButton>
+      <div class="flex flex-wrap gap-3">
+        <NButton @click="load">
+          Refresh
+        </NButton>
+        <NButton v-if="canCreateRelease" type="primary" @click="openReleaseModal">
+          New release
+        </NButton>
+      </div>
     </PageHeader>
 
     <NCard class="rounded-3xl border border-[var(--app-border)] shadow-[var(--app-shadow)]" title="Release timeline">
@@ -291,5 +384,68 @@ onMounted(load)
         })"
       />
     </NCard>
+
+    <NModal
+      v-if="canCreateRelease"
+      v-model:show="releaseModalOpen"
+      preset="card"
+      title="New release"
+      class="max-w-2xl"
+      :bordered="false"
+      segmented
+    >
+      <NForm label-placement="top">
+        <div class="grid gap-4 md:grid-cols-2">
+          <NFormItem label="Service">
+            <NSelect
+              v-model:value="releaseForm.service_id"
+              :options="serviceOptions"
+              placeholder="Select service"
+              filterable
+            />
+          </NFormItem>
+
+          <NFormItem label="Releaser plugin">
+            <NSelect
+              v-model:value="releaseForm.plugin_id"
+              :options="releaserOptions"
+              placeholder="Select releaser"
+            />
+          </NFormItem>
+
+          <NFormItem label="Target">
+            <NInput v-model:value="releaseForm.target" placeholder="main" />
+          </NFormItem>
+
+          <NFormItem label="Tag">
+            <NInput v-model:value="releaseForm.tag" placeholder="v1.0.0" />
+          </NFormItem>
+
+          <NFormItem label="Name">
+            <NInput v-model:value="releaseForm.name" placeholder="Payment v1.0.0" />
+          </NFormItem>
+
+          <NFormItem label="Notes" class="md:col-span-2">
+            <NInput
+              v-model:value="releaseForm.notes"
+              type="textarea"
+              :autosize="{ minRows: 3, maxRows: 5 }"
+              placeholder="Optional release notes or rollout context."
+            />
+          </NFormItem>
+        </div>
+      </NForm>
+
+      <template #action>
+        <div class="flex justify-end gap-3">
+          <NButton @click="releaseModalOpen = false">
+            Cancel
+          </NButton>
+          <NButton type="primary" :loading="releaseSubmitting" @click="submitRelease">
+            Create release
+          </NButton>
+        </div>
+      </template>
+    </NModal>
   </div>
 </template>
