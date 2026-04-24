@@ -5,6 +5,7 @@ ROOT_DIR="$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)"
 DOMAIN="${1:-${DEVHUB_DOMAIN:-devhub.local}}"
 API_DOMAIN="${2:-${DEVHUB_API_DOMAIN:-api.devhub.local}}"
 GITEA_DOMAIN="${3:-${GITEA_DOMAIN:-gitea.devhub.local}}"
+GRAFANA_DOMAIN="${4:-${GRAFANA_DOMAIN:-grafana.devhub.local}}"
 ARGOCD_DOMAIN="${DEVHUB_ARGOCD_DOMAIN:-argocd.devhub.local}"
 CERT_DIR="${ROOT_DIR}/infra/certs"
 CERT_FILE="${CERT_DIR}/${DEVHUB_SSL_CERT_FILE:-devhub.local.crt}"
@@ -22,11 +23,12 @@ add_host_entry() {
   printf '%s\n' "${host_ip} ${host_name}" | sudo tee -a /etc/hosts >/dev/null
 }
 
-"${ROOT_DIR}/scripts/generate-dev-cert.sh" "${DOMAIN}" "${API_DOMAIN}" "${GITEA_DOMAIN}"
+"${ROOT_DIR}/scripts/generate-dev-cert.sh" "${DOMAIN}" "${API_DOMAIN}" "${GITEA_DOMAIN}" "${GRAFANA_DOMAIN}"
 
 add_host_entry "127.0.0.1" "${DOMAIN}"
 add_host_entry "127.0.0.1" "${API_DOMAIN}"
 add_host_entry "127.0.0.1" "${GITEA_DOMAIN}"
+add_host_entry "127.0.0.1" "${GRAFANA_DOMAIN}"
 
 ARGOCD_IP="${DEVHUB_ARGOCD_IP:-}"
 if [ -z "${ARGOCD_IP}" ] && command -v minikube >/dev/null 2>&1; then
@@ -47,14 +49,14 @@ if [ "${OS_NAME}" = "Darwin" ]; then
     -r trustRoot \
     -k /Library/Keychains/System.keychain \
     "${CERT_FILE}"
-  printf '%s\n' "Local HTTPS is ready at https://${DOMAIN}, https://${API_DOMAIN}, and https://${GITEA_DOMAIN}"
+  printf '%s\n' "Local HTTPS is ready at https://${DOMAIN}, https://${API_DOMAIN}, https://${GITEA_DOMAIN}, and https://${GRAFANA_DOMAIN}"
   if [ -n "${ARGOCD_IP}" ]; then
     printf '%s\n' "Argo CD UI host is mapped at https://${ARGOCD_DOMAIN}"
   fi
 else
   printf '%s\n' "Hosts updated, but certificate trust was not automated for ${OS_NAME}."
   printf '%s\n' "Manually trust this certificate: ${CERT_FILE}"
-  printf '%s\n' "Then open https://${DOMAIN}, https://${API_DOMAIN}, and https://${GITEA_DOMAIN}"
+  printf '%s\n' "Then open https://${DOMAIN}, https://${API_DOMAIN}, https://${GITEA_DOMAIN}, and https://${GRAFANA_DOMAIN}"
   if [ -n "${ARGOCD_IP}" ]; then
     printf '%s\n' "Argo CD UI host is mapped at https://${ARGOCD_DOMAIN}"
   fi

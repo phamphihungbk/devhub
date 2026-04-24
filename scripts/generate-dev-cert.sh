@@ -6,6 +6,7 @@ CERT_DIR="${ROOT_DIR}/infra/certs"
 DOMAIN="${1:-${DEVHUB_DOMAIN:-devhub.local}}"
 API_DOMAIN="${2:-${DEVHUB_API_DOMAIN:-api.devhub.local}}"
 GITEA_DOMAIN="${3:-${GITEA_DOMAIN:-gitea.devhub.local}}"
+GRAFANA_DOMAIN="${4:-${GRAFANA_DOMAIN:-grafana.devhub.local}}"
 CERT_FILE="${DEVHUB_SSL_CERT_FILE:-devhub.local.crt}"
 KEY_FILE="${DEVHUB_SSL_KEY_FILE:-devhub.local.key}"
 
@@ -19,6 +20,6 @@ openssl req \
   -out "${CERT_DIR}/${CERT_FILE}" \
   -days 825 \
   -subj "/CN=${DOMAIN}" \
-  -addext "subjectAltName=DNS:${DOMAIN},DNS:${API_DOMAIN},DNS:${GITEA_DOMAIN},DNS:localhost,IP:127.0.0.1"
+  -addext "subjectAltName=DNS:${DOMAIN},DNS:${API_DOMAIN},DNS:${GITEA_DOMAIN},DNS:${GRAFANA_DOMAIN},DNS:localhost,IP:127.0.0.1"
 
 printf 'Created local TLS files:\n- %s\n- %s\n' "${CERT_DIR}/${CERT_FILE}" "${CERT_DIR}/${KEY_FILE}"
