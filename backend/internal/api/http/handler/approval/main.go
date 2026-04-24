@@ -11,6 +11,7 @@ type ApprovalHandler interface {
 	CreateApprovalPolicy(c *gin.Context)
 	CreateApprovalDecision(c *gin.Context)
 	FindAllApprovalRequests(c *gin.Context)
+	FindApprovalRequestDetail(c *gin.Context)
 }
 
 type approvalHandler struct {

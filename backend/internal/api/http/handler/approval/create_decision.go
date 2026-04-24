@@ -24,29 +24,30 @@ type createApprovalDecisionResponse struct {
 }
 
 type approvalRequestResponse struct {
-	ID                string `json:"id"`
-	Resource          string `json:"resource"`
-	Action            string `json:"action"`
-	ResourceID        string `json:"resource_id"`
-	RequestedBy       string `json:"requested_by"`
-	ProjectID         string `json:"project_id,omitempty"`
-	ServiceID         string `json:"service_id,omitempty"`
-	Environment       string `json:"environment,omitempty"`
-	Status            string `json:"status"`
-	RequiredApprovals int    `json:"required_approvals"`
-	ApprovedCount     int    `json:"approved_count"`
-	RejectedCount     int    `json:"rejected_count"`
+	ID                string     `json:"id"`
+	Resource          string     `json:"resource"`
+	Action            string     `json:"action"`
+	ResourceID        string     `json:"resource_id"`
+	RequestedBy       string     `json:"requested_by"`
+	ProjectID         string     `json:"project_id,omitempty"`
+	ServiceID         string     `json:"service_id,omitempty"`
+	Environment       string     `json:"environment,omitempty"`
+	Status            string     `json:"status"`
+	RequiredApprovals int        `json:"required_approvals"`
+	ApprovedCount     int        `json:"approved_count"`
+	RejectedCount     int        `json:"rejected_count"`
 	ResolvedAt        *time.Time `json:"resolved_at,omitempty"`
 	CreatedAt         time.Time  `json:"created_at"`
 	UpdatedAt         time.Time  `json:"updated_at"`
 }
 
 type approvalDecisionResponse struct {
-	ID                string `json:"id"`
-	ApprovalRequestID string `json:"approval_request_id"`
-	DecidedBy         string `json:"decided_by"`
-	Decision          string `json:"decision"`
-	Comment           string `json:"comment"`
+	ID                string    `json:"id"`
+	ApprovalRequestID string    `json:"approval_request_id"`
+	DecidedBy         string    `json:"decided_by"`
+	Decision          string    `json:"decision"`
+	Comment           string    `json:"comment"`
+	CreatedAt         time.Time `json:"created_at"`
 }
 
 // @Summary		Create Approval Decision
@@ -144,5 +145,6 @@ func (h *approvalHandler) newApprovalDecisionResponse(decision *entity.ApprovalD
 		DecidedBy:         decision.DecidedBy.String(),
 		Decision:          decision.Decision.String(),
 		Comment:           decision.Comment,
+		CreatedAt:         decision.CreatedAt,
 	}
 }

@@ -15,6 +15,7 @@ type ApprovalRepository interface {
 	CreateApprovalRequest(ctx context.Context, request *entity.ApprovalRequest) (*entity.ApprovalRequest, error)
 	FindAllApprovalRequests(ctx context.Context, filter FindAllApprovalRequestsFilter) (*entity.ApprovalRequests, int64, error)
 	FindApprovalRequest(ctx context.Context, id uuid.UUID) (*entity.ApprovalRequest, error)
+	FindApprovalDecisions(ctx context.Context, approvalRequestID uuid.UUID) ([]entity.ApprovalDecision, error)
 	UpdateApprovalRequest(ctx context.Context, input UpdateApprovalRequestInput) (*entity.ApprovalRequest, error)
 	CreateApprovalDecision(ctx context.Context, decision *entity.ApprovalDecision) (*entity.ApprovalDecision, error)
 }

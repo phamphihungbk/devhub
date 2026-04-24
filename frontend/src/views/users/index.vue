@@ -45,7 +45,7 @@ onMounted(load)
   <div>
     <PageHeader
       eyebrow="Access"
-      title="Users"
+      title="Team members"
       description="The operator directory for the control plane, ready for role governance, invite flows, and access reviews."
     >
       <NButton @click="load">

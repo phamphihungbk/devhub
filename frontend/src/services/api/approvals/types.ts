@@ -24,6 +24,29 @@ export interface ApprovalRequestRecord {
   updated_at: string
 }
 
+export interface ApprovalDecisionRecord {
+  id: string
+  approval_request_id: string
+  decided_by: string
+  decision: string
+  comment: string
+  created_at: string
+}
+
+export interface ApprovalAuditEventRecord {
+  type: string
+  actor_id: string
+  summary: string
+  comment?: string
+  created_at: string
+}
+
+export interface ApprovalRequestDetailRecord {
+  approval_request: ApprovalRequestRecord
+  decisions: ApprovalDecisionRecord[]
+  audit_events: ApprovalAuditEventRecord[]
+}
+
 export interface CreateApprovalDecisionPayload {
   decision: 'approve' | 'reject'
   comment?: string
@@ -31,11 +54,5 @@ export interface CreateApprovalDecisionPayload {
 
 export interface CreateApprovalDecisionResponse {
   approval_request: ApprovalRequestRecord
-  decision: {
-    id: string
-    approval_request_id: string
-    decided_by: string
-    decision: string
-    comment: string
-  }
+  decision: ApprovalDecisionRecord
 }

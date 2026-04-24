@@ -18,7 +18,7 @@
 - [ ] Deployment logs and runner output in UI
 - [ ] Better validation and guided forms for scaffold variables
 - [ ] Service health and runtime status panels
-- [ ] Approval request detail pages and richer audit history
+- [x] Approval request detail pages and richer audit history
 - [ ] Stronger auth and SSO flows
 - [ ] More plugin management controls from the UI
 
