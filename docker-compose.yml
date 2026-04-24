@@ -9,10 +9,16 @@ services:
     environment:
       SERVICE_ENV: ${SERVICE_ENV:-development}
       DATABASE_URL: ${DATABASE_URL:-postgres://devhub:devhubpass@db:5432/devhub?sslmode=disable}
+      OTEL_SERVICE_NAME: ${OTEL_BACKEND_SERVICE_NAME:-devhub-backend}
+      OTEL_COLLECTOR_ENDPOINT: ${OTEL_COLLECTOR_ENDPOINT:-otel-collector:4317}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}
     depends_on:
       db:
         condition: service_healthy
       redis:
+        condition: service_started
+      otel-collector:
         condition: service_started
 
   worker:
@@ -26,11 +32,47 @@ services:
     environment:
       SERVICE_ENV: ${SERVICE_ENV:-development}
       DATABASE_URL: ${DATABASE_URL:-postgres://devhub:devhubpass@db:5432/devhub?sslmode=disable}
+      OTEL_SERVICE_NAME: ${OTEL_WORKER_SERVICE_NAME:-devhub-worker}
+      OTEL_COLLECTOR_ENDPOINT: ${OTEL_COLLECTOR_ENDPOINT:-otel-collector:4317}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_started
+      otel-collector:
+        condition: service_started
+
+  otel-collector:
+    image: devhub-otel-collector:local
+    build:
+      context: .
+      dockerfile: infra/docker/otel-collector.Dockerfile
+    depends_on:
+      - tempo
+
+  tempo:
+    image: devhub-tempo:local
+    build:
+      context: .
+      dockerfile: infra/docker/tempo.Dockerfile
+    volumes:
+      - tempo_data:/tmp/tempo
+
+  grafana:
+    image: devhub-grafana:local
+    build:
+      context: .
+      dockerfile: infra/docker/grafana.Dockerfile
+    environment:
+      GF_SERVER_DOMAIN: ${GRAFANA_DOMAIN:-grafana.devhub.local}
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-https://grafana.devhub.local/}
+      GF_AUTH_ANONYMOUS_ENABLED: ${GRAFANA_AUTH_ANONYMOUS_ENABLED:-false}
+    depends_on:
+      - tempo
+    volumes:
+      - grafana_data:/var/lib/grafana
 
   frontend:
     image: devhub-frontend:local
@@ -56,12 +98,14 @@ services:
       DEVHUB_DOMAIN: ${DEVHUB_DOMAIN:-devhub.local}
       DEVHUB_API_DOMAIN: ${DEVHUB_API_DOMAIN:-api.devhub.local}
       GITEA_DOMAIN: ${GITEA_DOMAIN:-gitea.devhub.local}
+      GRAFANA_DOMAIN: ${GRAFANA_DOMAIN:-grafana.devhub.local}
       DEVHUB_SSL_CERT_FILE: ${DEVHUB_SSL_CERT_FILE:-devhub.local.crt}
       DEVHUB_SSL_KEY_FILE: ${DEVHUB_SSL_KEY_FILE:-devhub.local.key}
     depends_on:
       - backend
       - frontend
       - gitea
+      - grafana
     volumes:
       - ./infra/certs:/etc/nginx/certs:ro
 
@@ -142,3 +186,5 @@ volumes:
   gitea_data:
   gitea_config:
   gitea_runner_data:
+  tempo_data:
+  grafana_data:

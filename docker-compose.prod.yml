@@ -43,3 +43,12 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
+
+  otel-collector:
+    restart: unless-stopped
+
+  tempo:
+    restart: unless-stopped
+
+  grafana:
+    restart: unless-stopped

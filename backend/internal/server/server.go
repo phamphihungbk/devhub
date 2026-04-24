@@ -5,6 +5,7 @@ import (
 	httproute "devhub-backend/internal/api/http/route"
 	"devhub-backend/internal/config"
 	"devhub-backend/internal/util/httpresponse"
+	"devhub-backend/internal/util/misc"
 	"devhub-backend/internal/util/serverutils"
 	"fmt"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 
 	infraDB "devhub-backend/internal/infra/db"
 	infraLogger "devhub-backend/internal/infra/logger"
+	"devhub-backend/internal/infra/trace"
 
 	"github.com/gin-gonic/gin"
 )
@@ -29,6 +31,17 @@ func NewServer() *Server {
 func (s *Server) Start() error {
 	// Initialize context
 	ctx := context.Background()
+
+	// Initialize Tracer Provider
+	tracerProvider, err := trace.InitTracerProvider(
+		ctx,
+		s.cfg.Service.Name,
+		misc.ToPointer(s.cfg.Service.OtelExporter),
+		trace.ExporterGRPC,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to initialize tracer provider: %w", err)
+	}
 
 	// Initialize logger
 	logConfig := infraLogger.Config{
@@ -49,7 +62,7 @@ func (s *Server) Start() error {
 	}
 
 	// Initialize database connection
-	db, err := infraDB.Connect(s.cfg)
+	db, err := infraDB.Connect(s.cfg, tracerProvider)
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
@@ -59,10 +72,10 @@ func (s *Server) Start() error {
 	router := gin.Default()
 
 	// Setup middlewares
-	// middlewares := s.setupMiddlewares(appLogger)
+	middlewares := s.setupMiddlewares(appLogger, tracerProvider)
 
 	// Apply middlewares
-	// router.Use(middlewares...)
+	router.Use(middlewares...)
 
 	// Setup not found handler
 	router.NoRoute(func(c *gin.Context) {
@@ -70,7 +83,7 @@ func (s *Server) Start() error {
 	})
 
 	// Setup route dependencies
-	deps, err := s.setupRouteDependencies(ctx, appLogger, db)
+	deps, err := s.setupRouteDependencies(ctx, tracerProvider, appLogger, db)
 
 	if err != nil {
 		return fmt.Errorf("failed to setup route dependencies: %w", err)

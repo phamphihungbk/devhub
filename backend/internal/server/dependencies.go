@@ -38,10 +38,12 @@ import (
 	serviceUsecase "devhub-backend/internal/usecase/service"
 	teamUsecase "devhub-backend/internal/usecase/team"
 	userUsecase "devhub-backend/internal/usecase/user"
+
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
 //nolint:unparam
-func (s *Server) setupRouteDependencies(ctx context.Context, appLogger logger.Logger, dbConn *sqlx.DB) (httproute.Dependency, error) {
+func (s *Server) setupRouteDependencies(ctx context.Context, tracerProvider *sdktrace.TracerProvider, appLogger logger.Logger, dbConn *sqlx.DB) (httproute.Dependency, error) {
 	// Transactor factory
 	// transactorFactory := infraDB.NewSqlxTransactorFactory(dbConn)
 
@@ -56,13 +58,6 @@ func (s *Server) setupRouteDependencies(ctx context.Context, appLogger logger.Lo
 	dbServiceRepo := dbServiceRepo.NewServiceRepository(dbConn)
 	dbTeamRepo := dbTeamRepo.NewTeamRepository(dbConn)
 	dbRefreshTokenRepo := dbRefreshTokenRepo.NewRefreshTokenRepository(dbConn)
-
-	// Query retrier
-	// queryBackoff, _ := retry.NewExponentialBackoffStrategy(500*time.Millisecond, 2.0, 5*time.Second)
-	// queryRetrier, _ := retry.NewRetrier(retry.Config{
-	// MaxAttempts: 3,
-	// Backoff:     queryBackoff,
-	// })
 
 	// Usecases
 	approvalUsecase := approvalUsecase.NewApprovalUsecase(s.cfg.App, dbApprovalRepo, dbScaffoldRequestRepo)

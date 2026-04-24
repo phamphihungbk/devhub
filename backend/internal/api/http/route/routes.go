@@ -84,19 +84,17 @@ func (r *router) RegisterRoutes(router *gin.Engine) {
 
 func (r *router) applyTeamRoutes(router *gin.Engine) {
 	teamRoute := router.Group("/teams")
+	teamRoute.Use(r.Middleware.Auth(r.tokenCfg.Secret))
 	{
 		teamRoute.GET("/",
-			r.Middleware.Auth(r.tokenCfg.Secret),
 			r.Middleware.RequirePermissions(entity.PermissionUserRead),
 			r.TeamHandler.FindAllTeams,
 		)
 		teamRoute.POST("/",
-			r.Middleware.Auth(r.tokenCfg.Secret),
 			r.Middleware.RequirePermissions(entity.PermissionProjectWrite),
 			r.TeamHandler.CreateTeam,
 		)
 		teamRoute.PATCH("/:team",
-			r.Middleware.Auth(r.tokenCfg.Secret),
 			r.Middleware.RequirePermissions(entity.PermissionProjectWrite),
 			r.TeamHandler.UpdateTeam,
 		)
@@ -106,21 +104,20 @@ func (r *router) applyTeamRoutes(router *gin.Engine) {
 func (r *router) applyApprovalRoutes(router *gin.Engine) {
 	approvalPolicyRoute := router.Group("/approval-policies")
 	approvalRequestRoute := router.Group("/approval-requests")
+	approvalPolicyRoute.Use(r.Middleware.Auth(r.tokenCfg.Secret))
+	approvalRequestRoute.Use(r.Middleware.Auth(r.tokenCfg.Secret))
 	{
 		approvalRequestRoute.GET("/",
-			r.Middleware.Auth(r.tokenCfg.Secret),
 			r.Middleware.RequirePermissions(entity.PermissionScaffoldRequestWrite),
 			r.ApprovalHandler.FindAllApprovalRequests,
 		)
 
 		approvalPolicyRoute.POST("/",
-			r.Middleware.Auth(r.tokenCfg.Secret),
 			r.Middleware.RequirePermissions(entity.PermissionProjectWrite),
 			r.ApprovalHandler.CreateApprovalPolicy,
 		)
 
 		approvalRequestRoute.POST("/:approval-request/decisions",
-			r.Middleware.Auth(r.tokenCfg.Secret),
 			r.Middleware.RequirePermissions(entity.PermissionScaffoldRequestWrite),
 			r.ApprovalHandler.CreateApprovalDecision,
 		)
@@ -130,39 +127,37 @@ func (r *router) applyApprovalRoutes(router *gin.Engine) {
 // applyAuthRoutes applies the auth routes to the provided router
 func (r *router) applyAuthRoutes(router *gin.Engine) {
 	authRoute := router.Group("/auth")
+	authProtectedRoute := authRoute.Group("/")
+	authProtectedRoute.Use(r.Middleware.Auth(r.tokenCfg.Secret))
 	{
 		authRoute.POST("/login", r.AuthHandler.Login)
-		authRoute.POST("/logout", r.Middleware.Auth(r.tokenCfg.Secret), r.AuthHandler.Logout)
-		authRoute.GET("/me", r.Middleware.Auth(r.tokenCfg.Secret), r.AuthHandler.GetMe)
+		authProtectedRoute.POST("/logout", r.AuthHandler.Logout)
+		authProtectedRoute.GET("/me", r.AuthHandler.GetMe)
 	}
 }
 
 // applyUserRoutes applies the user routes to the provided router
 func (r *router) applyUserRoutes(router *gin.Engine) {
 	userRoute := router.Group("/users")
+	userRoute.Use(r.Middleware.Auth(r.tokenCfg.Secret))
 	{
 		userRoute.GET("/",
-			r.Middleware.Auth(r.tokenCfg.Secret),
 			r.Middleware.RequirePermissions(entity.PermissionUserRead),
 			r.UserHandler.FindAllUsers,
 		)
 		userRoute.POST("/",
-			r.Middleware.Auth(r.tokenCfg.Secret),
 			r.Middleware.RequirePermissions(entity.PermissionUserWrite),
 			r.UserHandler.CreateUser,
 		)
 		userRoute.GET("/:user",
-			r.Middleware.Auth(r.tokenCfg.Secret),
 			r.Middleware.RequirePermissions(entity.PermissionUserRead),
 			r.UserHandler.FindUserByID,
 		)
 		userRoute.DELETE("/:user",
-			r.Middleware.Auth(r.tokenCfg.Secret),
 			r.Middleware.RequirePermissions(entity.PermissionUserWrite),
 			r.UserHandler.DeleteUser,
 		)
 		userRoute.PATCH("/:user",
-			r.Middleware.Auth(r.tokenCfg.Secret),
 			r.Middleware.RequirePermissions(entity.PermissionUserWrite),
 			r.UserHandler.UpdateUser,
 		)
@@ -172,38 +167,37 @@ func (r *router) applyUserRoutes(router *gin.Engine) {
 // applyProjectRoutes applies the project routes to the provided router
 func (r *router) applyProjectRoutes(router *gin.Engine) {
 	projectRoute := router.Group("/projects")
+	projectProtectedRoute := projectRoute.Group("/")
+	projectProtectedRoute.Use(r.Middleware.Auth(r.tokenCfg.Secret))
 	{
 		projectRoute.GET("/", r.ProjectHandler.FindAllProjects)
-		projectRoute.POST("/",
-			r.Middleware.Auth(r.tokenCfg.Secret),
+		projectProtectedRoute.POST("/",
 			r.Middleware.RequirePermissions(entity.PermissionProjectWrite),
 			r.ProjectHandler.CreateProject,
 		)
 		projectRoute.GET("/:project", r.ProjectHandler.FindProjectByID)
 		projectRoute.GET("/:project/services", r.ServiceHandler.FindAllServices)
-		projectRoute.DELETE("/:project",
-			r.Middleware.Auth(r.tokenCfg.Secret),
+		projectProtectedRoute.DELETE("/:project",
 			r.Middleware.RequirePermissions(entity.PermissionProjectWrite),
 			r.ProjectHandler.DeleteProject,
 		)
-		projectRoute.PATCH("/:project",
-			r.Middleware.Auth(r.tokenCfg.Secret),
+		projectProtectedRoute.PATCH("/:project",
 			r.Middleware.RequirePermissions(entity.PermissionProjectWrite),
 			r.ProjectHandler.UpdateProject,
 		)
 	}
 
 	serviceRoute := router.Group("/services")
+	serviceProtectedRoute := serviceRoute.Group("/")
+	serviceProtectedRoute.Use(r.Middleware.Auth(r.tokenCfg.Secret))
 	{
 		serviceRoute.GET("/:service/deployments", r.DeploymentHandler.FindAllDeployments)
-		serviceRoute.POST("/:service/deployments",
-			r.Middleware.Auth(r.tokenCfg.Secret),
+		serviceProtectedRoute.POST("/:service/deployments",
 			r.Middleware.RequirePermissions(entity.PermissionDeploymentWrite),
 			r.DeploymentHandler.CreateDeployment,
 		)
 		serviceRoute.GET("/:service/releases", r.ReleaseHandler.FindAllReleases)
-		serviceRoute.POST("/:service/releases",
-			r.Middleware.Auth(r.tokenCfg.Secret),
+		serviceProtectedRoute.POST("/:service/releases",
 			r.Middleware.RequirePermissions(entity.PermissionReleaseWrite),
 			r.ReleaseHandler.CreateRelease,
 		)
@@ -214,17 +208,19 @@ func (r *router) applyProjectRoutes(router *gin.Engine) {
 func (r *router) applyScaffoldRequestRoutes(router *gin.Engine) {
 	scaffoldRequestRoute := router.Group("/scaffold-requests")
 	projectRoute := router.Group("/projects/:project")
+	projectProtectedRoute := projectRoute.Group("/")
+	projectProtectedRoute.Use(r.Middleware.Auth(r.tokenCfg.Secret))
+	scaffoldRequestProtectedRoute := scaffoldRequestRoute.Group("/")
+	scaffoldRequestProtectedRoute.Use(r.Middleware.Auth(r.tokenCfg.Secret))
 	{
 		projectRoute.GET("/scaffold-requests", r.ScaffoldRequestHandler.FindAllScaffoldRequests)
-		projectRoute.POST("/scaffold-requests",
-			r.Middleware.Auth(r.tokenCfg.Secret),
+		projectProtectedRoute.POST("/scaffold-requests",
 			r.Middleware.RequirePermissions(entity.PermissionScaffoldRequestWrite),
 			r.ScaffoldRequestHandler.CreateScaffoldRequest,
 		)
 
 		scaffoldRequestRoute.GET("/:scaffold-request", r.ScaffoldRequestHandler.FindScaffoldRequestByID)
-		scaffoldRequestRoute.DELETE("/:scaffold-request",
-			r.Middleware.Auth(r.tokenCfg.Secret),
+		scaffoldRequestProtectedRoute.DELETE("/:scaffold-request",
 			r.Middleware.RequirePermissions(entity.PermissionScaffoldRequestWrite),
 			r.ScaffoldRequestHandler.DeleteScaffoldRequest,
 		)
@@ -234,15 +230,15 @@ func (r *router) applyScaffoldRequestRoutes(router *gin.Engine) {
 // applyDeploymentRoutes applies the deployment routes to the provided router
 func (r *router) applyDeploymentRoutes(router *gin.Engine) {
 	deploymentRoute := router.Group("/deployments")
+	deploymentProtectedRoute := deploymentRoute.Group("/")
+	deploymentProtectedRoute.Use(r.Middleware.Auth(r.tokenCfg.Secret))
 	{
 		deploymentRoute.GET("/:deployment", r.DeploymentHandler.FindDeploymentByID)
-		deploymentRoute.DELETE("/:deployment",
-			r.Middleware.Auth(r.tokenCfg.Secret),
+		deploymentProtectedRoute.DELETE("/:deployment",
 			r.Middleware.RequirePermissions(entity.PermissionDeploymentWrite),
 			r.DeploymentHandler.DeleteDeployment,
 		)
-		deploymentRoute.PATCH("/:deployment",
-			r.Middleware.Auth(r.tokenCfg.Secret),
+		deploymentProtectedRoute.PATCH("/:deployment",
 			r.Middleware.RequirePermissions(entity.PermissionDeploymentWrite),
 			r.DeploymentHandler.UpdateDeployment,
 		)
@@ -252,21 +248,20 @@ func (r *router) applyDeploymentRoutes(router *gin.Engine) {
 // applyPluginRoutes applies the plugin routes to the provided router
 func (r *router) applyPluginRoutes(router *gin.Engine) {
 	pluginRoute := router.Group("/plugins")
+	pluginProtectedRoute := pluginRoute.Group("/")
+	pluginProtectedRoute.Use(r.Middleware.Auth(r.tokenCfg.Secret))
 	{
 		pluginRoute.GET("/", r.PluginHandler.FindAllPlugins)
-		pluginRoute.POST("/",
-			r.Middleware.Auth(r.tokenCfg.Secret),
+		pluginProtectedRoute.POST("/",
 			r.Middleware.RequirePermissions(entity.PermissionPluginWrite),
 			r.PluginHandler.CreatePlugin,
 		)
 		pluginRoute.GET("/:plugin", r.PluginHandler.FindPluginByID)
-		pluginRoute.DELETE("/:plugin",
-			r.Middleware.Auth(r.tokenCfg.Secret),
+		pluginProtectedRoute.DELETE("/:plugin",
 			r.Middleware.RequirePermissions(entity.PermissionPluginWrite),
 			r.PluginHandler.DeletePlugin,
 		)
-		pluginRoute.PATCH("/:plugin",
-			r.Middleware.Auth(r.tokenCfg.Secret),
+		pluginProtectedRoute.PATCH("/:plugin",
 			r.Middleware.RequirePermissions(entity.PermissionPluginWrite),
 			r.PluginHandler.UpdatePlugin,
 		)

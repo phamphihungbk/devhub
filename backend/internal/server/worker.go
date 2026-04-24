@@ -94,7 +94,7 @@ func (w *Worker) Start() error {
 	}
 
 	// Initialize database connection
-	db, err := infraDB.Connect(w.cfg)
+	db, err := infraDB.Connect(w.cfg, nil)
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}

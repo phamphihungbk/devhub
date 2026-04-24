@@ -77,6 +77,9 @@ make up
 
 # Run database migrations
 make migrate
+
+# Seed local roles, permissions, teams, and demo users
+make seed-data
 ```
 
 Local access points after startup:
@@ -84,7 +87,26 @@ Local access points after startup:
 - DevHub UI: [https://devhub.local](https://devhub.local)
 - DevHub API host: [https://api.devhub.local](https://api.devhub.local)
 - Gitea UI: [https://gitea.devhub.local](https://gitea.devhub.local)
+- Grafana UI: [https://grafana.devhub.local](https://grafana.devhub.local)
 - Argo CD UI: [https://argocd.devhub.local](https://argocd.devhub.local)
+
+Local development credentials:
+
+| Service | URL | User | Password |
+| --- | --- | --- | --- |
+| DevHub | [https://devhub.local](https://devhub.local) | `admin@devhub.local` | `admindevhub123` |
+| Grafana | [https://grafana.devhub.local](https://grafana.devhub.local) | `admin` | `admin` |
+
+Grafana may ask you to change the default password on first login. The DevHub account above is created by `make seed-data`.
+
+To view backend traces in Grafana:
+
+1. Open [https://grafana.devhub.local/explore](https://grafana.devhub.local/explore).
+2. Select the `Tempo` datasource.
+3. Set the time range to cover recent DevHub API activity, such as `Last 15 minutes`.
+4. Run a Tempo search for service `devhub-backend`.
+
+If the search is empty, generate fresh traces by opening the DevHub UI or calling any API endpoint, then search again. The local tracing path is `backend -> otel-collector -> tempo -> grafana`.
 
 To configure those local domains and trust the generated certificate on macOS:
 

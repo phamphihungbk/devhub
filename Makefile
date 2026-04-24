@@ -5,18 +5,18 @@
 	build-backend build-frontend up down logs logs-worker logs-runner logs-frontend ps shell \
 	worker-up worker-down runner-up runner-down migrate migrate-down migrate-force new-migration seed-data generate sync-worker plugin-scan create-plugin config prod-config argocd-ui argocd-token minikube-registry
 
-BACKEND_SERVICES := backend worker db redis devhub-registry gitea gitea-runner
+BACKEND_SERVICES := backend worker db redis devhub-registry gitea gitea-runner tempo grafana otel-collector
 FRONTEND_SERVICES := frontend nginx
 
 ##@ Setup
 bootstrap: ## Create local env files for first run
 	@./scripts/bootstrap.sh
 
-generate-dev-cert: ## Generate local TLS certs, optionally with DOMAIN=devhub.local API_DOMAIN=api.devhub.local
-	@./scripts/generate-dev-cert.sh $(if $(DOMAIN),$(DOMAIN),) $(if $(API_DOMAIN),$(API_DOMAIN),)
+generate-dev-cert: ## Generate local TLS certs, optionally with DOMAIN=devhub.local API_DOMAIN=api.devhub.local GRAFANA_DOMAIN=grafana.devhub.local
+	@./scripts/generate-dev-cert.sh $(if $(DOMAIN),$(DOMAIN),) $(if $(API_DOMAIN),$(API_DOMAIN),) $(if $(GITEA_DOMAIN),$(GITEA_DOMAIN),) $(if $(GRAFANA_DOMAIN),$(GRAFANA_DOMAIN),)
 
-setup-local-https: ## Generate certs, update hosts, and trust local devhub/api certs (macOS)
-	@./scripts/setup-local-https.sh $(if $(DOMAIN),$(DOMAIN),) $(if $(API_DOMAIN),$(API_DOMAIN),)
+setup-local-https: ## Generate certs, update hosts, and trust local devhub/api/gitea/grafana certs (macOS)
+	@./scripts/setup-local-https.sh $(if $(DOMAIN),$(DOMAIN),) $(if $(API_DOMAIN),$(API_DOMAIN),) $(if $(GITEA_DOMAIN),$(GITEA_DOMAIN),) $(if $(GRAFANA_DOMAIN),$(GRAFANA_DOMAIN),)
 
 ##@ Development
 backend-up: ## Start backend services without UI or nginx
