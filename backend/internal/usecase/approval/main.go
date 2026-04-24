@@ -12,6 +12,7 @@ type ApprovalUsecase interface {
 	CreateApprovalPolicy(ctx context.Context, input CreateApprovalPolicyInput) (*entity.ApprovalPolicy, error)
 	CreateApprovalDecision(ctx context.Context, input CreateApprovalDecisionInput) (*CreateApprovalDecisionOutput, error)
 	FindAllApprovalRequests(ctx context.Context, input FindAllApprovalRequestsInput) (entity.Page[entity.ApprovalRequest], error)
+	FindApprovalRequestDetail(ctx context.Context, input FindApprovalRequestDetailInput) (*FindApprovalRequestDetailOutput, error)
 }
 
 type approvalUsecase struct {

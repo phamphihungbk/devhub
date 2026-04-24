@@ -13,12 +13,12 @@ export class ApiError extends Error {
   }
 }
 
-function withQuery(path: string, query?: Record<string, QueryValue>) {
-  if (!query) return path
+function withQuery(path: string, query?: object) {
+ if (!query) return path
 
-  const searchParams = new URLSearchParams()
+ const searchParams = new URLSearchParams()
 
-  for (const [key, value] of Object.entries(query)) {
+  for (const [key, value] of Object.entries(query) as [string, QueryValue][]) {
     if (value === undefined || value === null || value === '') continue
     searchParams.set(key, String(value))
   }
@@ -64,7 +64,7 @@ async function request<T>(path: string, init: RequestInit = {}) {
 }
 
 export const api = {
-  get: <T>(path: string, query?: Record<string, QueryValue>) => request<T>(withQuery(path, query)),
+  get: <T>(path: string, query?: object) => request<T>(withQuery(path, query)),
   post: <T>(path: string, body?: unknown) =>
     request<T>(path, {
       method: 'POST',

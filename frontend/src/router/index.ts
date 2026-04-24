@@ -1,7 +1,11 @@
 import type { Component } from 'vue'
 import {
+  Application,
+  Catalog,
+  CloudServiceManagement,
   Dashboard,
-  Document,
+  Rocket,
+  TaskApproved,
   Plug,
   UserAvatar,
 } from '@vicons/carbon'
@@ -60,7 +64,19 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/approvals/index.vue'),
         meta: {
           title: 'Approvals',
-          icon: Document,
+          icon: TaskApproved,
+          permissions: [permission.scaffoldRequestWrite],
+        },
+      },
+      {
+        path: 'approvals/:approvalRequestId',
+        name: 'approval-details',
+        component: () => import('@/views/approvals/detail.vue'),
+        meta: {
+          title: 'Approval Details',
+          icon: TaskApproved,
+          hideInMenu: true,
+          activeMenu: 'approvals',
           permissions: [permission.scaffoldRequestWrite],
         },
       },
@@ -70,7 +86,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/projects/index.vue'),
         meta: {
           title: 'Project List',
-          icon: Document,
+          icon: Catalog,
         },
       },
       {
@@ -79,7 +95,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/services/index.vue'),
         meta: {
           title: 'Services',
-          icon: Document,
+          icon: CloudServiceManagement,
         },
       },
       {
@@ -88,7 +104,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/releases/index.vue'),
         meta: {
           title: 'Releases',
-          icon: Document,
+          icon: Rocket,
         },
       },
       {
@@ -97,7 +113,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/projects/create.vue'),
         meta: {
           title: 'Create Project',
-          icon: Document,
+          icon: Catalog,
           permissions: [permission.projectWrite],
         },
       },
@@ -107,7 +123,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/projects/detail.vue'),
         meta: {
           title: 'Project Details',
-          icon: Document,
+          icon: Catalog,
           hideInMenu: true,
           activeMenu: 'projects',
         },
@@ -118,7 +134,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/services/detail.vue'),
         meta: {
           title: 'Service Details',
-          icon: Document,
+          icon: Application,
           hideInMenu: true,
           activeMenu: 'projects',
         },
@@ -137,7 +153,7 @@ const routes: RouteRecordRaw[] = [
         name: 'users',
         component: () => import('@/views/users/index.vue'),
         meta: {
-          title: 'Users',
+          title: 'Team members',
           icon: UserAvatar,
           permissions: [permission.userRead],
         },

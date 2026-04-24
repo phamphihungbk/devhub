@@ -111,6 +111,10 @@ func (r *router) applyApprovalRoutes(router *gin.Engine) {
 			r.Middleware.RequirePermissions(entity.PermissionScaffoldRequestWrite),
 			r.ApprovalHandler.FindAllApprovalRequests,
 		)
+		approvalRequestRoute.GET("/:approval-request",
+			r.Middleware.RequirePermissions(entity.PermissionScaffoldRequestWrite),
+			r.ApprovalHandler.FindApprovalRequestDetail,
+		)
 
 		approvalPolicyRoute.POST("/",
 			r.Middleware.RequirePermissions(entity.PermissionProjectWrite),

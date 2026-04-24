@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { NButton, NCard, NDataTable, NForm, NFormItem, NInput, NModal, NSelect, NTag, useMessage } from 'naive-ui'
 import { computed, h, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import PageHeader from '@/components/page-header.vue'
 import { createApprovalDecision, fetchApprovalRequests } from '@/services/api'
@@ -8,6 +9,7 @@ import { ApiError } from '@/services/request'
 import type { ApprovalRequestRecord } from '@/services/api'
 
 const message = useMessage()
+const router = useRouter()
 const loading = ref(false)
 const actingRequestId = ref('')
 const rows = ref<ApprovalRequestRecord[]>([])
@@ -24,7 +26,7 @@ const statusOptions = [
   { label: 'Approved', value: 'approved' },
   { label: 'Rejected', value: 'rejected' },
   { label: 'Canceled', value: 'canceled' },
-] as const
+]
 
 function getApprovalStatusTagColor(status: string) {
   switch (status) {
@@ -69,6 +71,13 @@ function openDecisionModal(row: ApprovalRequestRecord, decision: 'approve' | 're
   selectedDecision.value = decision
   decisionComment.value = ''
   decisionModalOpen.value = true
+}
+
+function openApprovalDetail(row: ApprovalRequestRecord) {
+  router.push({
+    name: 'approval-details',
+    params: { approvalRequestId: row.id },
+  })
 }
 
 async function submitDecision() {
@@ -140,36 +149,55 @@ const columns = [
     title: 'Actions',
     key: 'actions',
     render: (row: ApprovalRequestRecord) =>
-      row.status !== 'pending'
-        ? 'Resolved'
-        : h(
-            'div',
-            { class: 'flex gap-2' },
-            [
-              h(
+      h(
+        'div',
+        { class: 'flex gap-2' },
+        [
+          h(
+            NButton,
+            {
+              size: 'small',
+              onClick: (event: MouseEvent) => {
+                event.stopPropagation()
+                openApprovalDetail(row)
+              },
+            },
+            { default: () => 'View' },
+          ),
+          row.status === 'pending'
+            ? h(
                 NButton,
                 {
                   size: 'small',
                   type: 'primary',
                   ghost: true,
                   loading: actingRequestId.value === row.id,
-                  onClick: () => openDecisionModal(row, 'approve'),
+                  onClick: (event: MouseEvent) => {
+                    event.stopPropagation()
+                    openDecisionModal(row, 'approve')
+                  },
                 },
                 { default: () => 'Approve' },
-              ),
-              h(
+              )
+            : null,
+          row.status === 'pending'
+            ? h(
                 NButton,
                 {
                   size: 'small',
                   type: 'error',
                   ghost: true,
                   loading: actingRequestId.value === row.id,
-                  onClick: () => openDecisionModal(row, 'reject'),
+                  onClick: (event: MouseEvent) => {
+                    event.stopPropagation()
+                    openDecisionModal(row, 'reject')
+                  },
                 },
                 { default: () => 'Reject' },
-              ),
-            ],
-          ),
+              )
+            : null,
+        ],
+      ),
   },
 ]
 
@@ -217,6 +245,10 @@ onMounted(load)
         :loading="loading"
         :pagination="{ pageSize: 10 }"
         :bordered="false"
+        :row-props="(row: ApprovalRequestRecord) => ({
+          class: 'cursor-pointer',
+          onClick: () => openApprovalDetail(row),
+        })"
       />
     </NCard>
 

@@ -73,6 +73,21 @@ type ApprovalDecision struct {
 	model.ApprovalDecisions
 }
 
+type ApprovalDecisions []ApprovalDecision
+
+func (m ApprovalDecisions) ToEntities() []entity.ApprovalDecision {
+	decisions := make([]entity.ApprovalDecision, 0, len(m))
+	for _, item := range m {
+		decision := item.toEntity()
+		if decision == nil {
+			continue
+		}
+		decisions = append(decisions, *decision)
+	}
+
+	return decisions
+}
+
 func (m *ApprovalDecision) toEntity() *entity.ApprovalDecision {
 	decision, err := new(entity.ApprovalDecisionType).Parse(m.Decision)
 	if err != nil {
