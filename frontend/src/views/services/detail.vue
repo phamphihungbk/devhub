@@ -6,6 +6,7 @@ import {
   NForm,
   NFormItem,
   NInput,
+  NInputNumber,
   NModal,
   NSelect,
   NStatistic,
@@ -20,8 +21,11 @@ import PageHeader from '@/components/page-header.vue'
 import {
   createDeployment,
   createRelease,
+  createScaffoldRequest,
+  fetchDeploymentById,
   fetchPlugins,
   fetchProjectById,
+  fetchProjects,
   fetchProjectServices,
   fetchServiceDeployments,
   fetchServiceReleases,
@@ -32,6 +36,7 @@ import { environmentOptions, getEnvironmentTagColor } from '@/theme/environment'
 import type {
   CreateDeploymentPayload,
   CreateReleasePayload,
+  CreateScaffoldRequestPayload,
   Deployment,
   PluginRecord,
   Project,
@@ -44,20 +49,25 @@ const router = useRouter()
 const message = useMessage()
 const authStore = useAuthStore()
 
-const projectId = computed(() => route.params.projectId as string)
 const serviceId = computed(() => route.params.serviceId as string)
+const projectId = computed(() => project.value?.id || service.value?.project_id || '')
 
 const loading = ref(false)
 const deploymentSubmitting = ref(false)
+const deploymentLogLoading = ref(false)
 const releaseSubmitting = ref(false)
+const scaffoldSubmitting = ref(false)
 const deploymentModalOpen = ref(false)
+const deploymentLogModalOpen = ref(false)
 const releaseModalOpen = ref(false)
+const scaffoldModalOpen = ref(false)
 const project = ref<Project | null>(null)
 const service = ref<Service | null>(null)
 const releases = ref<Release[]>([])
 const deployments = ref<Deployment[]>([])
 const plugins = ref<PluginRecord[]>([])
 const selectedReleaseTag = ref<string | null>(null)
+const selectedDeployment = ref<Deployment | null>(null)
 
 const releaseForm = reactive<CreateReleasePayload>({
   plugin_id: '',
@@ -71,6 +81,18 @@ const deploymentForm = reactive<CreateDeploymentPayload>({
   plugin_id: '',
   environment: 'dev',
   version: '',
+})
+
+const scaffoldForm = reactive<CreateScaffoldRequestPayload>({
+  plugin_id: '',
+  environment: 'dev',
+  variables: {
+    service_name: '',
+    module_path: '',
+    port: 8080,
+    database: 'postgres',
+    enable_logging: true,
+  },
 })
 
 const successfulReleases = computed(() =>
@@ -101,12 +123,22 @@ const deployerOptions = computed(() =>
     .map(plugin => ({ label: plugin.name, value: plugin.id })),
 )
 
+const scaffolderOptions = computed(() =>
+  plugins.value
+    .filter(plugin => plugin.type === 'scaffolder')
+    .map(plugin => ({ label: plugin.name, value: plugin.id })),
+)
+
 const canCreateRelease = computed(() =>
   authStore.canAccess({ permissions: [permission.releaseWrite] }),
 )
 
 const canCreateDeployment = computed(() =>
   authStore.canAccess({ permissions: [permission.deploymentWrite] }),
+)
+
+const canCreateScaffoldRequest = computed(() =>
+  authStore.canAccess({ permissions: [permission.scaffoldRequestWrite] }),
 )
 
 const selectedRelease = computed(() =>
@@ -133,6 +165,16 @@ function resetDeploymentForm() {
   deploymentForm.version = selectedRelease.value?.tag || ''
 }
 
+function resetScaffoldForm() {
+  scaffoldForm.plugin_id = scaffolderOptions.value[0]?.value || ''
+  scaffoldForm.environment = project.value?.environments?.[0] || 'dev'
+  scaffoldForm.variables.service_name = service.value?.name || project.value?.name || ''
+  scaffoldForm.variables.module_path = service.value?.repo_url || ''
+  scaffoldForm.variables.port = 8080
+  scaffoldForm.variables.database = 'postgres'
+  scaffoldForm.variables.enable_logging = true
+}
+
 function openReleaseModal() {
   resetReleaseForm()
   releaseModalOpen.value = true
@@ -148,12 +190,35 @@ function openDeploymentModal() {
   deploymentModalOpen.value = true
 }
 
+function openScaffoldModal() {
+  resetScaffoldForm()
+  scaffoldModalOpen.value = true
+}
+
 function selectRelease(row: Release) {
   selectedReleaseTag.value = row.tag
 }
 
 function clearReleaseSelection() {
   selectedReleaseTag.value = null
+}
+
+function formatDeploymentOutput(value?: string) {
+  return value?.trim() || 'No runner output recorded yet.'
+}
+
+async function openDeploymentLogs(row: Deployment) {
+  selectedDeployment.value = row
+  deploymentLogModalOpen.value = true
+  deploymentLogLoading.value = true
+
+  try {
+    selectedDeployment.value = await fetchDeploymentById(row.id)
+  } catch (error) {
+    message.error(error instanceof ApiError ? error.message : 'Unable to load deployment logs.')
+  } finally {
+    deploymentLogLoading.value = false
+  }
 }
 
 const releaseColumns = computed(() => {
@@ -267,38 +332,108 @@ const deploymentColumns = [
       ),
   },
   { title: 'Commit SHA', key: 'commit_sha', render: (row: Deployment) => row.commit_sha || 'Not set' },
+  {
+    title: 'Runner output',
+    key: 'runner_output',
+    render: (row: Deployment) =>
+      h(
+        NButton,
+        {
+          size: 'small',
+          onClick: (event: MouseEvent) => {
+            event.stopPropagation()
+            openDeploymentLogs(row)
+          },
+        },
+        { default: () => row.runner_output || row.runner_error ? 'View output' : 'View logs' },
+      ),
+  },
 ]
 
 async function loadServiceDetails() {
   loading.value = true
 
   try {
-    const [projectData, serviceRows, pluginData, serviceReleases, serviceDeployments] = await Promise.all([
-      fetchProjectById(projectId.value),
-      fetchProjectServices(projectId.value),
+    const [serviceContext, pluginData, serviceReleases, serviceDeployments] = await Promise.all([
+      findServiceContext(),
       fetchPlugins(),
       fetchServiceReleases(serviceId.value),
       fetchServiceDeployments(serviceId.value, { limit: 10, sortBy: 'date', sortOrder: 'desc' }),
     ])
 
-    const matchedService = serviceRows.find(item => item.id === serviceId.value) || null
-
-    if (!matchedService) {
-      message.warning('Service not found for this project.')
-      router.push({ name: 'project-details', params: { projectId: projectId.value } })
+    if (!serviceContext) {
+      message.warning('Service not found.')
+      router.push({ name: 'services' })
       return
     }
 
-    project.value = projectData
-    service.value = matchedService
+    project.value = serviceContext.project
+    service.value = serviceContext.service
     plugins.value = pluginData
     releases.value = serviceReleases
     deployments.value = serviceDeployments
     resetReleaseForm()
+    resetScaffoldForm()
   } catch (error) {
     message.error(error instanceof ApiError ? error.message : 'Unable to load service details.')
   } finally {
     loading.value = false
+  }
+}
+
+async function findServiceContext(): Promise<{ project: Project, service: Service } | null> {
+  const routeProjectId = route.params.projectId as string | undefined
+
+  if (routeProjectId) {
+    const [projectData, serviceRows] = await Promise.all([
+      fetchProjectById(routeProjectId),
+      fetchProjectServices(routeProjectId),
+    ])
+    const matchedService = serviceRows.find(item => item.id === serviceId.value) || null
+    return matchedService ? { project: projectData, service: matchedService } : null
+  }
+
+  const projects = await fetchProjects()
+  const serviceGroups = await Promise.all(
+    projects.map(async (projectData: Project) => {
+      const serviceRows = await fetchProjectServices(projectData.id)
+      const matchedService = serviceRows.find(item => item.id === serviceId.value) || null
+      return matchedService ? { project: projectData, service: matchedService } : null
+    }),
+  )
+
+  return serviceGroups.find(Boolean) || null
+}
+
+async function submitScaffoldRequest() {
+  if (!scaffoldForm.plugin_id || !scaffoldForm.environment || !scaffoldForm.variables.service_name.trim()) {
+    message.warning('Complete the scaffold request form before submitting.')
+    return
+  }
+
+  scaffoldSubmitting.value = true
+
+  try {
+    if (!projectId.value) {
+      message.warning('Project context is not available for this scaffold request.')
+      return
+    }
+
+    await createScaffoldRequest(projectId.value, {
+      ...scaffoldForm,
+      variables: {
+        ...scaffoldForm.variables,
+        service_name: scaffoldForm.variables.service_name.trim(),
+        module_path: scaffoldForm.variables.module_path.trim(),
+      },
+    })
+    message.success('Scaffold request created successfully.')
+    scaffoldModalOpen.value = false
+    resetScaffoldForm()
+  } catch (error) {
+    message.error(error instanceof ApiError ? error.message : 'Unable to create scaffold request.')
+  } finally {
+    scaffoldSubmitting.value = false
   }
 }
 
@@ -367,8 +502,8 @@ onMounted(loadServiceDetails)
       description="Inspect the selected service, review its repository, and scan the most recent release and deployment activity tied to it."
     >
       <div class="flex flex-wrap gap-3">
-        <NButton @click="router.push({ name: 'project-details', params: { projectId } })">
-          Back to project
+        <NButton @click="router.push({ name: 'services' })">
+          Back to services
         </NButton>
         <NButton
           v-if="canCreateRelease"
@@ -376,6 +511,13 @@ onMounted(loadServiceDetails)
           @click="openReleaseModal"
         >
           New release
+        </NButton>
+        <NButton
+          v-if="canCreateScaffoldRequest"
+          secondary
+          @click="openScaffoldModal"
+        >
+          New scaffold request
         </NButton>
         <!-- <NButton
           secondary
@@ -486,6 +628,10 @@ onMounted(loadServiceDetails)
             :loading="loading"
             :pagination="{ pageSize: 6 }"
             :bordered="false"
+            :row-props="(row: Deployment) => ({
+              class: 'cursor-pointer',
+              onClick: () => openDeploymentLogs(row),
+            })"
           />
         </NCard>
       </div>
@@ -592,6 +738,115 @@ onMounted(loadServiceDetails)
           </NButton>
         </div>
       </template>
+    </NModal>
+
+    <NModal
+      v-if="canCreateScaffoldRequest"
+      v-model:show="scaffoldModalOpen"
+      preset="card"
+      title="New scaffold request"
+      class="max-w-2xl"
+      :bordered="false"
+      segmented
+    >
+      <NForm label-placement="top">
+        <div class="grid gap-4 md:grid-cols-2">
+          <NFormItem label="Scaffolder plugin">
+            <NSelect
+              v-model:value="scaffoldForm.plugin_id"
+              :options="scaffolderOptions"
+              placeholder="Select scaffolder"
+            />
+          </NFormItem>
+
+          <NFormItem label="Environment">
+            <NSelect
+              v-model:value="scaffoldForm.environment"
+              :options="environmentOptions"
+              placeholder="Select environment"
+            />
+          </NFormItem>
+
+          <NFormItem label="Service name">
+            <NInput v-model:value="scaffoldForm.variables.service_name" placeholder="payments-api" />
+          </NFormItem>
+
+          <NFormItem label="Module path">
+            <NInput v-model:value="scaffoldForm.variables.module_path" placeholder="github.com/acme/payments-api" />
+          </NFormItem>
+
+          <NFormItem label="Port">
+            <NInputNumber v-model:value="scaffoldForm.variables.port" class="w-full" :min="1" :max="65535" />
+          </NFormItem>
+
+          <NFormItem label="Database">
+            <NInput v-model:value="scaffoldForm.variables.database" placeholder="postgres" />
+          </NFormItem>
+
+          <NFormItem label="Enable logging">
+            <NSelect
+              v-model:value="scaffoldForm.variables.enable_logging"
+              :options="[
+                { label: 'Enabled', value: true },
+                { label: 'Disabled', value: false },
+              ]"
+            />
+          </NFormItem>
+        </div>
+      </NForm>
+
+      <template #action>
+        <div class="flex justify-end gap-3">
+          <NButton @click="scaffoldModalOpen = false">
+            Cancel
+          </NButton>
+          <NButton type="primary" :loading="scaffoldSubmitting" @click="submitScaffoldRequest">
+            Create scaffold request
+          </NButton>
+        </div>
+      </template>
+    </NModal>
+
+    <NModal
+      v-model:show="deploymentLogModalOpen"
+      preset="card"
+      title="Deployment runner output"
+      class="max-w-4xl"
+      :bordered="false"
+      segmented
+    >
+      <div class="grid gap-4">
+        <div class="grid gap-3 text-sm md:grid-cols-3">
+          <div>
+            <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Environment</p>
+            <p class="mt-1 font-semibold text-[var(--app-text)]">{{ selectedDeployment?.environment || 'Unknown' }}</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Version</p>
+            <p class="mt-1 font-semibold text-[var(--app-text)]">{{ selectedDeployment?.version || 'Unknown' }}</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Status</p>
+            <NTag
+              class="mt-1"
+              :bordered="false"
+              :color="selectedDeployment?.status === 'failed'
+                ? { color: '#fee2e2', textColor: '#b91c1c' }
+                : { color: '#dbeafe', textColor: '#1d4ed8' }"
+            >
+              {{ selectedDeployment?.status || 'pending' }}
+            </NTag>
+          </div>
+        </div>
+
+        <NCard size="small" title="Runner output" :loading="deploymentLogLoading">
+          <pre class="max-h-80 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-950 p-4 text-xs leading-5 text-slate-100">{{ formatDeploymentOutput(selectedDeployment?.runner_output) }}</pre>
+        </NCard>
+
+        <NCard size="small" title="Runner errors">
+          <pre class="max-h-72 overflow-auto whitespace-pre-wrap rounded-lg bg-rose-950 p-4 text-xs leading-5 text-rose-50">{{ formatDeploymentOutput(selectedDeployment?.runner_error) }}</pre>
+        </NCard>
+      </div>
     </NModal>
   </div>
 </template>

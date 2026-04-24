@@ -15,7 +15,7 @@
 
 ## Phase 2: Developer Experience
 
-- [ ] Deployment logs and runner output in UI
+- [x] Deployment logs and runner output in UI
 - [ ] Better validation and guided forms for scaffold variables
 - [ ] Service health and runtime status panels
 - [x] Approval request detail pages and richer audit history

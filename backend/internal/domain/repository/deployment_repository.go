@@ -29,11 +29,13 @@ type FindAllDeploymentsFilter struct {
 }
 
 type UpdateDeploymentInput struct {
-	ID          uuid.UUID
-	Environment *entity.ProjectEnvironment
-	Status      *entity.DeploymentStatus
-	Version     *string
-	ExternalRef *string
-	CommitSHA   *string
-	FinishedAt  *time.Time
+	ID           uuid.UUID
+	Environment  *entity.ProjectEnvironment
+	Status       *entity.DeploymentStatus
+	Version      *string
+	ExternalRef  *string
+	CommitSHA    *string
+	RunnerOutput *string
+	RunnerError  *string
+	FinishedAt   *time.Time
 }

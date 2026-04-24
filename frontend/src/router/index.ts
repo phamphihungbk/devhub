@@ -4,6 +4,7 @@ import {
   Catalog,
   CloudServiceManagement,
   Dashboard,
+  DeploymentPattern,
   Rocket,
   TaskApproved,
   Plug,
@@ -56,6 +57,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: 'Dashboard',
           icon: Dashboard,
+          permissions: [permission.projectWrite],
         },
       },
       {
@@ -87,6 +89,7 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: 'Project List',
           icon: Catalog,
+          permissions: [permission.projectWrite],
         },
       },
       {
@@ -108,12 +111,24 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'deployments',
+        name: 'deployments',
+        component: () => import('@/views/deployments/index.vue'),
+        meta: {
+          title: 'Deployments',
+          icon: DeploymentPattern,
+          permissions: [permission.deploymentWrite],
+        },
+      },
+      {
         path: 'projects/new',
         name: 'project-create',
         component: () => import('@/views/projects/create.vue'),
         meta: {
           title: 'Create Project',
           icon: Catalog,
+          hideInMenu: true,
+          activeMenu: 'projects',
           permissions: [permission.projectWrite],
         },
       },
@@ -126,17 +141,30 @@ const routes: RouteRecordRaw[] = [
           icon: Catalog,
           hideInMenu: true,
           activeMenu: 'projects',
+          permissions: [permission.projectWrite],
         },
       },
       {
-        path: 'projects/:projectId/services/:serviceId',
+        path: 'services/:serviceId',
         name: 'service-details',
         component: () => import('@/views/services/detail.vue'),
         meta: {
           title: 'Service Details',
           icon: Application,
           hideInMenu: true,
-          activeMenu: 'projects',
+          activeMenu: 'services',
+          permissions: [permission.projectWrite],
+        },
+      },
+      {
+        path: 'projects/:projectId/services/:serviceId',
+        name: 'project-service-details',
+        redirect: to => ({
+          name: 'service-details',
+          params: { serviceId: to.params.serviceId },
+        }),
+        meta: {
+          hideInMenu: true,
         },
       },
       {

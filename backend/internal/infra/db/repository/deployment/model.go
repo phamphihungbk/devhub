@@ -21,18 +21,20 @@ func (c *Deployment) ToEntity() *entity.Deployment {
 	}
 
 	return &entity.Deployment{
-		ID:          c.ID,
-		ServiceID:   c.ServiceID,
-		PluginID:    c.PluginID,
-		Environment: env,
-		Version:     c.Version,
-		Status:      status,
-		ExternalRef: misc.GetValue(c.ExternalRef),
-		CommitSHA:   misc.GetValue(c.CommitSha),
-		TriggeredBy: c.TriggeredBy,
-		CreatedAt:   c.CreatedAt,
-		UpdatedAt:   c.UpdatedAt,
-		FinishedAt:  c.FinishedAt,
+		ID:           c.ID,
+		ServiceID:    c.ServiceID,
+		PluginID:     c.PluginID,
+		Environment:  env,
+		Version:      c.Version,
+		Status:       status,
+		ExternalRef:  misc.GetValue(c.ExternalRef),
+		CommitSHA:    misc.GetValue(c.CommitSha),
+		RunnerOutput: misc.GetValue(c.RunnerOutput),
+		RunnerError:  misc.GetValue(c.RunnerError),
+		TriggeredBy:  c.TriggeredBy,
+		CreatedAt:    c.CreatedAt,
+		UpdatedAt:    c.UpdatedAt,
+		FinishedAt:   c.FinishedAt,
 	}
 }
 

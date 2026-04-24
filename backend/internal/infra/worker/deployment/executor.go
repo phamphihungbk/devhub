@@ -27,9 +27,11 @@ type PythonDeploymentExecutor struct {
 }
 
 type DeploymentExecutionResult struct {
-	ExternalRef string
-	CommitSHA   string
-	FinishedAt  time.Time
+	ExternalRef  string
+	CommitSHA    string
+	RunnerOutput string
+	RunnerError  string
+	FinishedAt   time.Time
 }
 
 type deploymentPluginPayload struct {
@@ -215,9 +217,11 @@ func (e *PythonDeploymentExecutor) Execute(
 	}
 
 	result := DeploymentExecutionResult{
-		ExternalRef: strings.TrimSpace(out.Output.ExternalRef),
-		CommitSHA:   strings.TrimSpace(out.Output.CommitSHA),
-		FinishedAt:  time.Now().UTC(),
+		ExternalRef:  strings.TrimSpace(out.Output.ExternalRef),
+		CommitSHA:    strings.TrimSpace(out.Output.CommitSHA),
+		RunnerOutput: strings.TrimSpace(stdout.String()),
+		RunnerError:  strings.TrimSpace(stderr.String()),
+		FinishedAt:   time.Now().UTC(),
 	}
 
 	if ts := strings.TrimSpace(out.Output.FinishedAt); ts != "" {

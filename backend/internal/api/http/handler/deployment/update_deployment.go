@@ -12,25 +12,29 @@ import (
 )
 
 type updateDeploymentRequest struct {
-	Environment *string `json:"environment" example:"prod"`
-	Version     *string `json:"version" example:"1.0.0"`
-	Status      *string `json:"status" example:"Deployment Status"`
-	ExternalRef *string `json:"external_ref" example:"argocd-sync-123"`
-	CommitSHA   *string `json:"commit_sha" example:"abc123def456"`
-	FinishedAt  *string `json:"finished_at" example:"2026-04-13T12:34:56Z"`
+	Environment  *string `json:"environment" example:"prod"`
+	Version      *string `json:"version" example:"1.0.0"`
+	Status       *string `json:"status" example:"Deployment Status"`
+	ExternalRef  *string `json:"external_ref" example:"argocd-sync-123"`
+	CommitSHA    *string `json:"commit_sha" example:"abc123def456"`
+	RunnerOutput *string `json:"runner_output"`
+	RunnerError  *string `json:"runner_error"`
+	FinishedAt   *string `json:"finished_at" example:"2026-04-13T12:34:56Z"`
 }
 
 type updateDeploymentResponse struct {
-	ID          string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	ServiceID   string `json:"service_id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	PluginID    string `json:"plugin_id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Environment string `json:"environment" example:"prod"`
-	Version     string `json:"version" example:"1.0.0"`
-	Status      string `json:"status" example:"Deployment Status"`
-	ExternalRef string `json:"external_ref" example:"argocd-sync-123"`
-	CommitSHA   string `json:"commit_sha" example:"abc123def456"`
-	FinishedAt  string `json:"finished_at,omitempty" example:"2026-04-13T12:34:56Z"`
-	TriggeredBy string `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ID           string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ServiceID    string `json:"service_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	PluginID     string `json:"plugin_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Environment  string `json:"environment" example:"prod"`
+	Version      string `json:"version" example:"1.0.0"`
+	Status       string `json:"status" example:"Deployment Status"`
+	ExternalRef  string `json:"external_ref" example:"argocd-sync-123"`
+	CommitSHA    string `json:"commit_sha" example:"abc123def456"`
+	RunnerOutput string `json:"runner_output,omitempty"`
+	RunnerError  string `json:"runner_error,omitempty"`
+	FinishedAt   string `json:"finished_at,omitempty" example:"2026-04-13T12:34:56Z"`
+	TriggeredBy  string `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
 // @Summary		Update Deployment
@@ -54,13 +58,15 @@ func (h *deploymentHandler) UpdateDeployment(c *gin.Context) {
 	}
 
 	updatedDeployment, err := h.deploymentUsecase.UpdateDeployment(c.Request.Context(), deploymentUsecase.UpdateDeploymentInput{
-		ID:          deploymentID,
-		Environment: input.Environment,
-		Version:     input.Version,
-		Status:      input.Status,
-		ExternalRef: input.ExternalRef,
-		CommitSHA:   input.CommitSHA,
-		FinishedAt:  input.FinishedAt,
+		ID:           deploymentID,
+		Environment:  input.Environment,
+		Version:      input.Version,
+		Status:       input.Status,
+		ExternalRef:  input.ExternalRef,
+		CommitSHA:    input.CommitSHA,
+		RunnerOutput: input.RunnerOutput,
+		RunnerError:  input.RunnerError,
+		FinishedAt:   input.FinishedAt,
 	})
 
 	if err != nil {
@@ -77,14 +83,16 @@ func (h *deploymentHandler) newUpdateDeploymentResponse(deployment *entity.Deplo
 	}
 
 	return updateDeploymentResponse{
-		ID:          deployment.ID.String(),
-		ServiceID:   deployment.ServiceID.String(),
-		PluginID:    deployment.PluginID.String(),
-		Environment: deployment.Environment.String(),
-		Version:     deployment.Version,
-		Status:      deployment.Status.String(),
-		ExternalRef: deployment.ExternalRef,
-		CommitSHA:   deployment.CommitSHA,
+		ID:           deployment.ID.String(),
+		ServiceID:    deployment.ServiceID.String(),
+		PluginID:     deployment.PluginID.String(),
+		Environment:  deployment.Environment.String(),
+		Version:      deployment.Version,
+		Status:       deployment.Status.String(),
+		ExternalRef:  deployment.ExternalRef,
+		CommitSHA:    deployment.CommitSHA,
+		RunnerOutput: deployment.RunnerOutput,
+		RunnerError:  deployment.RunnerError,
 		FinishedAt: func() string {
 			if deployment.FinishedAt == nil {
 				return ""

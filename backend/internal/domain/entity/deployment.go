@@ -53,18 +53,20 @@ func (s DeploymentStatus) Parse(status string) (DeploymentStatus, error) {
 }
 
 type Deployment struct {
-	ID          uuid.UUID
-	ServiceID   uuid.UUID
-	PluginID    uuid.UUID
-	Environment ProjectEnvironment
-	Version     string
-	Status      DeploymentStatus
-	ExternalRef string
-	CommitSHA   string
-	TriggeredBy uuid.UUID
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	FinishedAt  *time.Time
+	ID           uuid.UUID
+	ServiceID    uuid.UUID
+	PluginID     uuid.UUID
+	Environment  ProjectEnvironment
+	Version      string
+	Status       DeploymentStatus
+	ExternalRef  string
+	CommitSHA    string
+	RunnerOutput string
+	RunnerError  string
+	TriggeredBy  uuid.UUID
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	FinishedAt   *time.Time
 }
 
 type Deployments []Deployment

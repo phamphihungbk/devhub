@@ -16,6 +16,8 @@ export interface Deployment {
   status: string
   external_ref?: string
   commit_sha?: string
+  runner_output?: string
+  runner_error?: string
   finished_at?: string
   triggered_by: string
 }
@@ -32,5 +34,7 @@ export interface UpdateDeploymentPayload {
   status?: string
   external_ref?: string
   commit_sha?: string
+  runner_output?: string
+  runner_error?: string
   finished_at?: string
 }
