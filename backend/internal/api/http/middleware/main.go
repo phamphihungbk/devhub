@@ -14,8 +14,6 @@ type Middleware interface {
 
 type middleware struct{}
 
-var _ Middleware = (*middleware)(nil)
-
 func New() Middleware {
 	return &middleware{}
 }
