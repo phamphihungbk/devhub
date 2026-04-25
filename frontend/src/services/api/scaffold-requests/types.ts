@@ -29,3 +29,21 @@ export interface CreateScaffoldRequestPayload {
   environment: string
   variables: ScaffoldRequestVariables
 }
+
+export interface SuggestScaffoldRequestPayload {
+  prompt: string
+  project_name?: string
+  project_description?: string
+  environment?: string
+  environments?: string[]
+}
+
+export interface ScaffoldRequestSuggestion {
+  source: string
+  plugin_id: string
+  plugin_name: string
+  environment: string
+  environments: string[]
+  variables: ScaffoldRequestVariables
+  rationale: string[]
+}

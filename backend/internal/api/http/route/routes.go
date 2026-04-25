@@ -205,10 +205,6 @@ func (r *router) applyProjectRoutes(router *gin.Engine) {
 			r.Middleware.RequirePermissions(entity.PermissionReleaseWrite),
 			r.ReleaseHandler.CreateRelease,
 		)
-		serviceProtectedRoute.POST("/:service/scaffold-suggestions",
-			r.Middleware.RequirePermissions(entity.PermissionScaffoldRequestWrite),
-			r.ServiceHandler.SuggestScaffold,
-		)
 	}
 }
 
@@ -225,6 +221,10 @@ func (r *router) applyScaffoldRequestRoutes(router *gin.Engine) {
 		projectProtectedRoute.POST("/scaffold-requests",
 			r.Middleware.RequirePermissions(entity.PermissionScaffoldRequestWrite),
 			r.ScaffoldRequestHandler.CreateScaffoldRequest,
+		)
+		projectProtectedRoute.POST("/scaffold-suggestions",
+			r.Middleware.RequirePermissions(entity.PermissionScaffoldRequestWrite),
+			r.ScaffoldRequestHandler.SuggestScaffoldRequest,
 		)
 
 		scaffoldRequestRoute.GET("/:scaffold-request", r.ScaffoldRequestHandler.FindScaffoldRequestByID)

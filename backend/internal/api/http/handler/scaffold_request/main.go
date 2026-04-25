@@ -10,6 +10,7 @@ import (
 
 type ScaffoldRequestHandler interface {
 	CreateScaffoldRequest(c *gin.Context)
+	SuggestScaffoldRequest(c *gin.Context)
 	FindScaffoldRequestByID(c *gin.Context)
 	FindAllScaffoldRequests(c *gin.Context)
 	DeleteScaffoldRequest(c *gin.Context)
