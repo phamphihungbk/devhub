@@ -8,117 +8,22 @@ import {
   NGridItem,
   NStatistic,
   NTag,
-  useMessage,
 } from 'naive-ui'
-import { computed, h, onMounted, ref } from 'vue'
 
 import PageHeader from '@/components/page-header.vue'
-import { fetchPlugins, fetchProjects, fetchUsers } from '@/services/api'
-import { ApiError } from '@/services/request'
-import { useAuthStore } from '@/stores/modules/auth'
-import { getEnvironmentTagColor } from '@/theme/environment'
-import { getPluginTypeTagColor } from '@/theme/plugin'
-import { getRoleTagColor } from '@/theme/role'
-import type { PluginRecord, Project, UserRecord } from '@/services/api'
+import { useDashboardService } from '@/services/dashboard'
 
-const message = useMessage()
-const authStore = useAuthStore()
-const loading = ref(false)
-const projects = ref<Project[]>([])
-const plugins = ref<PluginRecord[]>([])
-const users = ref<UserRecord[]>([])
-
-const teamMembers = computed(() =>
-  users.value.filter(user => user.team_id === authStore.profile?.team_id),
-)
-
-const stats = computed(() => [
-  {
-    label: 'Projects',
-    value: projects.value.length,
-    caption: 'Tracked service domains',
-  },
-  {
-    label: 'Plugins',
-    value: plugins.value.length,
-    caption: 'Installed platform automations',
-  },
-  {
-    label: 'Users',
-    value: teamMembers.value.length,
-    caption: 'People in your team',
-  },
-])
-
-const projectColumns = [
-  {
-    title: 'Project',
-    key: 'name',
-  },
-  {
-    title: 'Environments',
-    key: 'environments',
-    render: (row: Project) =>
-      h(
-        'div',
-        { class: 'flex flex-wrap gap-2' },
-        row.environments.map((value) =>
-          h(
-            NTag,
-            {
-              bordered: false,
-              color: getEnvironmentTagColor(value),
-            },
-            { default: () => value },
-          ),
-        ),
-      ),
-  },
-  {
-    title: 'Description',
-    key: 'description',
-    render: (row: Project) => row.description || 'No description yet.',
-  },
-]
-
-const pluginColumns = [
-  { title: 'Plugin', key: 'name' },
-  {
-    title: 'Type',
-    key: 'type',
-    render: (row: PluginRecord) =>
-      h(
-        NTag,
-        {
-          bordered: false,
-          color: getPluginTypeTagColor(row.type),
-        },
-        { default: () => row.type },
-      ),
-  },
-  { title: 'Runtime', key: 'runtime' },
-  { title: 'Scope', key: 'scope' },
-]
-
-async function load() {
-  loading.value = true
-  try {
-    const [projectData, pluginData, userData] = await Promise.all([
-      fetchProjects(),
-      fetchPlugins(),
-      fetchUsers(),
-    ])
-    projects.value = projectData
-    plugins.value = pluginData
-    users.value = userData
-  } catch (error) {
-    message.error(error instanceof ApiError ? error.message : 'Unable to load dashboard data.')
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(load)
+const {
+  getRoleTagColor,
+  loadDashboard,
+  loading,
+  pluginColumns,
+  plugins,
+  projectColumns,
+  projects,
+  stats,
+  teamMembers,
+} = useDashboardService()
 </script>
 
 <template>
@@ -128,7 +33,7 @@ onMounted(load)
       title="Platform dashboard"
       description="A higher-signal entry point for the control plane: service inventory, automation registry, and operator visibility in one calmer admin workspace."
     >
-      <NButton type="primary" @click="load">
+      <NButton type="primary" @click="loadDashboard">
         Refresh data
       </NButton>
     </PageHeader>

@@ -1,44 +1,10 @@
 <script setup lang="ts">
-import { NButton, NCard, NDataTable, NTag, useMessage } from 'naive-ui'
-import { h, onMounted, ref } from 'vue'
+import { NButton, NCard, NDataTable } from 'naive-ui'
 
 import PageHeader from '@/components/page-header.vue'
-import { fetchUsers } from '@/services/api'
-import { ApiError } from '@/services/request'
-import { getRoleTagColor } from '@/theme/role'
-import type { UserRecord } from '@/services/api'
+import { useTeamMemberService } from '@/services/team-member'
 
-const message = useMessage()
-const loading = ref(false)
-const rows = ref<UserRecord[]>([])
-
-const columns = [
-  { title: 'Name', key: 'name' },
-  { title: 'Email', key: 'email' },
-  {
-    title: 'Role',
-    key: 'role',
-    render: (row: UserRecord) =>
-      h(
-        NTag,
-        { bordered: false, color: getRoleTagColor(row.role) },
-        { default: () => row.role },
-      ),
-  },
-]
-
-async function load() {
-  loading.value = true
-  try {
-    rows.value = await fetchUsers()
-  } catch (error) {
-    message.error(error instanceof ApiError ? error.message : 'Unable to load users.')
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(load)
+const { columns, loadUsers, loading, rows } = useTeamMemberService()
 </script>
 
 <template>
@@ -48,7 +14,7 @@ onMounted(load)
       title="Team members"
       description="The operator directory for the control plane, ready for role governance, invite flows, and access reviews."
     >
-      <NButton @click="load">
+      <NButton @click="loadUsers">
         Refresh
       </NButton>
     </PageHeader>

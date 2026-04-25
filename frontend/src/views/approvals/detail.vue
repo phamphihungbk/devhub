@@ -13,118 +13,32 @@ import {
   NTag,
   NTimeline,
   NTimelineItem,
-  useMessage,
 } from 'naive-ui'
-import { computed, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 
 import PageHeader from '@/components/page-header.vue'
-import { createApprovalDecision, fetchApprovalRequestDetail } from '@/services/api'
-import { ApiError } from '@/services/request'
-import type {
-  ApprovalAuditEventRecord,
-  ApprovalRequestDetailRecord,
-  ApprovalRequestRecord,
-} from '@/services/api'
+import { useApprovalDetailService } from '@/services/approval'
 
-const route = useRoute()
-const router = useRouter()
-const message = useMessage()
-
-const loading = ref(false)
-const acting = ref(false)
-const detail = ref<ApprovalRequestDetailRecord | null>(null)
-const decisionModalOpen = ref(false)
-const selectedDecision = ref<'approve' | 'reject'>('approve')
-const decisionComment = ref('')
-
-const approvalRequestId = computed(() => route.params.approvalRequestId as string)
-const request = computed(() => detail.value?.approval_request || null)
-const decisions = computed(() => detail.value?.decisions || [])
-const auditEvents = computed(() => detail.value?.audit_events || [])
-const remainingApprovals = computed(() => {
-  if (!request.value) return 0
-  return Math.max(request.value.required_approvals - request.value.approved_count, 0)
-})
-
-function getApprovalStatusTagColor(status: string) {
-  switch (status) {
-    case 'approved':
-      return { color: '#dcfce7', textColor: '#15803d' }
-    case 'rejected':
-      return { color: '#fee2e2', textColor: '#b91c1c' }
-    case 'canceled':
-      return { color: '#e5e7eb', textColor: '#4b5563' }
-    default:
-      return { color: '#fef3c7', textColor: '#b45309' }
-  }
-}
-
-function getDecisionTagColor(decision: string) {
-  return decision === 'reject'
-    ? { color: '#fee2e2', textColor: '#b91c1c' }
-    : { color: '#dcfce7', textColor: '#15803d' }
-}
-
-function getTimelineType(event: ApprovalAuditEventRecord) {
-  if (event.type === 'reject' || event.type === 'rejected') return 'error'
-  if (event.type === 'approve' || event.type === 'approved' || event.type === 'resolved') return 'success'
-  return 'info'
-}
-
-function formatDate(value?: string | null) {
-  return value ? new Date(value).toLocaleString() : 'Not set'
-}
-
-function formatScope(row: ApprovalRequestRecord) {
-  return [row.project_id, row.service_id, row.environment].filter(Boolean).join(' / ') || 'Global'
-}
-
-function shortId(value: string) {
-  return value ? `${value.slice(0, 8)}...${value.slice(-4)}` : 'Unknown'
-}
-
-async function load() {
-  loading.value = true
-  try {
-    detail.value = await fetchApprovalRequestDetail(approvalRequestId.value)
-  } catch (error) {
-    message.error(error instanceof ApiError ? error.message : 'Unable to load approval request.')
-  } finally {
-    loading.value = false
-  }
-}
-
-function openDecisionModal(decision: 'approve' | 'reject') {
-  selectedDecision.value = decision
-  decisionComment.value = ''
-  decisionModalOpen.value = true
-}
-
-async function submitDecision() {
-  const comment = decisionComment.value.trim()
-  if (!comment) {
-    message.warning('Comment is required before submitting a decision.')
-    return
-  }
-
-  acting.value = true
-  try {
-    await createApprovalDecision(approvalRequestId.value, {
-      decision: selectedDecision.value,
-      comment,
-    })
-    message.success(`Approval request ${selectedDecision.value}d successfully.`)
-    decisionModalOpen.value = false
-    await load()
-  } catch (error) {
-    message.error(error instanceof ApiError ? error.message : `Unable to ${selectedDecision.value} approval request.`)
-  } finally {
-    acting.value = false
-  }
-}
-
-onMounted(load)
+const {
+  acting,
+  auditEvents,
+  decisionComment,
+  decisionModalOpen,
+  decisions,
+  formatDate,
+  formatScope,
+  getApprovalStatusTagColor,
+  getDecisionTagColor,
+  getTimelineType,
+  loadApprovalDetail,
+  loading,
+  openApprovals,
+  openDecisionModal,
+  remainingApprovals,
+  request,
+  selectedDecision,
+  shortId,
+  submitDecision,
+} = useApprovalDetailService()
 </script>
 
 <template>
@@ -135,10 +49,10 @@ onMounted(load)
       description="Review the approval target, decision trail, and audit timeline before resolving the request."
     >
       <div class="flex flex-wrap gap-3">
-        <NButton @click="router.push({ name: 'approvals' })">
+        <NButton @click="openApprovals">
           Back to approvals
         </NButton>
-        <NButton @click="load">
+        <NButton @click="loadApprovalDetail">
           Refresh
         </NButton>
         <NButton

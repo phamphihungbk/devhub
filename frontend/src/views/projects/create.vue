@@ -8,81 +8,20 @@ import {
   NFormItem,
   NInput,
   NSelect,
-  useMessage,
 } from 'naive-ui'
-import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
 
 import PageHeader from '@/components/page-header.vue'
-import { createProject } from '@/services/api'
-import { ApiError } from '@/services/request'
-import { useAuthStore } from '@/stores/modules/auth'
-import { environmentOptions } from '@/theme/environment'
-import type { ProjectPayload } from '@/services/api'
+import { useProjectCreateService } from '@/services/project'
 
-const router = useRouter()
-const message = useMessage()
-const authStore = useAuthStore()
-const saving = ref(false)
-
-const statusOptions = [
-  { label: 'Draft', value: 'draft' },
-  { label: 'Active', value: 'active' },
-  { label: 'Archived', value: 'archived' },
-  { label: 'Deprecated', value: 'deprecated' },
-]
-
-const scmProviderOptions = [
-  { label: 'Gitea', value: 'gitea' },
-  { label: 'GitHub', value: 'github' },
-  { label: 'GitLab', value: 'gitlab' },
-  { label: 'Bitbucket', value: 'bitbucket' },
-]
-
-const form = reactive<ProjectPayload>({
-  name: '',
-  description: '',
-  environments: ['dev'],
-  status: 'draft',
-  team_id: '',
-  scm_provider: 'gitea',
-})
-
-function validateForm() {
-  if (!form.name.trim()) return 'Project name is required.'
-  if (form.environments.length === 0) return 'Select at least one environment.'
-  if (!authStore.profile?.team_id) return 'Your team information is not available.'
-  if (!form.scm_provider.trim()) return 'SCM provider is required.'
-  return null
-}
-
-async function submit() {
-  const validationError = validateForm()
-
-  if (validationError) {
-    message.warning(validationError)
-    return
-  }
-
-  saving.value = true
-
-  try {
-    await createProject({
-      ...form,
-      team_id: authStore.profile.team_id,
-      name: form.name.trim(),
-      description: form.description?.trim() || undefined,
-      scm_provider: form.scm_provider.trim(),
-    })
-
-    message.success('Project created successfully.')
-    await router.push({ name: 'projects' })
-  } catch (error) {
-    message.error(error instanceof ApiError ? error.message : 'Unable to create project.')
-  } finally {
-    saving.value = false
-  }
-}
+const {
+  environmentSelectOptions,
+  form,
+  openProjects,
+  saving,
+  scmProviderOptions,
+  statusOptions,
+  submitProject,
+} = useProjectCreateService()
 </script>
 
 <template>
@@ -93,13 +32,13 @@ async function submit() {
       description="Register a new service space in DevHub so the platform can track ownership, deployment targets, and future scaffolding workflows."
     >
       <div class="flex flex-wrap gap-3">
-        <NButton @click="router.push({ name: 'projects' })">
+        <NButton @click="openProjects">
           Back to projects
         </NButton>
         <NButton
           type="primary"
           :loading="saving"
-          @click="submit"
+          @click="submitProject"
         >
           Create project
         </NButton>
@@ -148,7 +87,7 @@ async function submit() {
             <NCheckboxGroup v-model:value="form.environments">
               <div class="grid gap-3">
                 <NCheckbox
-                  v-for="option in environmentOptions"
+                  v-for="option in environmentSelectOptions"
                   :key="option.value"
                   :value="option.value"
                   :label="option.label"

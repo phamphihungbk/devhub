@@ -1,0 +1,8 @@
+name: python fastapi template
+type: scaffolder
+version: 1.0.0
+description: Create a Python FastAPI HTTP API template with health endpoint
+scope: global
+enabled: true
+runtime: python
+entrypoint: run.py
