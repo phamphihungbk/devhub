@@ -205,6 +205,10 @@ func (r *router) applyProjectRoutes(router *gin.Engine) {
 			r.Middleware.RequirePermissions(entity.PermissionReleaseWrite),
 			r.ReleaseHandler.CreateRelease,
 		)
+		serviceProtectedRoute.POST("/:service/scaffold-suggestions",
+			r.Middleware.RequirePermissions(entity.PermissionScaffoldRequestWrite),
+			r.ServiceHandler.SuggestScaffold,
+		)
 	}
 }
 

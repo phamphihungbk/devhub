@@ -6,7 +6,7 @@ import {
 } from '@vicons/carbon'
 import {
   canAccessMeta,
-} from '@/access/rbac'
+} from '@/services/access/rbac'
 import {
   NAvatar,
   NButton,

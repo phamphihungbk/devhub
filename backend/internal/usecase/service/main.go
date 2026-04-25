@@ -10,6 +10,7 @@ import (
 
 type ServiceUsecase interface {
 	FindAllServices(ctx context.Context, input FindAllServicesInput) (entity.Services, error)
+	SuggestScaffold(ctx context.Context, input SuggestScaffoldInput) (ScaffoldSuggestion, error)
 }
 
 type serviceUsecase struct {

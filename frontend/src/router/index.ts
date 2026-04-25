@@ -14,7 +14,7 @@ import { h } from 'vue'
 import {
   canAccessMeta,
   permission,
-} from '@/access/rbac'
+} from '@/services/access/rbac'
 import {
   createRouter,
   createWebHistory,
