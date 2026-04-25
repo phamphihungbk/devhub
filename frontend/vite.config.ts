@@ -2,13 +2,22 @@ import path from 'node:path'
 import UnoCSS from 'unocss/vite'
 import vue from '@vitejs/plugin-vue'
 import { defineConfig, loadEnv } from 'vite'
+import AutoImport from 'unplugin-auto-import/vite'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const proxyTarget = env.VITE_DEV_PROXY_TARGET || 'http://backend:8080'
 
   return {
-    plugins: [vue(), UnoCSS()],
+    plugins: [
+      vue(),
+      AutoImport({
+        dirs: ['src/utils'],
+        dts: 'src/auto-imports.d.ts',
+        vueTemplate: true,
+      }),
+      UnoCSS(),
+    ],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),

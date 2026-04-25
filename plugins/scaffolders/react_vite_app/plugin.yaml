@@ -1,0 +1,8 @@
+name: react vite frontend template
+type: scaffolder
+version: 1.0.0
+description: Create a React Vite frontend application template
+scope: global
+enabled: true
+runtime: python
+entrypoint: run.py

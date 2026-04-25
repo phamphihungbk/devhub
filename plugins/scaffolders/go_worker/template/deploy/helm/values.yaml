@@ -1,0 +1,8 @@
+image:
+  repository: [[CD_IMAGE_REPOSITORY]]
+  tag: [[IMAGE_TAG]]
+service:
+  name: [[SERVICE_NAME]]
+  port: [[PORT]]
+env:
+  name: [[ENVIRONMENT]]

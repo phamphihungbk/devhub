@@ -3,7 +3,7 @@ import { NButton, NCard, NForm, NFormItem, NInput, useMessage } from 'naive-ui'
 import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import { ApiError } from '@/services/request'
+import { ApiError } from '@/api/request'
 import { useAuthStore } from '@/stores/modules/auth'
 
 const authStore = useAuthStore()

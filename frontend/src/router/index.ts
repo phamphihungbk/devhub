@@ -1,6 +1,7 @@
 import type { Component } from 'vue'
 import {
   Application,
+  AiResults,
   Catalog,
   CloudServiceManagement,
   Dashboard,
@@ -79,6 +80,16 @@ const routes: RouteRecordRaw[] = [
           icon: TaskApproved,
           hideInMenu: true,
           activeMenu: 'approvals',
+          permissions: [permission.scaffoldRequestWrite],
+        },
+      },
+      {
+        path: 'scaffold-requests',
+        name: 'scaffold-requests',
+        component: () => import('@/views/scaffold-requests/index.vue'),
+        meta: {
+          title: 'Scaffold requests',
+          icon: AiResults,
           permissions: [permission.scaffoldRequestWrite],
         },
       },

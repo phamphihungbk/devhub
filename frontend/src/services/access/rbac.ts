@@ -1,4 +1,4 @@
-import type { UserProfile } from '@/services/api'
+import type { UserProfile } from '@/api'
 
 export type AppRole =
   | 'platform_admin'

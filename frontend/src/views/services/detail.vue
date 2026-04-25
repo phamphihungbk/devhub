@@ -30,8 +30,8 @@ import {
   fetchServiceDeployments,
   fetchServiceReleases,
   suggestProjectScaffoldRequest,
-} from '@/services/api'
-import { ApiError } from '@/services/request'
+} from '@/api'
+import { ApiError } from '@/api/request'
 import { useAuthStore } from '@/stores/modules/auth'
 import { getEnvironmentTagColor } from '@/theme/environment'
 import type {
@@ -43,7 +43,7 @@ import type {
   Release,
   ScaffoldRequestSuggestion,
   Service,
-} from '@/services/api'
+} from '@/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -504,21 +504,7 @@ onMounted(loadServiceDetails)
         <NButton @click="router.push({ name: 'services' })">
           Back to services
         </NButton>
-        <NButton
-          v-if="canCreateScaffoldRequest"
-          secondary
-          @click="openScaffoldModal"
-        >
-          New scaffold request
-        </NButton>
         <!-- <NButton
-          secondary
-          :disabled="!selectedRelease"
-          @click="openDeploymentModal"
-        >
-          Deploy selected release
-        </NButton> -->
-        <NButton
           v-if="service?.repo_url"
           tag="a"
           :href="service.repo_url"
@@ -526,6 +512,13 @@ onMounted(loadServiceDetails)
           rel="noreferrer"
         >
           Open repository
+        </NButton> -->
+        <NButton
+          v-if="canCreateScaffoldRequest"
+          type="primary"
+          @click="openScaffoldModal"
+        >
+          New scaffold request
         </NButton>
       </div>
     </PageHeader>

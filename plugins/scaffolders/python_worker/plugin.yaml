@@ -1,0 +1,8 @@
+name: python worker template
+type: scaffolder
+version: 1.0.0
+description: Create a Python background worker, job, or queue consumer template
+scope: global
+enabled: true
+runtime: python
+entrypoint: run.py

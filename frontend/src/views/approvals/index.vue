@@ -1,207 +1,25 @@
 <script setup lang="ts">
-import { NButton, NCard, NDataTable, NForm, NFormItem, NInput, NModal, NSelect, NTag, useMessage } from 'naive-ui'
-import { computed, h, onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { NButton, NCard, NDataTable, NForm, NFormItem, NInput, NModal, NSelect } from 'naive-ui'
 
 import PageHeader from '@/components/page-header.vue'
-import { createApprovalDecision, fetchApprovalRequests } from '@/services/api'
-import { ApiError } from '@/services/request'
-import type { ApprovalRequestRecord } from '@/services/api'
+import { useApprovalListService } from '@/services/approval'
 
-const message = useMessage()
-const router = useRouter()
-const loading = ref(false)
-const actingRequestId = ref('')
-const rows = ref<ApprovalRequestRecord[]>([])
-const decisionModalOpen = ref(false)
-const selectedRequest = ref<ApprovalRequestRecord | null>(null)
-const selectedDecision = ref<'approve' | 'reject'>('approve')
-const decisionComment = ref('')
-const filters = reactive({
-  status: 'pending',
-})
-
-const statusOptions = [
-  { label: 'Pending', value: 'pending' },
-  { label: 'Approved', value: 'approved' },
-  { label: 'Rejected', value: 'rejected' },
-  { label: 'Canceled', value: 'canceled' },
-]
-
-function getApprovalStatusTagColor(status: string) {
-  switch (status) {
-    case 'approved':
-      return { color: '#dcfce7', textColor: '#15803d' }
-    case 'rejected':
-      return { color: '#fee2e2', textColor: '#b91c1c' }
-    case 'canceled':
-      return { color: '#e5e7eb', textColor: '#4b5563' }
-    default:
-      return { color: '#fef3c7', textColor: '#b45309' }
-  }
-}
-
-function formatScope(row: ApprovalRequestRecord) {
-  return [row.project_id, row.service_id, row.environment].filter(Boolean).join(' / ') || 'Global'
-}
-
-function formatRequestedAt(value: string) {
-  return new Date(value).toLocaleString()
-}
-
-async function load() {
-  loading.value = true
-  try {
-    rows.value = await fetchApprovalRequests({
-      status: filters.status || undefined,
-      sortBy: 'date',
-      sortOrder: 'desc',
-      limit: 100,
-      offset: 0,
-    })
-  } catch (error) {
-    message.error(error instanceof ApiError ? error.message : 'Unable to load approval requests.')
-  } finally {
-    loading.value = false
-  }
-}
-
-function openDecisionModal(row: ApprovalRequestRecord, decision: 'approve' | 'reject') {
-  selectedRequest.value = row
-  selectedDecision.value = decision
-  decisionComment.value = ''
-  decisionModalOpen.value = true
-}
-
-function openApprovalDetail(row: ApprovalRequestRecord) {
-  router.push({
-    name: 'approval-details',
-    params: { approvalRequestId: row.id },
-  })
-}
-
-async function submitDecision() {
-  if (!selectedRequest.value) return
-
-  const comment = decisionComment.value.trim()
-  if (!comment) {
-    message.warning('Comment is required before submitting a decision.')
-    return
-  }
-
-  actingRequestId.value = selectedRequest.value.id
-  try {
-    const response = await createApprovalDecision(selectedRequest.value.id, {
-      decision: selectedDecision.value,
-      comment,
-    })
-    rows.value = rows.value.map(item =>
-      item.id === selectedRequest.value?.id ? response.approval_request : item,
-    )
-    message.success(`Approval request ${selectedDecision.value}d successfully.`)
-    decisionModalOpen.value = false
-  } catch (error) {
-    message.error(error instanceof ApiError ? error.message : `Unable to ${selectedDecision.value} approval request.`)
-  } finally {
-    actingRequestId.value = ''
-  }
-}
-
-const pendingCount = computed(() =>
-  rows.value.filter(row => row.status === 'pending').length,
-)
-
-const columns = [
-  {
-    title: 'Target',
-    key: 'target',
-    render: (row: ApprovalRequestRecord) => `${row.resource} / ${row.action}`,
-  },
-  {
-    title: 'Scope',
-    key: 'scope',
-    render: (row: ApprovalRequestRecord) => formatScope(row),
-  },
-  {
-    title: 'Status',
-    key: 'status',
-    render: (row: ApprovalRequestRecord) =>
-      h(
-        NTag,
-        {
-          bordered: false,
-          color: getApprovalStatusTagColor(row.status),
-        },
-        { default: () => row.status },
-      ),
-  },
-  {
-    title: 'Progress',
-    key: 'progress',
-    render: (row: ApprovalRequestRecord) => `${row.approved_count}/${row.required_approvals}`,
-  },
-  {
-    title: 'Requested At',
-    key: 'created_at',
-    render: (row: ApprovalRequestRecord) => formatRequestedAt(row.created_at),
-  },
-  {
-    title: 'Actions',
-    key: 'actions',
-    render: (row: ApprovalRequestRecord) =>
-      h(
-        'div',
-        { class: 'flex gap-2' },
-        [
-          h(
-            NButton,
-            {
-              size: 'small',
-              onClick: (event: MouseEvent) => {
-                event.stopPropagation()
-                openApprovalDetail(row)
-              },
-            },
-            { default: () => 'View' },
-          ),
-          row.status === 'pending'
-            ? h(
-                NButton,
-                {
-                  size: 'small',
-                  type: 'primary',
-                  ghost: true,
-                  loading: actingRequestId.value === row.id,
-                  onClick: (event: MouseEvent) => {
-                    event.stopPropagation()
-                    openDecisionModal(row, 'approve')
-                  },
-                },
-                { default: () => 'Approve' },
-              )
-            : null,
-          row.status === 'pending'
-            ? h(
-                NButton,
-                {
-                  size: 'small',
-                  type: 'error',
-                  ghost: true,
-                  loading: actingRequestId.value === row.id,
-                  onClick: (event: MouseEvent) => {
-                    event.stopPropagation()
-                    openDecisionModal(row, 'reject')
-                  },
-                },
-                { default: () => 'Reject' },
-              )
-            : null,
-        ],
-      ),
-  },
-]
-
-onMounted(load)
+const {
+  actingRequestId,
+  columns,
+  decisionComment,
+  decisionModalOpen,
+  filters,
+  loadApprovals,
+  loading,
+  openApprovalDetail,
+  pendingCount,
+  rows,
+  selectedDecision,
+  selectedRequest,
+  statusOptions,
+  submitDecision,
+} = useApprovalListService()
 </script>
 
 <template>
@@ -212,7 +30,7 @@ onMounted(load)
       description="Review pending control-plane actions and resolve the requests that are currently waiting on manual approval."
     >
       <div class="flex flex-wrap gap-3">
-        <NButton type="primary" @click="load">
+        <NButton type="primary" @click="loadApprovals">
           Refresh
         </NButton>
       </div>
@@ -233,7 +51,7 @@ onMounted(load)
           v-model:value="filters.status"
           class="mt-3"
           :options="statusOptions"
-          @update:value="load"
+          @update:value="loadApprovals"
         />
       </NCard>
     </div>
@@ -245,7 +63,7 @@ onMounted(load)
         :loading="loading"
         :pagination="{ pageSize: 10 }"
         :bordered="false"
-        :row-props="(row: ApprovalRequestRecord) => ({
+        :row-props="row => ({
           class: 'cursor-pointer',
           onClick: () => openApprovalDetail(row),
         })"

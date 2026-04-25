@@ -1,0 +1,8 @@
+name: node express api template
+type: scaffolder
+version: 1.0.0
+description: Create a Node.js Express HTTP API template
+scope: global
+enabled: true
+runtime: python
+entrypoint: run.py

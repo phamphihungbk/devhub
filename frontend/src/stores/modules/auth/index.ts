@@ -3,8 +3,8 @@ import { reactive } from 'vue';
 
 import { canAccess, resolveProfilePermissions, type AccessRequirement } from '@/services/access/rbac'
 import { SetupStoreId } from '@/enum'
-import { fetchCurrentUser, loginWithPassword } from '@/services/api'
-import type { Credentials, LoginTokens, UserProfile } from '@/services/api'
+import { fetchCurrentUser, loginWithPassword } from '@/api'
+import type { Credentials, LoginTokens, UserProfile } from '@/api'
 
 export const TOKEN_STORAGE_KEY = 'devhub.access_token'
 export const REFRESH_STORAGE_KEY = 'devhub.refresh_token'
