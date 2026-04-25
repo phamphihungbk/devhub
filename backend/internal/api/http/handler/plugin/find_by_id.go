@@ -16,6 +16,7 @@ type findOnePluginResponse struct {
 	Version     string `json:"version" example:"1.0.0"`
 	Runtime     string `json:"runtime" example:"python"`
 	Entrypoint  string `json:"entrypoint" example:"/app/plugins/scaffolders/go_http_api/action.py"`
+	Enabled     bool   `json:"enabled" example:"true"`
 	Scope       string `json:"scope" example:"global"`
 	Description string `json:"description" example:"Plugin Description"`
 }
@@ -55,6 +56,7 @@ func (h *pluginHandler) newFindOnePluginResponse(plugin *entity.Plugin) findOneP
 		Version:     plugin.Version,
 		Runtime:     plugin.Runtime.String(),
 		Entrypoint:  plugin.Entrypoint,
+		Enabled:     plugin.Enabled,
 		Scope:       plugin.Scope.String(),
 		Description: plugin.Description,
 	}
