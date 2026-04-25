@@ -72,6 +72,9 @@ make help
 # Prepare local environment files
 make bootstrap
 
+# Install local Git hooks for Conventional Commit messages
+make install-git-hooks
+
 # Start the local platform stack
 make up
 
@@ -117,6 +120,9 @@ make setup-local-https
 Useful follow-up commands:
 
 ```bash
+# Validate commit messages locally
+make install-git-hooks
+
 # Backend with file watch
 make backend-watch
 
