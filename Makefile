@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help bootstrap generate-dev-cert setup-local-https \
+.PHONY: help bootstrap install-git-hooks generate-dev-cert setup-local-https \
 	backend-up backend-down backend-watch frontend-up frontend-down frontend-watch \
 	build-backend build-frontend up down logs logs-worker logs-runner logs-frontend ps shell \
 	worker-up worker-down runner-up runner-down migrate migrate-down migrate-force new-migration seed-data generate sync-worker plugin-scan create-plugin config prod-config argocd-ui argocd-token minikube-registry
@@ -11,6 +11,11 @@ FRONTEND_SERVICES := frontend nginx
 ##@ Setup
 bootstrap: ## Create local env files for first run
 	@./scripts/bootstrap.sh
+
+install-git-hooks: ## Install local Git hooks, including Conventional Commit message validation
+	@git config core.hooksPath .githooks
+	@chmod +x .githooks/commit-msg scripts/validate-commit-msg.sh
+	@echo "Git hooks installed from .githooks"
 
 generate-dev-cert: ## Generate local TLS certs, optionally with DOMAIN=devhub.local API_DOMAIN=api.devhub.local GRAFANA_DOMAIN=grafana.devhub.local
 	@./scripts/generate-dev-cert.sh $(if $(DOMAIN),$(DOMAIN),) $(if $(API_DOMAIN),$(API_DOMAIN),) $(if $(GITEA_DOMAIN),$(GITEA_DOMAIN),) $(if $(GRAFANA_DOMAIN),$(GRAFANA_DOMAIN),)

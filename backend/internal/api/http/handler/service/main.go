@@ -9,7 +9,6 @@ import (
 
 type ServiceHandler interface {
 	FindAllServices(c *gin.Context)
-	SuggestScaffold(c *gin.Context)
 }
 
 type serviceHandler struct {

@@ -66,7 +66,7 @@ func (s *Server) setupRouteDependencies(ctx context.Context, tracerProvider *sdk
 	deploymentUsecase := deploymentUsecase.NewDeploymentUsecase(s.cfg.App, dbApprovalRepo, dbDeploymentRepo)
 	releaseUsecase := releaseUsecase.NewReleaseUsecase(s.cfg.App, dbReleaseRepo)
 	pluginUsecase := pluginUsecase.NewPluginUsecase(s.cfg.App, dbPluginRepo)
-	scaffoldRequestUsecase := scaffoldRequestUsecase.NewScaffoldRequestUsecase(s.cfg.App, dbApprovalRepo, dbScaffoldRequestRepo)
+	scaffoldRequestUsecase := scaffoldRequestUsecase.NewScaffoldRequestUsecase(s.cfg.App, dbApprovalRepo, dbPluginRepo, dbScaffoldRequestRepo)
 	serviceUsecase := serviceUsecase.NewServiceUsecase(s.cfg.App, dbServiceRepo)
 	teamUsecase := teamUsecase.NewTeamUsecase(s.cfg.App, dbTeamRepo)
 	authUsecase := authUsecase.NewAuthUsecase(s.cfg.Token, dbUserRepo, dbRefreshTokenRepo)
