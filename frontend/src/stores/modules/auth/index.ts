@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { reactive } from 'vue';
 
-import { canAccess, resolveProfilePermissions, type AccessRequirement } from '@/access/rbac'
+import { canAccess, resolveProfilePermissions, type AccessRequirement } from '@/services/access/rbac'
 import { SetupStoreId } from '@/enum'
 import { fetchCurrentUser, loginWithPassword } from '@/services/api'
 import type { Credentials, LoginTokens, UserProfile } from '@/services/api'

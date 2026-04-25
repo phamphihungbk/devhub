@@ -3,7 +3,7 @@ import { NButton, NCard, NDataTable, NEmpty, NForm, NFormItem, NInput, NModal, N
 import { computed, h, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { permission } from '@/access/rbac'
+import { permission } from '@/services/access/rbac'
 import PageHeader from '@/components/page-header.vue'
 import { createRelease, fetchPlugins, fetchProjects, fetchProjectServices, fetchServiceReleases } from '@/services/api'
 import { ApiError } from '@/services/request'

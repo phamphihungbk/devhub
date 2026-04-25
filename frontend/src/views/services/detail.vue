@@ -2,6 +2,7 @@
 import {
   NButton,
   NCard,
+  NCheckbox,
   NDataTable,
   NForm,
   NFormItem,
@@ -16,11 +17,10 @@ import {
 import { computed, h, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import { permission } from '@/access/rbac'
+import { permission } from '@/services/access/rbac'
 import PageHeader from '@/components/page-header.vue'
 import {
   createDeployment,
-  createRelease,
   createScaffoldRequest,
   fetchDeploymentById,
   fetchPlugins,
@@ -29,18 +29,19 @@ import {
   fetchProjectServices,
   fetchServiceDeployments,
   fetchServiceReleases,
+  suggestServiceScaffold,
 } from '@/services/api'
 import { ApiError } from '@/services/request'
 import { useAuthStore } from '@/stores/modules/auth'
-import { environmentOptions, getEnvironmentTagColor } from '@/theme/environment'
+import { getEnvironmentTagColor } from '@/theme/environment'
 import type {
   CreateDeploymentPayload,
-  CreateReleasePayload,
   CreateScaffoldRequestPayload,
   Deployment,
   PluginRecord,
   Project,
   Release,
+  ScaffoldSuggestion,
   Service,
 } from '@/services/api'
 
@@ -55,11 +56,10 @@ const projectId = computed(() => project.value?.id || service.value?.project_id 
 const loading = ref(false)
 const deploymentSubmitting = ref(false)
 const deploymentLogLoading = ref(false)
-const releaseSubmitting = ref(false)
+const scaffoldSuggestionLoading = ref(false)
 const scaffoldSubmitting = ref(false)
 const deploymentModalOpen = ref(false)
 const deploymentLogModalOpen = ref(false)
-const releaseModalOpen = ref(false)
 const scaffoldModalOpen = ref(false)
 const project = ref<Project | null>(null)
 const service = ref<Service | null>(null)
@@ -68,14 +68,6 @@ const deployments = ref<Deployment[]>([])
 const plugins = ref<PluginRecord[]>([])
 const selectedReleaseTag = ref<string | null>(null)
 const selectedDeployment = ref<Deployment | null>(null)
-
-const releaseForm = reactive<CreateReleasePayload>({
-  plugin_id: '',
-  tag: '',
-  target: 'main',
-  name: '',
-  notes: '',
-})
 
 const deploymentForm = reactive<CreateDeploymentPayload>({
   plugin_id: '',
@@ -95,6 +87,8 @@ const scaffoldForm = reactive<CreateScaffoldRequestPayload>({
   },
 })
 
+const scaffoldSuggestion = ref<ScaffoldSuggestion | null>(null)
+
 const successfulReleases = computed(() =>
   releases.value.filter(item => item.status === 'completed').length,
 )
@@ -111,12 +105,6 @@ const failedDeployments = computed(() =>
   deployments.value.filter(item => item.status === 'failed').length,
 )
 
-const releaserOptions = computed(() =>
-  plugins.value
-    .filter(plugin => plugin.type === 'releaser')
-    .map(plugin => ({ label: plugin.name, value: plugin.id })),
-)
-
 const deployerOptions = computed(() =>
   plugins.value
     .filter(plugin => plugin.type === 'deployer')
@@ -129,9 +117,10 @@ const scaffolderOptions = computed(() =>
     .map(plugin => ({ label: plugin.name, value: plugin.id })),
 )
 
-const canCreateRelease = computed(() =>
-  authStore.canAccess({ permissions: [permission.releaseWrite] }),
-)
+const environmentSelectOptions = computed(() => {
+  const values = project.value?.environments?.length ? project.value.environments : ['dev', 'staging', 'prod']
+  return values.map(value => ({ label: value, value }))
+})
 
 const canCreateDeployment = computed(() =>
   authStore.canAccess({ permissions: [permission.deploymentWrite] }),
@@ -151,14 +140,6 @@ const visibleDeployments = computed(() =>
     : deployments.value,
 )
 
-function resetReleaseForm() {
-  releaseForm.plugin_id = releaserOptions.value[0]?.value || ''
-  releaseForm.tag = ''
-  releaseForm.target = 'main'
-  releaseForm.name = ''
-  releaseForm.notes = ''
-}
-
 function resetDeploymentForm() {
   deploymentForm.plugin_id = deployerOptions.value[0]?.value || ''
   deploymentForm.environment = project.value?.environments?.[0] || 'dev'
@@ -168,31 +149,69 @@ function resetDeploymentForm() {
 function resetScaffoldForm() {
   scaffoldForm.plugin_id = scaffolderOptions.value[0]?.value || ''
   scaffoldForm.environment = project.value?.environments?.[0] || 'dev'
-  scaffoldForm.variables.service_name = service.value?.name || project.value?.name || ''
-  scaffoldForm.variables.module_path = service.value?.repo_url || ''
-  scaffoldForm.variables.port = 8080
+  scaffoldForm.variables.service_name = normalizeServiceName(service.value?.name || project.value?.name || 'new-service')
+  scaffoldForm.variables.module_path = inferModulePath(service.value?.repo_url || '')
+  scaffoldForm.variables.port = suggestPort(scaffoldForm.variables.service_name)
   scaffoldForm.variables.database = 'postgres'
   scaffoldForm.variables.enable_logging = true
-}
-
-function openReleaseModal() {
-  resetReleaseForm()
-  releaseModalOpen.value = true
-}
-
-function openDeploymentModal() {
-  if (!selectedRelease.value) {
-    message.warning('Select a release first so deployment can use its version.')
-    return
-  }
-
-  resetDeploymentForm()
-  deploymentModalOpen.value = true
+  scaffoldSuggestion.value = null
 }
 
 function openScaffoldModal() {
   resetScaffoldForm()
+  generateScaffoldSuggestion()
   scaffoldModalOpen.value = true
+}
+
+function normalizeServiceName(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    || 'new-service'
+}
+
+function inferModulePath(repoUrl: string) {
+  const trimmed = repoUrl.trim().replace(/\.git$/, '')
+  if (!trimmed) return ''
+  return trimmed
+    .replace(/^https?:\/\//, '')
+    .replace(/^git@/, '')
+    .replace(':', '/')
+}
+
+function suggestPort(name: string) {
+  const hash = [...name].reduce((total, char) => total + char.charCodeAt(0), 0)
+  return 8000 + (hash % 1000)
+}
+
+async function generateScaffoldSuggestion() {
+  scaffoldSuggestionLoading.value = true
+
+  try {
+    scaffoldSuggestion.value = await suggestServiceScaffold(serviceId.value, {
+      service_name: service.value?.name || scaffoldForm.variables.service_name,
+      project_name: project.value?.name || '',
+      project_description: project.value?.description || '',
+      repo_url: service.value?.repo_url || scaffoldForm.variables.module_path,
+      environment: scaffoldForm.environment,
+      environments: project.value?.environments || [],
+    })
+  } catch (error) {
+    message.warning(error instanceof ApiError
+      ? `Using browser fallback: ${error.message}`
+      : 'Using browser fallback for scaffold suggestions.')
+  } finally {
+    scaffoldSuggestionLoading.value = false
+  }
+}
+
+function applyScaffoldSuggestion() {
+  if (!scaffoldSuggestion.value) return
+
+  scaffoldForm.environment = scaffoldSuggestion.value.environment
+  scaffoldForm.variables = { ...scaffoldSuggestion.value.variables }
 }
 
 function selectRelease(row: Release) {
@@ -372,7 +391,6 @@ async function loadServiceDetails() {
     plugins.value = pluginData
     releases.value = serviceReleases
     deployments.value = serviceDeployments
-    resetReleaseForm()
     resetScaffoldForm()
   } catch (error) {
     message.error(error instanceof ApiError ? error.message : 'Unable to load service details.')
@@ -437,35 +455,6 @@ async function submitScaffoldRequest() {
   }
 }
 
-async function submitRelease() {
-  if (!releaseForm.plugin_id || !releaseForm.tag.trim() || !releaseForm.target.trim()) {
-    message.warning('Complete the release form before submitting.')
-    return
-  }
-
-  releaseSubmitting.value = true
-
-  try {
-    const createdTag = releaseForm.tag.trim()
-
-    await createRelease(serviceId.value, {
-      plugin_id: releaseForm.plugin_id,
-      tag: createdTag,
-      target: releaseForm.target.trim(),
-      name: releaseForm.name?.trim() || undefined,
-      notes: releaseForm.notes?.trim() || undefined,
-    })
-    message.success('Release created successfully.')
-    releaseModalOpen.value = false
-    await loadServiceDetails()
-    selectedReleaseTag.value = createdTag
-  } catch (error) {
-    message.error(error instanceof ApiError ? error.message : 'Unable to create release.')
-  } finally {
-    releaseSubmitting.value = false
-  }
-}
-
 async function submitDeployment() {
   if (!deploymentForm.plugin_id || !deploymentForm.environment || !deploymentForm.version.trim()) {
     message.warning('Complete the deployment form before submitting.')
@@ -504,13 +493,6 @@ onMounted(loadServiceDetails)
       <div class="flex flex-wrap gap-3">
         <NButton @click="router.push({ name: 'services' })">
           Back to services
-        </NButton>
-        <NButton
-          v-if="canCreateRelease"
-          type="primary"
-          @click="openReleaseModal"
-        >
-          New release
         </NButton>
         <NButton
           v-if="canCreateScaffoldRequest"
@@ -638,60 +620,6 @@ onMounted(loadServiceDetails)
     </div>
 
     <NModal
-      v-if="canCreateRelease"
-      v-model:show="releaseModalOpen"
-      preset="card"
-      title="New release"
-      class="max-w-2xl"
-      :bordered="false"
-      segmented
-    >
-      <NForm label-placement="top">
-        <div class="grid gap-4 md:grid-cols-2">
-          <NFormItem label="Releaser plugin">
-            <NSelect
-              v-model:value="releaseForm.plugin_id"
-              :options="releaserOptions"
-              placeholder="Select releaser"
-            />
-          </NFormItem>
-
-          <NFormItem label="Target">
-            <NInput v-model:value="releaseForm.target" placeholder="main" />
-          </NFormItem>
-
-          <NFormItem label="Tag">
-            <NInput v-model:value="releaseForm.tag" placeholder="v1.0.0" />
-          </NFormItem>
-
-          <NFormItem label="Name">
-            <NInput v-model:value="releaseForm.name" placeholder="Payment v1.0.0" />
-          </NFormItem>
-
-          <NFormItem label="Notes" class="md:col-span-2">
-            <NInput
-              v-model:value="releaseForm.notes"
-              type="textarea"
-              :autosize="{ minRows: 3, maxRows: 5 }"
-              placeholder="Optional release notes or rollout context."
-            />
-          </NFormItem>
-        </div>
-      </NForm>
-
-      <template #action>
-        <div class="flex justify-end gap-3">
-          <NButton @click="releaseModalOpen = false">
-            Cancel
-          </NButton>
-          <NButton type="primary" :loading="releaseSubmitting" @click="submitRelease">
-            Create release
-          </NButton>
-        </div>
-      </template>
-    </NModal>
-
-    <NModal
       v-if="canCreateDeployment"
       v-model:show="deploymentModalOpen"
       preset="card"
@@ -713,7 +641,7 @@ onMounted(loadServiceDetails)
           <NFormItem label="Environment">
             <NSelect
               v-model:value="deploymentForm.environment"
-              :options="environmentOptions"
+              :options="environmentSelectOptions"
               placeholder="Select environment"
             />
           </NFormItem>
@@ -745,11 +673,64 @@ onMounted(loadServiceDetails)
       v-model:show="scaffoldModalOpen"
       preset="card"
       title="New scaffold request"
-      class="max-w-2xl"
+      class="max-w-3xl"
       :bordered="false"
       segmented
     >
       <NForm label-placement="top">
+        <div class="mb-4 rounded-2xl border border-[var(--app-border)] bg-slate-50 p-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <p class="text-sm font-700 text-[var(--app-text)]">AI-assisted scaffold suggestions</p>
+                <NTag v-if="scaffoldSuggestion" size="small" :bordered="false" type="success">
+                  {{ scaffoldSuggestion.source }}
+                </NTag>
+              </div>
+              <p class="mt-1 text-xs text-[var(--app-text-muted)]">Generated by the local AI service from {{ service?.name || 'this service' }} and {{ project?.name || 'this project' }}</p>
+            </div>
+            <div class="flex gap-2">
+              <NButton size="small" :loading="scaffoldSuggestionLoading" @click="generateScaffoldSuggestion">
+                Refresh
+              </NButton>
+              <NButton
+                size="small"
+                type="primary"
+                ghost
+                :disabled="!scaffoldSuggestion || scaffoldSuggestionLoading"
+                @click="applyScaffoldSuggestion"
+              >
+                Apply
+              </NButton>
+            </div>
+          </div>
+
+          <div v-if="scaffoldSuggestion" class="mt-4 grid gap-3 text-sm md:grid-cols-2">
+            <div class="rounded-xl bg-white p-3">
+              <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Suggested service</p>
+              <p class="mt-1 font-semibold text-[var(--app-text)]">{{ scaffoldSuggestion.variables.service_name }}</p>
+            </div>
+            <div class="rounded-xl bg-white p-3">
+              <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Suggested port</p>
+              <p class="mt-1 font-semibold text-[var(--app-text)]">{{ scaffoldSuggestion.variables.port }}</p>
+            </div>
+            <div class="rounded-xl bg-white p-3">
+              <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Environment</p>
+              <p class="mt-1 font-semibold text-[var(--app-text)]">{{ scaffoldSuggestion.environment }}</p>
+            </div>
+            <div class="rounded-xl bg-white p-3">
+              <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Module path</p>
+              <p class="mt-1 break-all font-semibold text-[var(--app-text)]">{{ scaffoldSuggestion.variables.module_path || 'Manual input needed' }}</p>
+            </div>
+            <div class="rounded-xl bg-white p-3 md:col-span-2">
+              <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Reasoning</p>
+              <ul class="mt-2 grid gap-1 text-[var(--app-text-muted)]">
+                <li v-for="item in scaffoldSuggestion.rationale" :key="item">{{ item }}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         <div class="grid gap-4 md:grid-cols-2">
           <NFormItem label="Scaffolder plugin">
             <NSelect
@@ -762,7 +743,7 @@ onMounted(loadServiceDetails)
           <NFormItem label="Environment">
             <NSelect
               v-model:value="scaffoldForm.environment"
-              :options="environmentOptions"
+              :options="environmentSelectOptions"
               placeholder="Select environment"
             />
           </NFormItem>
@@ -784,13 +765,9 @@ onMounted(loadServiceDetails)
           </NFormItem>
 
           <NFormItem label="Enable logging">
-            <NSelect
-              v-model:value="scaffoldForm.variables.enable_logging"
-              :options="[
-                { label: 'Enabled', value: true },
-                { label: 'Disabled', value: false },
-              ]"
-            />
+            <NCheckbox v-model:checked="scaffoldForm.variables.enable_logging">
+              Enabled
+            </NCheckbox>
           </NFormItem>
         </div>
       </NForm>

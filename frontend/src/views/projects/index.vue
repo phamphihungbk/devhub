@@ -3,7 +3,7 @@ import { NButton, NCard, NDataTable, NInput, NSelect, NTag, useMessage } from 'n
 import { computed, h, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { permission } from '@/access/rbac'
+import { permission } from '@/services/access/rbac'
 import PageHeader from '@/components/page-header.vue'
 import { fetchProjects, fetchTeams } from '@/services/api'
 import { ApiError } from '@/services/request'
