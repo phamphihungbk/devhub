@@ -1,0 +1,8 @@
+name: release notes
+type: releaser
+version: 1.0.0
+description: Generate a local release record from tag, target, and notes without pushing to SCM
+scope: global
+enabled: true
+runtime: python
+entrypoint: run.py

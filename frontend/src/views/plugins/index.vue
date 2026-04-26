@@ -35,6 +35,8 @@ const {
   scopeSelectOptions,
   selectedPlugin,
   submitPlugin,
+  syncPluginRegistry,
+  syncing,
   typeOptions,
 } = usePluginService()
 </script>
@@ -49,6 +51,13 @@ const {
       <div class="flex flex-wrap gap-3">
         <NButton @click="loadPlugins">
           Refresh
+        </NButton>
+        <NButton
+          v-if="canManagePlugins"
+          :loading="syncing"
+          @click="syncPluginRegistry"
+        >
+          Sync plugins
         </NButton>
         <NButton
           v-if="canManagePlugins"

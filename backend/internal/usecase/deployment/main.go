@@ -19,16 +19,19 @@ type deploymentUsecase struct {
 	approvalRepository   repository.ApprovalRepository
 	appConfig            config.AppConfig
 	deploymentRepository repository.DeploymentRepository
+	pluginRepository     repository.PluginRepository
 }
 
 func NewDeploymentUsecase(
 	appConfig config.AppConfig,
 	approvalRepository repository.ApprovalRepository,
 	deploymentRepository repository.DeploymentRepository,
+	pluginRepository repository.PluginRepository,
 ) DeploymentUsecase {
 	return &deploymentUsecase{
 		approvalRepository:   approvalRepository,
 		appConfig:            appConfig,
 		deploymentRepository: deploymentRepository,
+		pluginRepository:     pluginRepository,
 	}
 }

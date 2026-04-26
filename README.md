@@ -111,6 +111,8 @@ To view backend traces in Grafana:
 
 If the search is empty, generate fresh traces by opening the DevHub UI or calling any API endpoint, then search again. The local tracing path is `backend -> otel-collector -> tempo -> grafana`.
 
+Scaffold prompt suggestions return instantly from local prompt parsing and enabled plugin metadata. The optional Ollama Compose service is available for experiments, but it is not required for the scaffold suggestion flow.
+
 To configure those local domains and trust the generated certificate on macOS:
 
 ```bash

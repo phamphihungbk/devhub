@@ -51,6 +51,7 @@ func (u *deploymentUsecase) CreateDeployment(ctx context.Context, input CreateDe
 	}
 
 	serviceID := uuid.MustParse(input.ServiceID)
+	pluginID := uuid.MustParse(input.PluginID)
 	triggeredBy := uuid.MustParse(input.TriggeredBy)
 	approvalResource, err := entity.ParseOptionalApprovalResource(input.ApprovalResource)
 	if err != nil {
@@ -62,9 +63,22 @@ func (u *deploymentUsecase) CreateDeployment(ctx context.Context, input CreateDe
 		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid approval action", nil))
 	}
 
+	plugin, err := u.pluginRepository.FindOne(ctx, pluginID)
+	if err != nil {
+		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid deployment plugin", nil))
+	}
+
+	if plugin.Type != entity.PluginDeployer {
+		return nil, errs.NewBadRequestError("deployment plugin must be a deployer", nil)
+	}
+
+	if !plugin.Enabled {
+		return nil, errs.NewBadRequestError("deployment plugin is disabled", nil)
+	}
+
 	deployment = &entity.Deployment{
 		ServiceID:   serviceID,
-		PluginID:    uuid.MustParse(input.PluginID),
+		PluginID:    pluginID,
 		Environment: env,
 		Version:     input.Version,
 		Status:      entity.DeploymentStatusPending,

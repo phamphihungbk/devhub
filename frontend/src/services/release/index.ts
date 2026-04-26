@@ -91,7 +91,7 @@ export function useReleaseListService() {
 
   const releaserOptions = computed(() =>
     plugins.value
-      .filter(plugin => plugin.type === 'releaser')
+      .filter(plugin => plugin.type === 'releaser' && plugin.enabled !== false)
       .map(plugin => ({ label: plugin.name, value: plugin.id })),
   )
 

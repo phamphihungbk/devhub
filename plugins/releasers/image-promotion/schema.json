@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "required": ["tag", "repo_url"],
+  "properties": {
+    "release_id": { "type": "string" },
+    "service_id": { "type": "string" },
+    "plugin_id": { "type": "string" },
+    "tag": { "type": "string", "minLength": 1 },
+    "target": { "type": "string" },
+    "name": { "type": "string" },
+    "notes": { "type": "string" },
+    "repo_url": { "type": "string" }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,8 @@
+name: local runner deployment
+type: deployer
+version: 1.0.0
+description: Simulate a deployment locally and return runner output for development environments
+scope: environment
+enabled: true
+runtime: python
+entrypoint: run.py

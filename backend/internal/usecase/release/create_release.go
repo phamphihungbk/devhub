@@ -44,9 +44,23 @@ func (u *releaseUsecase) CreateRelease(ctx context.Context, input CreateReleaseI
 		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid environment", nil))
 	}
 
+	pluginID := uuid.MustParse(input.PluginID)
+	plugin, err := u.pluginRepository.FindOne(ctx, pluginID)
+	if err != nil {
+		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid release plugin", nil))
+	}
+
+	if plugin.Type != entity.PluginReleaser {
+		return nil, errs.NewBadRequestError("release plugin must be a releaser", nil)
+	}
+
+	if !plugin.Enabled {
+		return nil, errs.NewBadRequestError("release plugin is disabled", nil)
+	}
+
 	release = &entity.Release{
 		ServiceID:   uuid.MustParse(input.ServiceID),
-		PluginID:    uuid.MustParse(input.PluginID),
+		PluginID:    pluginID,
 		Tag:         input.Tag,
 		Target:      input.Target,
 		Name:        input.Name,

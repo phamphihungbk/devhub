@@ -108,13 +108,13 @@ const failedDeployments = computed(() =>
 
 const deployerOptions = computed(() =>
   plugins.value
-    .filter(plugin => plugin.type === 'deployer')
+    .filter(plugin => plugin.type === 'deployer' && plugin.enabled !== false)
     .map(plugin => ({ label: plugin.name, value: plugin.id })),
 )
 
 const scaffolderOptions = computed(() =>
   plugins.value
-    .filter(plugin => plugin.type === 'scaffolder')
+    .filter(plugin => plugin.type === 'scaffolder' && plugin.enabled !== false)
     .map(plugin => ({ label: plugin.name, value: plugin.id })),
 )
 

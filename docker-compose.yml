@@ -74,6 +74,27 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
 
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+
+  ollama-pull:
+    image: ollama/ollama:latest
+    restart: "no"
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
+    entrypoint:
+      - /bin/sh
+      - -c
+    command:
+      - until ollama list >/dev/null 2>&1; do sleep 2; done; ollama pull "$${OLLAMA_MODEL}"
+    depends_on:
+      ollama:
+        condition: service_started
+
   frontend:
     image: devhub-frontend:local
     build:
@@ -188,3 +209,4 @@ volumes:
   gitea_runner_data:
   tempo_data:
   grafana_data:
+  ollama_data:

@@ -61,6 +61,7 @@ func (u *scaffoldRequestUsecase) SuggestScaffoldRequest(ctx context.Context, inp
 		"Prompt was analyzed by the local scaffold suggestion engine.",
 		"Scaffolder plugin was selected from enabled scaffold_request plugins.",
 		"Service name was inferred from the user prompt and project context.",
+		"Selected plugin: " + plugin.Name + ".",
 	}
 	if hasExplicitPort(input.Prompt) {
 		rationale = append(rationale, "Port was taken from the prompt.")
@@ -70,18 +71,14 @@ func (u *scaffoldRequestUsecase) SuggestScaffoldRequest(ctx context.Context, inp
 	if len(suggestedEnvironments) > 0 {
 		rationale = append(rationale, "Environments were inferred from the prompt or project settings.")
 	}
-
 	if strings.TrimSpace(input.ProjectDescription) != "" {
 		rationale = append(rationale, "Project description was used as additional intent context.")
 	}
-	if plugin != nil {
-		rationale = append(rationale, "Selected plugin: "+plugin.Name+".")
-	}
 
 	return ScaffoldRequestSuggestion{
-		Source:       "local-prompt-heuristic-v1",
-		PluginID:     pluginID(plugin),
-		PluginName:   pluginName(plugin),
+		Source:       "local-prompt-heuristic-v2",
+		PluginID:     plugin.ID.String(),
+		PluginName:   plugin.Name,
 		Environment:  environment,
 		Environments: suggestedEnvironments,
 		Variables: entity.ScaffoldRequestVariables{
@@ -310,18 +307,4 @@ func suggestScaffoldSuggestionDatabase(prompt string, projectDescription string,
 func suggestScaffoldSuggestionLogging(prompt string, projectDescription string) bool {
 	value := strings.ToLower(prompt + " " + projectDescription)
 	return !strings.Contains(value, "disable logging") && !strings.Contains(value, "no logging")
-}
-
-func pluginID(plugin *entity.Plugin) string {
-	if plugin == nil {
-		return ""
-	}
-	return plugin.ID.String()
-}
-
-func pluginName(plugin *entity.Plugin) string {
-	if plugin == nil {
-		return ""
-	}
-	return plugin.Name
 }

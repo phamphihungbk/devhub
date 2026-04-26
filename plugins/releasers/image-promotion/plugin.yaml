@@ -1,0 +1,8 @@
+name: image promotion
+type: releaser
+version: 1.0.0
+description: Promote a tagged service image through the release flow and emit a traceable promotion reference
+scope: global
+enabled: true
+runtime: python
+entrypoint: run.py

@@ -264,6 +264,10 @@ func (r *router) applyPluginRoutes(router *gin.Engine) {
 			r.Middleware.RequirePermissions(entity.PermissionPluginWrite),
 			r.PluginHandler.CreatePlugin,
 		)
+		pluginProtectedRoute.POST("/sync",
+			r.Middleware.RequirePermissions(entity.PermissionPluginWrite),
+			r.PluginHandler.SyncPlugins,
+		)
 		pluginRoute.GET("/:plugin", r.PluginHandler.FindPluginByID)
 		pluginProtectedRoute.DELETE("/:plugin",
 			r.Middleware.RequirePermissions(entity.PermissionPluginWrite),

@@ -1,28 +1,38 @@
 <script setup lang="ts">
-import { NButton, NCard, NDataTable, NEmpty, NInput, NModal, NSelect, NStatistic, NTag } from 'naive-ui'
+import { NButton, NCard, NDataTable, NEmpty, NForm, NFormItem, NInput, NModal, NSelect, NStatistic, NTag } from 'naive-ui'
 
 import PageHeader from '@/components/page-header.vue'
 import { useDeploymentListService } from '@/services/deployment'
 
 const {
+  canCreateDeployment,
   columns,
   completedCount,
+  deployerOptions,
+  deploymentEnvironmentOptions,
+  deploymentForm,
+  deploymentModalOpen,
+  deploymentSubmitting,
   environmentOptions,
   failedCount,
   filteredRows,
   filters,
   formatRunnerText,
   getDeploymentStatusTagColor,
+  handleDeploymentServiceChange,
   loadDeployments,
   loading,
   logLoading,
   logModalOpen,
+  openDeploymentModal,
   openLogs,
   resetFilters,
   rows,
   runningCount,
   selectedDeployment,
+  serviceOptions,
   statusOptions,
+  submitDeployment,
 } = useDeploymentListService()
 </script>
 
@@ -33,9 +43,14 @@ const {
       title="Deployments"
       description="Track deployment activity across services, inspect environment rollout state, and open runner output for completed or failed jobs."
     >
-      <NButton @click="loadDeployments">
-        Refresh
-      </NButton>
+      <div class="flex flex-wrap gap-3">
+        <NButton @click="loadDeployments">
+          Refresh
+        </NButton>
+        <NButton v-if="canCreateDeployment" type="primary" @click="openDeploymentModal">
+          Deploy
+        </NButton>
+      </div>
     </PageHeader>
 
     <div class="grid gap-4 md:grid-cols-4">
@@ -89,6 +104,61 @@ const {
         })"
       />
     </NCard>
+
+    <NModal
+      v-if="canCreateDeployment"
+      v-model:show="deploymentModalOpen"
+      preset="card"
+      title="New deployment"
+      class="max-w-2xl"
+      :bordered="false"
+      segmented
+    >
+      <NForm label-placement="top">
+        <div class="grid gap-4 md:grid-cols-2">
+          <NFormItem label="Service">
+            <NSelect
+              v-model:value="deploymentForm.service_id"
+              :options="serviceOptions"
+              placeholder="Select service"
+              filterable
+              @update:value="handleDeploymentServiceChange"
+            />
+          </NFormItem>
+
+          <NFormItem label="Deployer plugin">
+            <NSelect
+              v-model:value="deploymentForm.plugin_id"
+              :options="deployerOptions"
+              placeholder="Select deployer"
+            />
+          </NFormItem>
+
+          <NFormItem label="Environment">
+            <NSelect
+              v-model:value="deploymentForm.environment"
+              :options="deploymentEnvironmentOptions"
+              placeholder="Select environment"
+            />
+          </NFormItem>
+
+          <NFormItem label="Version">
+            <NInput v-model:value="deploymentForm.version" placeholder="v1.0.0" />
+          </NFormItem>
+        </div>
+      </NForm>
+
+      <template #action>
+        <div class="flex justify-end gap-3">
+          <NButton @click="deploymentModalOpen = false">
+            Cancel
+          </NButton>
+          <NButton type="primary" :loading="deploymentSubmitting" @click="submitDeployment">
+            Create deployment
+          </NButton>
+        </div>
+      </template>
+    </NModal>
 
     <NModal
       v-model:show="logModalOpen"

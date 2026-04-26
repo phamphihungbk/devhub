@@ -103,7 +103,7 @@ export function useScaffoldRequestListService() {
 
   const scaffolderOptions = computed(() =>
     plugins.value
-      .filter(plugin => plugin.type === 'scaffolder')
+      .filter(plugin => plugin.type === 'scaffolder' && plugin.enabled !== false)
       .map(plugin => ({ label: plugin.name, value: plugin.id })),
   )
 

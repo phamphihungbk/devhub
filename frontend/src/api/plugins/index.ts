@@ -1,6 +1,12 @@
 import { apiBaseURL } from '../constants'
 import { api } from '../request'
-import type { PluginListQuery, PluginPayload, PluginRecord, UpdatePluginPayload } from './types'
+import type {
+  PluginListQuery,
+  PluginPayload,
+  PluginRecord,
+  PluginSyncResult,
+  UpdatePluginPayload,
+} from './types'
 
 const baseURL = `${apiBaseURL.plugins}/`
 
@@ -24,4 +30,14 @@ export function deletePlugin(pluginId: string) {
   return api.delete<null>(`${apiBaseURL.plugins}/${pluginId}`)
 }
 
-export type { PluginListQuery, PluginPayload, PluginRecord, UpdatePluginPayload } from './types'
+export function syncPlugins() {
+  return api.post<PluginSyncResult>(`${apiBaseURL.plugins}/sync`)
+}
+
+export type {
+  PluginListQuery,
+  PluginPayload,
+  PluginRecord,
+  PluginSyncResult,
+  UpdatePluginPayload,
+} from './types'

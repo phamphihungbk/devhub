@@ -61,6 +61,19 @@ func (u *scaffoldRequestUsecase) CreateScaffoldRequest(ctx context.Context, inpu
 		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid plugin ID", nil))
 	}
 
+	plugin, err := u.pluginRepository.FindOne(ctx, pluginID)
+	if err != nil {
+		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid scaffold plugin", nil))
+	}
+
+	if plugin.Type != entity.PluginScaffolder {
+		return nil, errs.NewBadRequestError("scaffold plugin must be a scaffolder", nil)
+	}
+
+	if !plugin.Enabled {
+		return nil, errs.NewBadRequestError("scaffold plugin is disabled", nil)
+	}
+
 	requestedBy, err := uuid.Parse(input.RequestedBy)
 	if err != nil {
 		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid requested by user ID", nil))
