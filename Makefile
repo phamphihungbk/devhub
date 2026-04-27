@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 .PHONY: help bootstrap install-git-hooks generate-dev-cert setup-local-https \
-	backend-up backend-down backend-watch frontend-up frontend-down frontend-watch \
+	backend-up backend-down frontend-up frontend-down watch \
 	build-backend build-frontend up down logs logs-worker logs-runner logs-frontend ps shell \
 	worker-up worker-down runner-up runner-down migrate migrate-down migrate-force new-migration seed-data generate sync-worker plugin-scan create-plugin config prod-config argocd-ui argocd-token minikube-registry
 
@@ -27,14 +27,11 @@ setup-local-https: ## Generate certs, update hosts, and trust local devhub/api/g
 backend-up: ## Start backend services without UI or nginx
 	@./scripts/dev.sh up --build $(BACKEND_SERVICES)
 
-backend-watch: ## Start backend services with Air hot reload
-	@./scripts/dev.sh up --build $(BACKEND_SERVICES)
-
 frontend-up: ## Start the UI stack; nginx will also bring up backend dependencies it needs
 	@./scripts/dev.sh up --build $(FRONTEND_SERVICES)
 
-frontend-watch: frontend-up ## Start and follow the frontend dev stack (frontend + nginx) for UI work
-	@./scripts/frontend-watch.sh
+watch: ## Start backend and frontend dev stack, then follow app logs
+	@./scripts/watch.sh
 
 build-backend: ## Build backend-side dev images without UI services
 	@./scripts/dev.sh build $(BACKEND_SERVICES)
@@ -61,7 +58,7 @@ logs-worker: ## Follow logs for the worker service
 	@./scripts/dev.sh logs -f worker
 
 logs-frontend: ## Follow logs for the frontend and nginx services
-	@/scripts/dev.sh logs -f frontend nginx
+	@./scripts/dev.sh logs -f frontend nginx
 
 logs-runner: ## Follow logs for the Gitea Actions runner
 	@./scripts/dev.sh logs -f gitea-runner

@@ -22,7 +22,7 @@ FROM base AS dev
 WORKDIR /app/backend
 RUN go install github.com/air-verse/air@v1.60.0
 EXPOSE 8080
-CMD ["go", "run", ".", "serve"]
+CMD ["air", "-c", ".air.toml"]
 
 FROM base AS prod-builder
 

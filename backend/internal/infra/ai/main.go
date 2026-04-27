@@ -1,9 +1,17 @@
 package ai
 
-import "context"
+import (
+	"context"
+
+	"devhub-backend/internal/domain/entity"
+)
 
 type Client interface {
 	PlanScaffold(ctx context.Context, input ScaffoldPlanningInput) (*ScaffoldPlan, error)
+}
+
+type ScaffoldSuggestionGenerator interface {
+	GenerateScaffoldSuggestion(ctx context.Context, input ScaffoldSuggestionInput) (*ScaffoldSuggestion, error)
 }
 
 type ScaffoldPlanningInput struct {
@@ -29,4 +37,19 @@ type ScaffoldPlan struct {
 	Confidence float64        `json:"confidence"`
 	Reason     string         `json:"reason"`
 	Matches    []string       `json:"matches"`
+}
+
+type ScaffoldSuggestionInput struct {
+	Prompt              string
+	Project             entity.Project
+	ProjectEnvironments []string
+	Plugin              entity.Plugin
+	Plan                ScaffoldPlan
+}
+
+type ScaffoldSuggestion struct {
+	Source      string
+	Environment string
+	Variables   entity.ScaffoldRequestVariables
+	Rationale   []string
 }

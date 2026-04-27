@@ -15,14 +15,13 @@ type suggestScaffoldRequest struct {
 }
 
 type suggestScaffoldRequestResponse struct {
-	Source       string                          `json:"source" example:"local-prompt-heuristic-v1"`
-	PluginID     string                          `json:"plugin_id" example:"72bd5b8f-54b3-442a-b54f-685643f6d46e"`
-	PluginName   string                          `json:"plugin_name" example:"Go HTTP API Scaffolder"`
-	Confidence   float64                         `json:"confidence" example:"0.82"`
-	Environment  string                          `json:"environment" example:"dev"`
-	Environments []string                        `json:"environments" example:"dev,staging,prod"`
-	Variables    entity.ScaffoldRequestVariables `json:"variables"`
-	Rationale    []string                        `json:"rationale"`
+	Source      string                          `json:"source" example:"local-prompt-heuristic-v1"`
+	PluginID    string                          `json:"plugin_id" example:"72bd5b8f-54b3-442a-b54f-685643f6d46e"`
+	PluginName  string                          `json:"plugin_name" example:"Go HTTP API Scaffolder"`
+	Confidence  float64                         `json:"confidence" example:"0.82"`
+	Environment string                          `json:"environment" example:"dev"`
+	Variables   entity.ScaffoldRequestVariables `json:"variables"`
+	Rationale   []string                        `json:"rationale"`
 }
 
 // @Summary		Suggest Scaffold Request
@@ -55,13 +54,12 @@ func (h *scaffoldRequestHandler) SuggestScaffoldRequest(c *gin.Context) {
 	}
 
 	httpresponse.Success(c, suggestScaffoldRequestResponse{
-		Source:       suggestion.Source,
-		PluginID:     suggestion.PluginID,
-		PluginName:   suggestion.PluginName,
-		Confidence:   suggestion.Confidence,
-		Environment:  suggestion.Environment,
-		Environments: suggestion.Environments,
-		Variables:    suggestion.Variables,
-		Rationale:    suggestion.Rationale,
+		Source:      suggestion.Source,
+		PluginID:    suggestion.PluginID,
+		PluginName:  suggestion.PluginName,
+		Confidence:  suggestion.Confidence,
+		Environment: suggestion.Environment,
+		Variables:   suggestion.Variables,
+		Rationale:   suggestion.Rationale,
 	})
 }

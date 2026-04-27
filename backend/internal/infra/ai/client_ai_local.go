@@ -17,15 +17,15 @@ type localPluginScore struct {
 	matches []string
 }
 
-var localTokenPattern = regexp.MustCompile(`[a-z0-9]+`)
+var LOCAL_TOKEN_PATTERN = regexp.MustCompile(`[a-z0-9]+`)
 
-var localStopTokens = map[string]struct{}{
+var LOCAL_STOP_TOKENS = map[string]struct{}{
 	"a": {}, "an": {}, "and": {}, "are": {}, "build": {}, "can": {}, "create": {}, "for": {}, "from": {}, "generate": {},
 	"i": {}, "in": {}, "is": {}, "me": {}, "new": {}, "of": {}, "please": {}, "scaffold": {}, "service": {}, "the": {},
 	"to": {}, "use": {}, "want": {}, "with": {},
 }
 
-var localTokenAliases = map[string][]string{
+var LOCAL_TOKEN_ALIASES = map[string][]string{
 	"api":        {"api", "http", "rest", "backend", "server"},
 	"backend":    {"backend", "api", "http", "server"},
 	"db":         {"db", "database", "postgres", "postgresql", "mysql", "mariadb", "mongodb"},
@@ -121,11 +121,11 @@ func tokenizeLocalPlugin(plugin PluginCandidate) map[string]struct{} {
 
 func tokenizeLocalText(value string) map[string]struct{} {
 	tokens := map[string]struct{}{}
-	for _, token := range localTokenPattern.FindAllString(strings.ToLower(value), -1) {
+	for _, token := range LOCAL_TOKEN_PATTERN.FindAllString(strings.ToLower(value), -1) {
 		if len(token) < 2 {
 			continue
 		}
-		if _, ok := localStopTokens[token]; ok {
+		if _, ok := LOCAL_STOP_TOKENS[token]; ok {
 			continue
 		}
 		tokens[token] = struct{}{}
@@ -137,7 +137,7 @@ func expandLocalTokens(tokens map[string]struct{}) map[string]struct{} {
 	expanded := map[string]struct{}{}
 	for token := range tokens {
 		expanded[token] = struct{}{}
-		for _, alias := range localTokenAliases[token] {
+		for _, alias := range LOCAL_TOKEN_ALIASES[token] {
 			expanded[alias] = struct{}{}
 		}
 	}

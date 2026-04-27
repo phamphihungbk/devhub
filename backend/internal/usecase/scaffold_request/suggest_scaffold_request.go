@@ -2,9 +2,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
-	"regexp"
-	"strconv"
 	"strings"
 
 	"devhub-backend/internal/domain/entity"
@@ -23,22 +20,16 @@ type SuggestScaffoldRequestInput struct {
 }
 
 type ScaffoldRequestSuggestion struct {
-	Source       string                          `json:"source"`
-	PluginID     string                          `json:"plugin_id"`
-	PluginName   string                          `json:"plugin_name"`
-	Confidence   float64                         `json:"confidence"`
-	Environment  string                          `json:"environment"`
-	Environments []string                        `json:"environments"`
-	Variables    entity.ScaffoldRequestVariables `json:"variables"`
-	Rationale    []string                        `json:"rationale"`
+	Source      string                          `json:"source"`
+	PluginID    string                          `json:"plugin_id"`
+	PluginName  string                          `json:"plugin_name"`
+	Confidence  float64                         `json:"confidence"`
+	Environment string                          `json:"environment"`
+	Variables   entity.ScaffoldRequestVariables `json:"variables"`
+	Rationale   []string                        `json:"rationale"`
 }
 
-var (
-	nonScaffoldServiceNameCharacterPattern = regexp.MustCompile(`[^a-z0-9]+`)
-	portPattern                            = regexp.MustCompile(`\bport\s*[:=]?\s*(\d{1,5})\b`)
-)
-
-func (u *scaffoldRequestUsecase) SuggestScaffoldRequest(ctx context.Context, input SuggestScaffoldRequestInput) (suggestion *ScaffoldRequestSuggestion, err error) {
+func (u *scaffoldRequestUsecase) SuggestScaffoldRequest(ctx context.Context, input SuggestScaffoldRequestInput) (suggestion ScaffoldRequestSuggestion, err error) {
 	const errLocation = "[usecase scaffold_request/suggest_scaffold_request SuggestScaffoldRequest] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
@@ -48,19 +39,19 @@ func (u *scaffoldRequestUsecase) SuggestScaffoldRequest(ctx context.Context, inp
 	)
 
 	if err != nil {
-		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to create validator", nil))
+		return ScaffoldRequestSuggestion{}, misc.WrapError(err, errs.NewInternalServerError("failed to create validator", nil))
 	}
 
 	// Validate Input
 	err = vInstance.Struct(input)
 	if err != nil {
-		return nil, misc.WrapError(err, errs.NewBadRequestError("the request is invalid", map[string]string{"details": err.Error()}))
+		return ScaffoldRequestSuggestion{}, misc.WrapError(err, errs.NewBadRequestError("the request is invalid", map[string]string{"details": err.Error()}))
 	}
 
 	projectID := uuid.MustParse(input.ProjectID)
 	project, err := u.projectRepository.FindOne(ctx, projectID)
 	if err != nil {
-		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to load project context", nil))
+		return ScaffoldRequestSuggestion{}, misc.WrapError(err, errs.NewInternalServerError("failed to load project context", nil))
 	}
 
 	projectEnvironments := make([]string, 0, len(project.Environments))
@@ -70,54 +61,28 @@ func (u *scaffoldRequestUsecase) SuggestScaffoldRequest(ctx context.Context, inp
 
 	plugin, plan, err := u.suggestScaffolderPlugin(ctx, input.Prompt+" "+project.Description)
 	if err != nil {
-		return nil, err
+		return ScaffoldRequestSuggestion{}, err
 	}
 
-	serviceName := normalizeScaffoldSuggestionServiceName(firstNonEmpty(inferNameFromPrompt(input.Prompt), project.Name, inferNameFromPrompt(project.Description), "new-service"))
-	suggestedEnvironments := inferScaffoldSuggestionEnvironments(input.Prompt, projectEnvironments)
-	environment := pickScaffoldSuggestionEnvironment("", suggestedEnvironments)
-	modulePath := suggestScaffoldSuggestionModulePath(plugin, project.Name, serviceName)
-	database := suggestScaffoldSuggestionDatabase(input.Prompt, project.Description, plugin)
-	port := suggestScaffoldSuggestionPort(input.Prompt, serviceName)
-	enableLogging := suggestScaffoldSuggestionLogging(input.Prompt, project.Description)
-
-	rationale := []string{
-		"Prompt was analyzed by the local token ranking client.",
-		fmt.Sprintf("Winning plugin score: %.0f%%.", plan.Confidence*100),
-		"Scaffolder plugin was selected from enabled scaffold_request plugins only.",
-		"Service name was inferred from the user prompt and project context.",
-		"Selected plugin: " + plugin.Name + ".",
-	}
-	if len(plan.Matches) > 0 {
-		rationale = append(rationale, "Matched tokens: "+strings.Join(plan.Matches, ", ")+".")
-	}
-	if hasExplicitPort(input.Prompt) {
-		rationale = append(rationale, "Port was taken from the prompt.")
-	} else {
-		rationale = append(rationale, "Port was selected from a stable service-name hash.")
-	}
-	if len(suggestedEnvironments) > 0 {
-		rationale = append(rationale, "Environments were inferred from the prompt or project settings.")
-	}
-	if strings.TrimSpace(project.Description) != "" {
-		rationale = append(rationale, "Project description was used as additional intent context.")
+	aiSuggestion, err := u.aiSuggestionGenerator.GenerateScaffoldSuggestion(ctx, ai.ScaffoldSuggestionInput{
+		Prompt:              input.Prompt,
+		Project:             *project,
+		ProjectEnvironments: projectEnvironments,
+		Plugin:              *plugin,
+		Plan:                *plan,
+	})
+	if err != nil {
+		return ScaffoldRequestSuggestion{}, misc.WrapError(err, errs.NewInternalServerError("failed to generate scaffold suggestion", nil))
 	}
 
 	return ScaffoldRequestSuggestion{
-		Source:       "local-token-ranker-v1",
-		PluginID:     plugin.ID.String(),
-		PluginName:   plugin.Name,
-		Confidence:   plan.Confidence,
-		Environment:  environment,
-		Environments: suggestedEnvironments,
-		Variables: entity.ScaffoldRequestVariables{
-			ServiceName:   serviceName,
-			ModulePath:    modulePath,
-			Port:          port,
-			Database:      database,
-			EnableLogging: enableLogging,
-		},
-		Rationale: rationale,
+		Source:      aiSuggestion.Source,
+		PluginID:    plugin.ID.String(),
+		PluginName:  plugin.Name,
+		Confidence:  plan.Confidence,
+		Environment: aiSuggestion.Environment,
+		Variables:   aiSuggestion.Variables,
+		Rationale:   aiSuggestion.Rationale,
 	}, nil
 }
 
@@ -203,163 +168,4 @@ func inferScaffoldPluginCapabilities(plugin entity.Plugin) []string {
 		}
 	}
 	return capabilities
-}
-
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if strings.TrimSpace(value) != "" {
-			return value
-		}
-	}
-	return ""
-}
-
-func inferNameFromPrompt(prompt string) string {
-	words := strings.Fields(strings.ToLower(prompt))
-	if len(words) == 0 {
-		return ""
-	}
-
-	stopWords := map[string]struct{}{
-		"a": {}, "an": {}, "and": {}, "api": {}, "app": {}, "build": {}, "create": {}, "for": {}, "generate": {},
-		"database": {}, "db": {}, "dev": {}, "environment": {}, "go": {}, "http": {}, "logging": {}, "mariadb": {}, "mongodb": {},
-		"mysql": {}, "node": {}, "of": {}, "please": {}, "port": {}, "postgres": {}, "prod": {}, "python": {},
-		"redis": {}, "scaffold": {}, "service": {}, "staging": {}, "structured": {}, "the": {}, "to": {}, "with": {},
-	}
-
-	selected := make([]string, 0, 3)
-	for _, word := range words {
-		word = strings.Trim(word, ".,:;()[]{}")
-		if _, ok := stopWords[word]; ok || word == "" {
-			continue
-		}
-		if _, err := strconv.Atoi(word); err == nil {
-			continue
-		}
-		selected = append(selected, word)
-		if len(selected) == 3 {
-			break
-		}
-	}
-
-	return strings.Join(selected, "-")
-}
-
-func normalizeScaffoldSuggestionServiceName(value string) string {
-	normalized := strings.Trim(nonScaffoldServiceNameCharacterPattern.ReplaceAllString(strings.ToLower(strings.TrimSpace(value)), "-"), "-")
-	if normalized == "" {
-		return "new-service"
-	}
-	return normalized
-}
-
-func pickScaffoldSuggestionEnvironment(selected string, environments []string) string {
-	selected = strings.TrimSpace(selected)
-	if selected != "" {
-		return selected
-	}
-	for _, environment := range environments {
-		if strings.TrimSpace(environment) != "" {
-			return environment
-		}
-	}
-	return entity.EnvDev.String()
-}
-
-func inferScaffoldSuggestionEnvironments(prompt string, projectEnvironments []string) []string {
-	value := strings.ToLower(prompt)
-	known := []string{entity.EnvDev.String(), entity.EnvStaging.String(), entity.EnvProd.String()}
-	seen := map[string]struct{}{}
-	environments := make([]string, 0, len(known))
-
-	for _, environment := range known {
-		if strings.Contains(value, environment) {
-			seen[environment] = struct{}{}
-			environments = append(environments, environment)
-		}
-	}
-
-	if len(environments) > 0 {
-		return environments
-	}
-
-	for _, environment := range projectEnvironments {
-		environment = strings.TrimSpace(environment)
-		if environment == "" {
-			continue
-		}
-		if _, ok := seen[environment]; ok {
-			continue
-		}
-		seen[environment] = struct{}{}
-		environments = append(environments, environment)
-	}
-
-	if len(environments) == 0 {
-		return []string{entity.EnvDev.String()}
-	}
-
-	return environments
-}
-
-func suggestScaffoldSuggestionModulePath(plugin *entity.Plugin, projectName string, serviceName string) string {
-	host := "gitea.devhub.local"
-	if plugin != nil && strings.Contains(plugin.Entrypoint, "github") {
-		host = "github.com"
-	}
-	owner := normalizeScaffoldSuggestionServiceName(firstNonEmpty(projectName, "platform"))
-	return host + "/" + owner + "/" + serviceName
-}
-
-func suggestScaffoldSuggestionPort(prompt string, serviceName string) int {
-	if port, ok := inferScaffoldSuggestionPort(prompt); ok {
-		return port
-	}
-
-	hash := 0
-	for _, char := range serviceName {
-		hash += int(char)
-	}
-	return 8000 + hash%1000
-}
-
-func inferScaffoldSuggestionPort(prompt string) (int, bool) {
-	matches := portPattern.FindStringSubmatch(strings.ToLower(prompt))
-	if len(matches) != 2 {
-		return 0, false
-	}
-
-	port, err := strconv.Atoi(matches[1])
-	if err != nil || port < 1 || port > 65535 {
-		return 0, false
-	}
-
-	return port, true
-}
-
-func hasExplicitPort(prompt string) bool {
-	_, ok := inferScaffoldSuggestionPort(prompt)
-	return ok
-}
-
-func suggestScaffoldSuggestionDatabase(prompt string, projectDescription string, plugin *entity.Plugin) string {
-	value := strings.ToLower(prompt + " " + projectDescription)
-	if plugin != nil {
-		value += " " + strings.ToLower(plugin.Description)
-	}
-	switch {
-	case strings.Contains(value, "cache"), strings.Contains(value, "redis"):
-		return "redis"
-	case strings.Contains(value, "mongo"), strings.Contains(value, "document"):
-		return "mongodb"
-	case strings.Contains(value, "mysql"), strings.Contains(value, "mariadb"):
-		return "mysql"
-	default:
-		return "postgres"
-	}
-}
-
-func suggestScaffoldSuggestionLogging(prompt string, projectDescription string) bool {
-	value := strings.ToLower(prompt + " " + projectDescription)
-	return !strings.Contains(value, "disable logging") && !strings.Contains(value, "no logging")
 }

@@ -12,3 +12,4 @@ frontend/dist/
 frontend/.vite/
 frontend/.pnpm-store/
 .gocache
+backend/tmp

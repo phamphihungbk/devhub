@@ -20,6 +20,7 @@ type scaffoldRequestUsecase struct {
 	appConfig                 config.AppConfig
 	approvalRepository        repository.ApprovalRepository
 	aiClient                  ai.Client
+	aiSuggestionGenerator     ai.ScaffoldSuggestionGenerator
 	pluginRepository          repository.PluginRepository
 	projectRepository         repository.ProjectRepository
 	scaffoldRequestRepository repository.ScaffoldRequestRepository
@@ -29,6 +30,7 @@ func NewScaffoldRequestUsecase(
 	appConfig config.AppConfig,
 	approvalRepository repository.ApprovalRepository,
 	aiClient ai.Client,
+	aiSuggestionGenerator ai.ScaffoldSuggestionGenerator,
 	pluginRepository repository.PluginRepository,
 	projectRepository repository.ProjectRepository,
 	scaffoldRequestRepository repository.ScaffoldRequestRepository,
@@ -36,6 +38,7 @@ func NewScaffoldRequestUsecase(
 	return &scaffoldRequestUsecase{
 		approvalRepository:        approvalRepository,
 		aiClient:                  aiClient,
+		aiSuggestionGenerator:     aiSuggestionGenerator,
 		appConfig:                 appConfig,
 		pluginRepository:          pluginRepository,
 		projectRepository:         projectRepository,

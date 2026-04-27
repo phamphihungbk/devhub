@@ -40,7 +40,6 @@ export interface ScaffoldRequestSuggestion {
   plugin_name: string
   confidence: number
   environment: string
-  environments: string[]
   variables: ScaffoldRequestVariables
   rationale: string[]
 }
