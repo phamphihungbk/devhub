@@ -47,11 +47,50 @@ const formatScope = (row: ApprovalRequestRecord) => {
   return [row.project_id, row.service_id, row.environment].filter(Boolean).join(' / ') || 'Global'
 }
 
+const renderApprovalScope = (row: ApprovalRequestRecord) => {
+  const scope = formatScope(row)
+  const parts = scope
+    .split('/')
+    .map(part => part.trim())
+    .filter(Boolean)
+
+  if (parts.length === 0 || scope === 'Global') {
+    return h(
+      NTag,
+      {
+        size: 'small',
+        bordered: false,
+        color: { color: '#f1f5f9', textColor: '#475569' },
+      },
+      { default: () => 'Global' },
+    )
+  }
+
+  return h(
+    'div',
+    { class: 'flex max-w-[280px] flex-wrap items-center gap-1.5' },
+    parts.map((part, index) =>
+      h(
+        NTag,
+        {
+          key: `${part}-${index}`,
+          size: 'small',
+          bordered: false,
+          color: index === parts.length - 1
+            ? { color: '#dcfce7', textColor: '#15803d' }
+            : { color: '#eef2ff', textColor: '#3730a3' },
+        },
+        { default: () => part },
+      ),
+    ),
+  )
+}
+
 const formatRequestedAt = (value: string) => {
   return new Date(value).toLocaleString()
 }
 
-function formatApprovalTargetLabel(value: string) {
+const formatApprovalTargetLabel = (value: string) => {
   return value
     .split(/[_\s-]+/)
     .filter(Boolean)
@@ -59,7 +98,7 @@ function formatApprovalTargetLabel(value: string) {
     .join(' ')
 }
 
-function getApprovalTargetIcon(resource: string) {
+const getApprovalTargetIcon = (resource: string) => {
   const value = resource.toLowerCase()
   if (value.includes('deployment')) return DeploymentPattern
   if (value.includes('release')) return Rocket
@@ -70,7 +109,7 @@ function getApprovalTargetIcon(resource: string) {
   return DocumentBlank
 }
 
-function renderApprovalTarget(row: ApprovalRequestRecord) {
+const renderApprovalTarget = (row: ApprovalRequestRecord) => {
   const resource = formatApprovalTargetLabel(row.resource || 'Resource')
   const action = formatApprovalTargetLabel(row.action || 'Action')
   const resourceName = row.resource_name || shortId(row.resource_id)
@@ -219,7 +258,7 @@ export function useApprovalListService() {
     {
       title: 'Scope',
       key: 'scope',
-      render: row => formatScope(row),
+      render: renderApprovalScope,
     },
     {
       title: 'Status',
