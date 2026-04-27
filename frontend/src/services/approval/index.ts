@@ -1,8 +1,17 @@
 import { computed, h, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useRoute } from 'vue-router'
-import { NButton, NTag, useMessage } from 'naive-ui'
+import { NButton, NIcon, NTag, useMessage } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
+import {
+  Cube,
+  DeploymentPattern,
+  DocumentBlank,
+  Rocket,
+  Rule,
+  ServiceDesk,
+  TaskView,
+} from '@vicons/carbon'
 
 import { createApprovalDecision, fetchApprovalRequests } from '@/api'
 import type { ApprovalRequestRecord } from '@/api'
@@ -34,11 +43,124 @@ const getApprovalStatusTagColor = (status: string) => {
 }
 
 const formatScope = (row: ApprovalRequestRecord) => {
+  if (row.scope?.trim()) return row.scope
   return [row.project_id, row.service_id, row.environment].filter(Boolean).join(' / ') || 'Global'
+}
+
+const renderApprovalScope = (row: ApprovalRequestRecord) => {
+  const scope = formatScope(row)
+  const parts = scope
+    .split('/')
+    .map(part => part.trim())
+    .filter(Boolean)
+
+  if (parts.length === 0 || scope === 'Global') {
+    return h(
+      NTag,
+      {
+        size: 'small',
+        bordered: false,
+        color: { color: '#f1f5f9', textColor: '#475569' },
+      },
+      { default: () => 'Global' },
+    )
+  }
+
+  return h(
+    'div',
+    { class: 'flex max-w-[280px] flex-wrap items-center gap-1.5' },
+    parts.map((part, index) =>
+      h(
+        NTag,
+        {
+          key: `${part}-${index}`,
+          size: 'small',
+          bordered: false,
+          color: index === parts.length - 1
+            ? { color: '#dcfce7', textColor: '#15803d' }
+            : { color: '#eef2ff', textColor: '#3730a3' },
+        },
+        { default: () => part },
+      ),
+    ),
+  )
 }
 
 const formatRequestedAt = (value: string) => {
   return new Date(value).toLocaleString()
+}
+
+const formatApprovalTargetLabel = (value: string) => {
+  return value
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+const getApprovalTargetIcon = (resource: string) => {
+  const value = resource.toLowerCase()
+  if (value.includes('deployment')) return DeploymentPattern
+  if (value.includes('release')) return Rocket
+  if (value.includes('scaffold')) return TaskView
+  if (value.includes('plugin')) return Cube
+  if (value.includes('service')) return ServiceDesk
+  if (value.includes('policy') || value.includes('rule')) return Rule
+  return DocumentBlank
+}
+
+const renderApprovalTarget = (row: ApprovalRequestRecord) => {
+  const resource = formatApprovalTargetLabel(row.resource || 'Resource')
+  const action = formatApprovalTargetLabel(row.action || 'Action')
+  const resourceName = row.resource_name || shortId(row.resource_id)
+  const Icon = getApprovalTargetIcon(row.resource)
+
+  return h(
+    'div',
+    { class: 'flex min-w-[240px] items-center gap-3 py-1' },
+    [
+      h(
+        'div',
+        { class: 'grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-50 text-brand-700 ring-1 ring-brand-100' },
+        [
+          h(
+            NIcon,
+            { size: 22 },
+            { default: () => h(Icon) },
+          ),
+        ],
+      ),
+      h(
+        'div',
+        { class: 'min-w-0' },
+        [
+          h(
+            'div',
+            { class: 'flex flex-wrap items-center gap-2' },
+            [
+              h('span', { class: 'font-700 text-ink-900' }, resource),
+              h(
+                NTag,
+                {
+                  size: 'small',
+                  bordered: false,
+                  color: { color: '#dbeafe', textColor: '#1d4ed8' },
+                },
+                { default: () => action },
+              ),
+            ],
+          ),
+          h('p', { class: 'mt-1 truncate text-xs text-ink-500' }, resourceName),
+        ],
+      ),
+    ],
+  )
+}
+
+function getApprovalRequestId(request?: ApprovalRequestRecord | null) {
+  const id = request?.id?.trim()
+  if (id) return id
+  return ''
 }
 
 export function useApprovalListService() {
@@ -80,14 +202,24 @@ export function useApprovalListService() {
   }
 
   const openApprovalDetail = (row: ApprovalRequestRecord) => {
+    const approvalRequestId = getApprovalRequestId(row)
+    if (!approvalRequestId) {
+      message.error('Approval request id is missing.')
+      return
+    }
+
     router.push({
       name: 'approval-details',
-      params: { approvalRequestId: row.id },
+      params: { approvalRequestId },
     })
   }
 
   const submitDecision = async() => {
-    if (!selectedRequest.value) return
+    const approvalRequestId = getApprovalRequestId(selectedRequest.value)
+    if (!approvalRequestId) {
+      message.error('Approval request id is missing.')
+      return
+    }
 
     const comment = decisionComment.value.trim()
     if (!comment) {
@@ -95,14 +227,14 @@ export function useApprovalListService() {
       return
     }
 
-    actingRequestId.value = selectedRequest.value.id
+    actingRequestId.value = approvalRequestId
     try {
-      const response = await createApprovalDecision(selectedRequest.value.id, {
+      const response = await createApprovalDecision(approvalRequestId, {
         decision: selectedDecision.value,
         comment,
       })
       rows.value = rows.value.map(item =>
-        item.id === selectedRequest.value?.id ? response.approval_request : item,
+        getApprovalRequestId(item) === approvalRequestId ? response.approval_request : item,
       )
       message.success(`Approval request ${selectedDecision.value}d successfully.`)
       decisionModalOpen.value = false
@@ -121,12 +253,12 @@ export function useApprovalListService() {
     {
       title: 'Target',
       key: 'target',
-      render: row => `${row.resource} / ${row.action}`,
+      render: renderApprovalTarget,
     },
     {
       title: 'Scope',
       key: 'scope',
-      render: row => formatScope(row),
+      render: renderApprovalScope,
     },
     {
       title: 'Status',
@@ -176,7 +308,6 @@ export function useApprovalListService() {
                   {
                     size: 'small',
                     type: 'primary',
-                    ghost: true,
                     loading: actingRequestId.value === row.id,
                     onClick: (event: MouseEvent) => {
                       event.stopPropagation()
@@ -259,7 +390,10 @@ export function useApprovalDetailService() {
   const selectedDecision = ref<'approve' | 'reject'>('approve')
   const decisionComment = ref('')
 
-  const approvalRequestId = computed(() => route.params.approvalRequestId as string)
+  const approvalRequestId = computed(() => {
+    const value = route.params.approvalRequestId
+    return Array.isArray(value) ? value[0] : value || ''
+  })
   const request = computed(() => detail.value?.approval_request || null)
   const decisions = computed(() => detail.value?.decisions || [])
   const auditEvents = computed(() => detail.value?.audit_events || [])
@@ -269,6 +403,11 @@ export function useApprovalDetailService() {
   })
 
   const loadApprovalDetail = async() => {
+    if (!approvalRequestId.value) {
+      message.error('Approval request id is missing.')
+      return
+    }
+
     loading.value = true
     try {
       detail.value = await fetchApprovalRequestDetail(approvalRequestId.value)
@@ -290,6 +429,12 @@ export function useApprovalDetailService() {
   }
 
   const submitDecision = async() => {
+    const requestId = approvalRequestId.value || getApprovalRequestId(request.value)
+    if (!requestId) {
+      message.error('Approval request id is missing.')
+      return
+    }
+
     const comment = decisionComment.value.trim()
     if (!comment) {
       message.warning('Comment is required before submitting a decision.')
@@ -298,7 +443,7 @@ export function useApprovalDetailService() {
 
     acting.value = true
     try {
-      await createApprovalDecision(approvalRequestId.value, {
+      await createApprovalDecision(requestId, {
         decision: selectedDecision.value,
         comment,
       })

@@ -1,0 +1,8 @@
+name: kubectl rollout
+type: deployer
+version: 1.0.0
+description: Record a Kubernetes rollout-style deployment reference for a service and environment
+scope: environment
+enabled: true
+runtime: python
+entrypoint: run.py

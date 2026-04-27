@@ -33,6 +33,14 @@ const router = useRouter()
 const authStore = useAuthStore()
 const collapsed = ref(false)
 
+const sidebarContentStyle = computed(() =>
+  collapsed.value
+    ? 'display:flex;flex-direction:column;padding:20px 12px 24px;overflow:hidden;'
+    : 'display:flex;flex-direction:column;padding:20px 16px 24px;overflow:hidden;',
+)
+
+const menuCollapsedWidth = 60
+
 onMounted(async () => {
   if (!authStore.profile && authStore.isAuthenticated) {
     try {
@@ -97,12 +105,18 @@ async function handleUserAction(key: string) {
       :collapsed="collapsed"
       :collapsed-width="84"
       :width="280"
-      content-style="display:flex;flex-direction:column;padding:20px 16px 24px;"
+      :content-style="sidebarContentStyle"
       class="border-r border-[var(--app-border)] bg-[var(--app-sidebar)] backdrop-blur-xl"
     >
-      <div class="mb-8 flex items-center gap-3 px-2">
-        <div class="grid h-12 w-12 place-items-center rounded-2xl bg-[linear-gradient(145deg,#0f172a_0%,#1d4ed8_100%)] text-white shadow-[0_18px_38px_rgba(37,99,235,0.22)]">
-          DH
+      <div
+        class="mb-8 flex items-center gap-3"
+        :class="collapsed ? 'justify-center px-0' : 'px-2'"
+      >
+        <div
+          class="grid place-items-center overflow-hidden rounded-2xl shadow-[0_18px_38px_rgba(37,99,235,0.22)]"
+          :class="collapsed ? 'h-11 w-11' : 'h-12 w-12'"
+        >
+          <img src="/devhub-logo.svg" alt="DevHub" class="h-full w-full" />
         </div>
         <div v-if="!collapsed">
           <p class="text-xs font-600 uppercase tracking-0.24em text-ink-500">Platform control</p>
@@ -122,14 +136,18 @@ async function handleUserAction(key: string) {
 
       <NMenu
         :collapsed="collapsed"
-        :collapsed-width="84"
+        :collapsed-width="menuCollapsedWidth"
         :collapsed-icon-size="22"
         :value="activeKey"
         :options="menuOptions"
       />
 
-      <div class="mt-auto px-2 pt-6">
-        <NButton class="w-full justify-start rounded-2xl" @click="collapsed = !collapsed">
+      <div class="mt-auto pt-6" :class="collapsed ? 'px-0' : 'px-2'">
+        <NButton
+          class="w-full rounded-2xl"
+          :class="collapsed ? 'px-0' : 'justify-start'"
+          @click="collapsed = !collapsed"
+        >
           {{ collapsed ? 'Expand' : 'Collapse sidebar' }}
         </NButton>
       </div>

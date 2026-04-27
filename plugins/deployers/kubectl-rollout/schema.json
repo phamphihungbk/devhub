@@ -1,0 +1,12 @@
+{
+  "type": "object",
+  "required": ["service", "environment", "version"],
+  "properties": {
+    "deployment_id": { "type": "string" },
+    "service": { "type": "string" },
+    "environment": { "type": "string" },
+    "version": { "type": "string" },
+    "repo_url": { "type": "string" }
+  },
+  "additionalProperties": true
+}

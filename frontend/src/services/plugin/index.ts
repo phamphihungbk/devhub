@@ -3,7 +3,7 @@ import { NButton, NPopconfirm, NTag, useMessage } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
 
 import { permission } from '@/services/access/rbac'
-import { createPlugin, deletePlugin, fetchPlugins, updatePlugin } from '@/api'
+import { createPlugin, deletePlugin, fetchPlugins, syncPlugins, updatePlugin } from '@/api'
 import { getPluginTypeTagColor, pluginTypeOptions } from '@/theme/plugin'
 import { useAuthStore } from '@/stores/modules/auth'
 import type { PluginPayload, PluginRecord } from '@/api'
@@ -25,6 +25,7 @@ export function usePluginService() {
   const authStore = useAuthStore()
   const loading = ref(false)
   const saving = ref(false)
+  const syncing = ref(false)
   const deletingPluginId = ref('')
   const togglingPluginId = ref('')
   const rows = ref<PluginRecord[]>([])
@@ -182,15 +183,36 @@ export function usePluginService() {
                 )
               : null,
             canManagePlugins.value
-              ? h(
-                  NButton,
-                  {
-                    size: 'small',
-                    loading: togglingPluginId.value === row.id,
-                    onClick: () => togglePluginEnabled(row),
-                  },
-                  { default: () => row.enabled === false ? 'Enable' : 'Disable' },
-                )
+              ? row.enabled === false
+                ? h(
+                    NButton,
+                    {
+                      size: 'small',
+                      loading: togglingPluginId.value === row.id,
+                      onClick: () => togglePluginEnabled(row),
+                    },
+                    { default: () => 'Enable' },
+                  )
+                : h(
+                    NPopconfirm,
+                    {
+                      positiveText: 'Disable',
+                      negativeText: 'Cancel',
+                      onPositiveClick: () => togglePluginEnabled(row),
+                    },
+                    {
+                      trigger: () =>
+                        h(
+                          NButton,
+                          {
+                            size: 'small',
+                            loading: togglingPluginId.value === row.id,
+                          },
+                          { default: () => 'Disable' },
+                        ),
+                      default: () => `Disable ${row.name}? It will no longer be selectable for new workflows.`,
+                    },
+                  )
               : null,
             canManagePlugins.value
               ? h(
@@ -268,6 +290,21 @@ export function usePluginService() {
       )
     } finally {
       loading.value = false
+    }
+  }
+
+  const syncPluginRegistry = async() => {
+    syncing.value = true
+    try {
+      const result = await syncPlugins()
+      await loadPlugins()
+      message.success(
+        `Plugin registry synced: ${result.discovered} discovered, ${result.created} created, ${result.updated} updated.`,
+      )
+    } catch (error) {
+      message.error(error instanceof ApiError ? error.message : 'Unable to sync plugin registry.')
+    } finally {
+      syncing.value = false
     }
   }
 
@@ -355,6 +392,8 @@ export function usePluginService() {
     scopeSelectOptions,
     selectedPlugin,
     submitPlugin,
+    syncPluginRegistry,
+    syncing,
     typeOptions,
   }
 }

@@ -79,7 +79,6 @@ services:
     build:
       context: .
       dockerfile: infra/docker/frontend.Dockerfile
-    profiles: ["ui"]
     env_file:
       - .env
     environment:
@@ -91,7 +90,6 @@ services:
     build:
       context: .
       dockerfile: infra/docker/nginx.Dockerfile
-    profiles: ["ui"]
     env_file:
       - .env
     environment:
@@ -166,7 +164,6 @@ services:
     build:
       context: .
       dockerfile: infra/docker/gitea-runner.Dockerfile
-    profiles: ["ci"]
     restart: unless-stopped
     environment:
       GITEA_INSTANCE_URL: ${GITEA_RUNNER_INSTANCE_URL:-http://gitea:3000}

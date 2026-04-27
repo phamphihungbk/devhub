@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 .PHONY: help bootstrap install-git-hooks generate-dev-cert setup-local-https \
-	backend-up backend-down backend-watch frontend-up frontend-down frontend-watch \
+	backend-up backend-down frontend-up frontend-down watch \
 	build-backend build-frontend up down logs logs-worker logs-runner logs-frontend ps shell \
 	worker-up worker-down runner-up runner-down migrate migrate-down migrate-force new-migration seed-data generate sync-worker plugin-scan create-plugin config prod-config argocd-ui argocd-token minikube-registry
 
@@ -25,34 +25,31 @@ setup-local-https: ## Generate certs, update hosts, and trust local devhub/api/g
 
 ##@ Development
 backend-up: ## Start backend services without UI or nginx
-	@COMPOSE_PROFILES=ci ./scripts/dev.sh up --build $(BACKEND_SERVICES)
-
-backend-watch: backend-up ## Start support services, then run the Go backend locally with Air hot reload
-	@./scripts/backend-watch.sh
+	@./scripts/dev.sh up --build $(BACKEND_SERVICES)
 
 frontend-up: ## Start the UI stack; nginx will also bring up backend dependencies it needs
-	@COMPOSE_PROFILES=ui ./scripts/dev.sh up --build $(FRONTEND_SERVICES)
+	@./scripts/dev.sh up --build $(FRONTEND_SERVICES)
 
-frontend-watch: frontend-up ## Start and follow the frontend dev stack (frontend + nginx) for UI work
-	@./scripts/frontend-watch.sh
+watch: ## Start backend and frontend dev stack, then follow app logs
+	@./scripts/watch.sh
 
 build-backend: ## Build backend-side dev images without UI services
-	@COMPOSE_PROFILES=ci ./scripts/dev.sh build $(BACKEND_SERVICES)
+	@./scripts/dev.sh build $(BACKEND_SERVICES)
 
 build-frontend: ## Build only the frontend UI services
-	@COMPOSE_PROFILES=ui ./scripts/dev.sh build $(FRONTEND_SERVICES)
+	@./scripts/dev.sh build $(FRONTEND_SERVICES)
 
 up: ## Start full stack services
-	@COMPOSE_PROFILES=ui,ci ./scripts/dev.sh up --build
+	@./scripts/dev.sh up --build
 
 down: ## Stop and remove the dev stack
 	@./scripts/dev.sh down
 
 backend-down: ## Stop backend services without touching the UI profile
-	@COMPOSE_PROFILES=ci ./scripts/dev.sh stop $(BACKEND_SERVICES)
+	@./scripts/dev.sh stop $(BACKEND_SERVICES)
 
 frontend-down: ## Stop the frontend and nginx services
-	@COMPOSE_PROFILES=ui ./scripts/dev.sh stop $(FRONTEND_SERVICES)
+	@./scripts/dev.sh stop $(FRONTEND_SERVICES)
 
 logs: ## Follow logs for the dev stack
 	@./scripts/dev.sh logs -f
@@ -61,10 +58,10 @@ logs-worker: ## Follow logs for the worker service
 	@./scripts/dev.sh logs -f worker
 
 logs-frontend: ## Follow logs for the frontend and nginx services
-	@COMPOSE_PROFILES=ui ./scripts/dev.sh logs -f frontend nginx
+	@./scripts/dev.sh logs -f frontend nginx
 
 logs-runner: ## Follow logs for the Gitea Actions runner
-	@COMPOSE_PROFILES=ci ./scripts/dev.sh logs -f gitea-runner
+	@./scripts/dev.sh logs -f gitea-runner
 
 ps: ## List dev stack containers
 	@./scripts/dev.sh ps
@@ -79,10 +76,10 @@ worker-down: ## Stop the worker service
 	@./scripts/dev.sh stop worker
 
 runner-up: ## Start the Gitea Actions runner
-	@COMPOSE_PROFILES=ci ./scripts/dev.sh up -d gitea-runner
+	@./scripts/dev.sh up -d gitea-runner
 
 runner-down: ## Stop the Gitea Actions runner
-	@COMPOSE_PROFILES=ci ./scripts/dev.sh stop gitea-runner
+	@./scripts/dev.sh stop gitea-runner
 
 ##@ Backend
 migrate: ## Run database migrations up

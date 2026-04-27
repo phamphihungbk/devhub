@@ -5,6 +5,7 @@ import (
 	"devhub-backend/internal/config"
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/domain/repository"
+	"devhub-backend/internal/infra/ai"
 )
 
 type ScaffoldRequestUsecase interface {
@@ -18,20 +19,29 @@ type ScaffoldRequestUsecase interface {
 type scaffoldRequestUsecase struct {
 	appConfig                 config.AppConfig
 	approvalRepository        repository.ApprovalRepository
+	aiClient                  ai.Client
+	aiSuggestionGenerator     ai.ScaffoldSuggestionGenerator
 	pluginRepository          repository.PluginRepository
+	projectRepository         repository.ProjectRepository
 	scaffoldRequestRepository repository.ScaffoldRequestRepository
 }
 
 func NewScaffoldRequestUsecase(
 	appConfig config.AppConfig,
 	approvalRepository repository.ApprovalRepository,
+	aiClient ai.Client,
+	aiSuggestionGenerator ai.ScaffoldSuggestionGenerator,
 	pluginRepository repository.PluginRepository,
+	projectRepository repository.ProjectRepository,
 	scaffoldRequestRepository repository.ScaffoldRequestRepository,
 ) ScaffoldRequestUsecase {
 	return &scaffoldRequestUsecase{
 		approvalRepository:        approvalRepository,
+		aiClient:                  aiClient,
+		aiSuggestionGenerator:     aiSuggestionGenerator,
 		appConfig:                 appConfig,
 		pluginRepository:          pluginRepository,
+		projectRepository:         projectRepository,
 		scaffoldRequestRepository: scaffoldRequestRepository,
 	}
 }

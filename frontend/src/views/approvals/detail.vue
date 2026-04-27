@@ -45,7 +45,7 @@ const {
   <div>
     <PageHeader
       eyebrow="Approvals"
-      :title="request ? `${request.resource} / ${request.action}` : 'Approval request'"
+      :title="request ? `${request.resource_name || request.resource} / ${request.action}` : 'Approval request'"
       description="Review the approval target, decision trail, and audit timeline before resolving the request."
     >
       <div class="flex flex-wrap gap-3">
@@ -100,13 +100,13 @@ const {
               </NTag>
             </NDescriptionsItem>
             <NDescriptionsItem label="Scope">
-              {{ formatScope(request) }}
+              {{ request.scope || formatScope(request) }}
             </NDescriptionsItem>
-            <NDescriptionsItem label="Resource ID">
-              {{ request.resource_id }}
+            <NDescriptionsItem label="Resource">
+              {{ request.resource_name || request.resource_id }}
             </NDescriptionsItem>
             <NDescriptionsItem label="Requested by">
-              {{ request.requested_by }}
+              {{ request.requested_by_name || request.requested_by }}
             </NDescriptionsItem>
             <NDescriptionsItem label="Created">
               {{ formatDate(request.created_at) }}
@@ -134,7 +134,7 @@ const {
                 {{ decision.comment || 'No comment recorded.' }}
               </p>
               <p class="mt-2 text-xs text-[var(--app-text-muted)]">
-                Decided by {{ decision.decided_by }}
+                Decided by {{ decision.decided_by_name || decision.decided_by }}
               </p>
             </div>
           </div>
@@ -152,7 +152,7 @@ const {
             :time="formatDate(event.created_at)"
           >
             <div class="text-sm leading-6 text-[var(--app-text-muted)]">
-              <p>Actor {{ shortId(event.actor_id) }}</p>
+              <p>{{ event.actor_name || `Actor ${shortId(event.actor_id)}` }}</p>
               <p v-if="event.comment" class="mt-1 text-[var(--app-text)]">
                 {{ event.comment }}
               </p>

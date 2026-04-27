@@ -4,7 +4,7 @@ services:
       target: dev
       args:
         MODE: dev
-    command: ["go", "run", ".", "serve"]
+    command: ["air", "-c", ".air.toml"]
     environment:
       SERVICE_ENV: development
     volumes:

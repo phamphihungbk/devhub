@@ -32,18 +32,14 @@ export interface CreateScaffoldRequestPayload {
 
 export interface SuggestScaffoldRequestPayload {
   prompt: string
-  project_name?: string
-  project_description?: string
-  environment?: string
-  environments?: string[]
 }
 
 export interface ScaffoldRequestSuggestion {
   source: string
   plugin_id: string
   plugin_name: string
+  confidence: number
   environment: string
-  environments: string[]
   variables: ScaffoldRequestVariables
   rationale: string[]
 }

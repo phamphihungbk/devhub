@@ -18,6 +18,10 @@ import { computed, h, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { permission } from '@/services/access/rbac'
+import {
+  applyScaffoldSuggestionToForm,
+  generateScaffoldSuggestion as requestScaffoldSuggestion,
+} from '@/services/scaffold-request'
 import PageHeader from '@/components/page-header.vue'
 import {
   createDeployment,
@@ -29,7 +33,6 @@ import {
   fetchProjectServices,
   fetchServiceDeployments,
   fetchServiceReleases,
-  suggestProjectScaffoldRequest,
 } from '@/api'
 import { ApiError } from '@/api/request'
 import { useAuthStore } from '@/stores/modules/auth'
@@ -108,13 +111,13 @@ const failedDeployments = computed(() =>
 
 const deployerOptions = computed(() =>
   plugins.value
-    .filter(plugin => plugin.type === 'deployer')
+    .filter(plugin => plugin.type === 'deployer' && plugin.enabled !== false)
     .map(plugin => ({ label: plugin.name, value: plugin.id })),
 )
 
 const scaffolderOptions = computed(() =>
   plugins.value
-    .filter(plugin => plugin.type === 'scaffolder')
+    .filter(plugin => plugin.type === 'scaffolder' && plugin.enabled !== false)
     .map(plugin => ({ label: plugin.name, value: plugin.id })),
 )
 
@@ -200,12 +203,9 @@ async function generateScaffoldSuggestion() {
   scaffoldSuggestionLoading.value = true
 
   try {
-    scaffoldSuggestion.value = await suggestProjectScaffoldRequest(projectId.value, {
-      prompt: scaffoldPrompt.value.trim(),
-      project_name: project.value?.name || '',
-      project_description: project.value?.description || '',
-      environment: scaffoldForm.environment,
-      environments: project.value?.environments || [],
+    scaffoldSuggestion.value = await requestScaffoldSuggestion({
+      projectId: projectId.value,
+      prompt: scaffoldPrompt.value,
     })
   } catch (error) {
     message.warning(error instanceof ApiError
@@ -219,9 +219,7 @@ async function generateScaffoldSuggestion() {
 function applyScaffoldSuggestion() {
   if (!scaffoldSuggestion.value) return
 
-  scaffoldForm.environment = scaffoldSuggestion.value.environment
-  scaffoldForm.plugin_id = scaffoldSuggestion.value.plugin_id || scaffoldForm.plugin_id
-  scaffoldForm.variables = { ...scaffoldSuggestion.value.variables }
+  applyScaffoldSuggestionToForm(scaffoldForm, scaffoldSuggestion.value)
 }
 
 function selectRelease(row: Release) {
@@ -719,7 +717,7 @@ onMounted(loadServiceDetails)
           <div v-if="scaffoldSuggestion" class="mt-4 grid gap-3 text-sm md:grid-cols-2">
             <div class="rounded-xl bg-white p-3 md:col-span-2">
               <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Suggested plugin</p>
-              <p class="mt-1 font-semibold text-[var(--app-text)]">{{ scaffoldSuggestion.plugin_name || 'Select manually' }}</p>
+              <p class="mt-1 font-semibold text-[var(--app-text)]">{{ scaffoldSuggestion.plugin_name || 'Select manually' }} · {{ Math.round(scaffoldSuggestion.confidence * 100) }}%</p>
             </div>
             <div class="rounded-xl bg-white p-3">
               <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Suggested service</p>
@@ -732,10 +730,6 @@ onMounted(loadServiceDetails)
             <div class="rounded-xl bg-white p-3">
               <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Environment</p>
               <p class="mt-1 font-semibold text-[var(--app-text)]">{{ scaffoldSuggestion.environment }}</p>
-            </div>
-            <div class="rounded-xl bg-white p-3">
-              <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Mentioned environments</p>
-              <p class="mt-1 font-semibold text-[var(--app-text)]">{{ scaffoldSuggestion.environments.join(', ') }}</p>
             </div>
             <div class="rounded-xl bg-white p-3">
               <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Module path</p>

@@ -40,3 +40,9 @@ export interface UpdatePluginPayload {
   scope?: string
   enabled?: boolean
 }
+
+export interface PluginSyncResult {
+  discovered: number
+  created: number
+  updated: number
+}
