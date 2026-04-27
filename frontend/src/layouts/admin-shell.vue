@@ -113,10 +113,10 @@ async function handleUserAction(key: string) {
         :class="collapsed ? 'justify-center px-0' : 'px-2'"
       >
         <div
-          class="grid place-items-center rounded-2xl bg-[linear-gradient(145deg,#0f172a_0%,#1d4ed8_100%)] text-white shadow-[0_18px_38px_rgba(37,99,235,0.22)]"
+          class="grid place-items-center overflow-hidden rounded-2xl shadow-[0_18px_38px_rgba(37,99,235,0.22)]"
           :class="collapsed ? 'h-11 w-11' : 'h-12 w-12'"
         >
-          DH
+          <img src="/devhub-logo.svg" alt="DevHub" class="h-full w-full" />
         </div>
         <div v-if="!collapsed">
           <p class="text-xs font-600 uppercase tracking-0.24em text-ink-500">Platform control</p>

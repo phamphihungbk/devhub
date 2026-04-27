@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"devhub-backend/internal/domain/entity"
@@ -24,12 +25,16 @@ type createApprovalDecisionResponse struct {
 }
 
 type approvalRequestResponse struct {
+	ID                string     `json:"id"`
 	Resource          string     `json:"resource"`
 	ResourceName      string     `json:"resource_name,omitempty"`
 	Action            string     `json:"action"`
+	ResourceID        string     `json:"resource_id"`
 	RequestedBy       string     `json:"requested_by"`
 	RequestedByName   string     `json:"requested_by_name,omitempty"`
 	Scope             string     `json:"scope,omitempty"`
+	ProjectID         string     `json:"project_id,omitempty"`
+	ServiceID         string     `json:"service_id,omitempty"`
 	Environment       string     `json:"environment,omitempty"`
 	Status            string     `json:"status"`
 	RequiredApprovals int        `json:"required_approvals"`
@@ -105,8 +110,10 @@ func (h *approvalHandler) newApprovalRequestResponse(request *entity.ApprovalReq
 	}
 
 	response := approvalRequestResponse{
+		ID:                request.ID.String(),
 		Resource:          request.Resource,
 		Action:            request.Action,
+		ResourceID:        request.ResourceID.String(),
 		RequestedBy:       request.RequestedBy.String(),
 		Status:            request.Status.String(),
 		RequiredApprovals: request.RequiredApprovals,
@@ -116,8 +123,35 @@ func (h *approvalHandler) newApprovalRequestResponse(request *entity.ApprovalReq
 		CreatedAt:         request.CreatedAt,
 		UpdatedAt:         request.UpdatedAt,
 	}
+	if request.ProjectID != nil {
+		response.ProjectID = request.ProjectID.String()
+	}
+	if request.ServiceID != nil {
+		response.ServiceID = request.ServiceID.String()
+	}
+	if request.Environment != nil {
+		response.Environment = *request.Environment
+	}
+	response.Scope = newApprovalRequestScope(response)
 
 	return response
+}
+
+func newApprovalRequestScope(request approvalRequestResponse) string {
+	parts := make([]string, 0, 3)
+	if request.ProjectID != "" {
+		parts = append(parts, request.ProjectID)
+	}
+	if request.ServiceID != "" {
+		parts = append(parts, request.ServiceID)
+	}
+	if request.Environment != "" {
+		parts = append(parts, request.Environment)
+	}
+	if len(parts) == 0 {
+		return "Global"
+	}
+	return strings.Join(parts, " / ")
 }
 
 func (h *approvalHandler) newApprovalDecisionResponse(decision *entity.ApprovalDecision) approvalDecisionResponse {

@@ -162,8 +162,8 @@ const {
               <p class="mt-1 font-semibold text-[var(--app-text)]">{{ suggestion.plugin_name || 'Select manually' }}</p>
             </div>
             <div>
-              <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Environments</p>
-              <p class="mt-1 font-semibold text-[var(--app-text)]">{{ suggestion.environments.join(', ') }}</p>
+              <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Environment</p>
+              <p class="mt-1 font-semibold text-[var(--app-text)]">{{ suggestion.environment }}</p>
             </div>
             <div class="md:col-span-2">
               <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Reasoning</p>

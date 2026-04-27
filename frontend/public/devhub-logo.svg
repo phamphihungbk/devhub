@@ -1,0 +1,12 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">DevHub</title>
+  <desc id="desc">DevHub logo mark</desc>
+  <rect width="160" height="160" rx="36" fill="#0F172A"/>
+  <path d="M37 45C37 40.5817 40.5817 37 45 37H76C98.0914 37 116 54.9086 116 77V83C116 105.091 98.0914 123 76 123H45C40.5817 123 37 119.418 37 115V45Z" fill="#2563EB"/>
+  <path d="M55 55H76C88.1503 55 98 64.8497 98 77V83C98 95.1503 88.1503 105 76 105H55V55Z" fill="#F8FAFC"/>
+  <path d="M69 70H83V90H69V70Z" fill="#0F172A"/>
+  <path d="M83 70H105V90H83V70Z" fill="#14B8A6"/>
+  <path d="M55 73H69V87H55V73Z" fill="#2563EB"/>
+  <circle cx="118" cy="42" r="9" fill="#14B8A6"/>
+  <circle cx="42" cy="118" r="7" fill="#93C5FD"/>
+</svg>

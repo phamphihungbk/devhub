@@ -18,6 +18,10 @@ import { computed, h, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { permission } from '@/services/access/rbac'
+import {
+  applyScaffoldSuggestionToForm,
+  generateScaffoldSuggestion as requestScaffoldSuggestion,
+} from '@/services/scaffold-request'
 import PageHeader from '@/components/page-header.vue'
 import {
   createDeployment,
@@ -29,7 +33,6 @@ import {
   fetchProjectServices,
   fetchServiceDeployments,
   fetchServiceReleases,
-  suggestProjectScaffoldRequest,
 } from '@/api'
 import { ApiError } from '@/api/request'
 import { useAuthStore } from '@/stores/modules/auth'
@@ -200,8 +203,9 @@ async function generateScaffoldSuggestion() {
   scaffoldSuggestionLoading.value = true
 
   try {
-    scaffoldSuggestion.value = await suggestProjectScaffoldRequest(projectId.value, {
-      prompt: scaffoldPrompt.value.trim(),
+    scaffoldSuggestion.value = await requestScaffoldSuggestion({
+      projectId: projectId.value,
+      prompt: scaffoldPrompt.value,
     })
   } catch (error) {
     message.warning(error instanceof ApiError
@@ -215,9 +219,7 @@ async function generateScaffoldSuggestion() {
 function applyScaffoldSuggestion() {
   if (!scaffoldSuggestion.value) return
 
-  scaffoldForm.environment = scaffoldSuggestion.value.environment
-  scaffoldForm.plugin_id = scaffoldSuggestion.value.plugin_id || scaffoldForm.plugin_id
-  scaffoldForm.variables = { ...scaffoldSuggestion.value.variables }
+  applyScaffoldSuggestionToForm(scaffoldForm, scaffoldSuggestion.value)
 }
 
 function selectRelease(row: Release) {
@@ -728,10 +730,6 @@ onMounted(loadServiceDetails)
             <div class="rounded-xl bg-white p-3">
               <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Environment</p>
               <p class="mt-1 font-semibold text-[var(--app-text)]">{{ scaffoldSuggestion.environment }}</p>
-            </div>
-            <div class="rounded-xl bg-white p-3">
-              <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Mentioned environments</p>
-              <p class="mt-1 font-semibold text-[var(--app-text)]">{{ scaffoldSuggestion.environments.join(', ') }}</p>
             </div>
             <div class="rounded-xl bg-white p-3">
               <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Module path</p>
