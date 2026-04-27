@@ -17,6 +17,7 @@ import (
 	userHandler "devhub-backend/internal/api/http/handler/user"
 	"devhub-backend/internal/api/http/middleware"
 	httproute "devhub-backend/internal/api/http/route"
+	"devhub-backend/internal/infra/ai"
 	dbApprovalRepo "devhub-backend/internal/infra/db/repository/approval"
 	dbDeploymentRepo "devhub-backend/internal/infra/db/repository/deployment"
 	dbPluginRepo "devhub-backend/internal/infra/db/repository/plugin"
@@ -60,13 +61,14 @@ func (s *Server) setupRouteDependencies(ctx context.Context, tracerProvider *sdk
 	dbRefreshTokenRepo := dbRefreshTokenRepo.NewRefreshTokenRepository(dbConn)
 
 	// Usecases
-	approvalUsecase := approvalUsecase.NewApprovalUsecase(s.cfg.App, dbApprovalRepo, dbScaffoldRequestRepo)
+	approvalUsecase := approvalUsecase.NewApprovalUsecase(s.cfg.App, dbApprovalRepo, dbDeploymentRepo, dbProjectRepo, dbReleaseRepo, dbScaffoldRequestRepo, dbServiceRepo, dbUserRepo)
 	userUsecase := userUsecase.NewUserUsecase(s.cfg.App, dbUserRepo)
 	projectUsecase := projectUsecase.NewProjectUsecase(s.cfg.App, dbProjectRepo, dbUserRepo)
 	deploymentUsecase := deploymentUsecase.NewDeploymentUsecase(s.cfg.App, dbApprovalRepo, dbDeploymentRepo, dbPluginRepo)
 	releaseUsecase := releaseUsecase.NewReleaseUsecase(s.cfg.App, dbPluginRepo, dbReleaseRepo)
 	pluginUsecase := pluginUsecase.NewPluginUsecase(s.cfg.App, dbPluginRepo)
-	scaffoldRequestUsecase := scaffoldRequestUsecase.NewScaffoldRequestUsecase(s.cfg.App, dbApprovalRepo, dbPluginRepo, dbScaffoldRequestRepo)
+	localAIClient := ai.NewLocalClient()
+	scaffoldRequestUsecase := scaffoldRequestUsecase.NewScaffoldRequestUsecase(s.cfg.App, dbApprovalRepo, localAIClient, dbPluginRepo, dbProjectRepo, dbScaffoldRequestRepo)
 	serviceUsecase := serviceUsecase.NewServiceUsecase(s.cfg.App, dbServiceRepo)
 	teamUsecase := teamUsecase.NewTeamUsecase(s.cfg.App, dbTeamRepo)
 	authUsecase := authUsecase.NewAuthUsecase(s.cfg.Token, dbUserRepo, dbRefreshTokenRepo)

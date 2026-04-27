@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -9,22 +10,23 @@ import (
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/domain/errs"
 	"devhub-backend/internal/domain/repository"
+	"devhub-backend/internal/infra/ai"
 	"devhub-backend/internal/util/misc"
+	"devhub-backend/pkg/validator"
+
+	"github.com/google/uuid"
 )
 
 type SuggestScaffoldRequestInput struct {
-	ProjectID          string   `json:"project_id" validate:"required,uuid"`
-	Prompt             string   `json:"prompt" validate:"required"`
-	ProjectName        string   `json:"project_name"`
-	ProjectDescription string   `json:"project_description"`
-	Environment        string   `json:"environment"`
-	Environments       []string `json:"environments"`
+	ProjectID string `json:"project_id" validate:"required,uuid"`
+	Prompt    string `json:"prompt" validate:"required"`
 }
 
 type ScaffoldRequestSuggestion struct {
 	Source       string                          `json:"source"`
 	PluginID     string                          `json:"plugin_id"`
 	PluginName   string                          `json:"plugin_name"`
+	Confidence   float64                         `json:"confidence"`
 	Environment  string                          `json:"environment"`
 	Environments []string                        `json:"environments"`
 	Variables    entity.ScaffoldRequestVariables `json:"variables"`
@@ -36,32 +38,58 @@ var (
 	portPattern                            = regexp.MustCompile(`\bport\s*[:=]?\s*(\d{1,5})\b`)
 )
 
-func (u *scaffoldRequestUsecase) SuggestScaffoldRequest(ctx context.Context, input SuggestScaffoldRequestInput) (suggestion ScaffoldRequestSuggestion, err error) {
+func (u *scaffoldRequestUsecase) SuggestScaffoldRequest(ctx context.Context, input SuggestScaffoldRequestInput) (suggestion *ScaffoldRequestSuggestion, err error) {
 	const errLocation = "[usecase scaffold_request/suggest_scaffold_request SuggestScaffoldRequest] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
-	if strings.TrimSpace(input.Prompt) == "" {
-		return ScaffoldRequestSuggestion{}, errs.NewBadRequestError("prompt is required", nil)
-	}
+	// Create a new validator instance
+	vInstance, err := validator.NewValidator(
+		validator.WithTagNameFunc(validator.JSONTagNameFunc),
+	)
 
-	plugin, err := u.suggestScaffolderPlugin(ctx, input.Prompt+" "+input.ProjectDescription)
 	if err != nil {
-		return ScaffoldRequestSuggestion{}, err
+		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to create validator", nil))
 	}
 
-	serviceName := normalizeScaffoldSuggestionServiceName(firstNonEmpty(inferNameFromPrompt(input.Prompt), input.ProjectName, inferNameFromPrompt(input.ProjectDescription), "new-service"))
-	suggestedEnvironments := inferScaffoldSuggestionEnvironments(input.Prompt, input.Environments)
-	environment := pickScaffoldSuggestionEnvironment(input.Environment, suggestedEnvironments)
-	modulePath := suggestScaffoldSuggestionModulePath(plugin, input.ProjectName, serviceName)
-	database := suggestScaffoldSuggestionDatabase(input.Prompt, input.ProjectDescription, plugin)
+	// Validate Input
+	err = vInstance.Struct(input)
+	if err != nil {
+		return nil, misc.WrapError(err, errs.NewBadRequestError("the request is invalid", map[string]string{"details": err.Error()}))
+	}
+
+	projectID := uuid.MustParse(input.ProjectID)
+	project, err := u.projectRepository.FindOne(ctx, projectID)
+	if err != nil {
+		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to load project context", nil))
+	}
+
+	projectEnvironments := make([]string, 0, len(project.Environments))
+	for _, environment := range project.Environments {
+		projectEnvironments = append(projectEnvironments, environment.String())
+	}
+
+	plugin, plan, err := u.suggestScaffolderPlugin(ctx, input.Prompt+" "+project.Description)
+	if err != nil {
+		return nil, err
+	}
+
+	serviceName := normalizeScaffoldSuggestionServiceName(firstNonEmpty(inferNameFromPrompt(input.Prompt), project.Name, inferNameFromPrompt(project.Description), "new-service"))
+	suggestedEnvironments := inferScaffoldSuggestionEnvironments(input.Prompt, projectEnvironments)
+	environment := pickScaffoldSuggestionEnvironment("", suggestedEnvironments)
+	modulePath := suggestScaffoldSuggestionModulePath(plugin, project.Name, serviceName)
+	database := suggestScaffoldSuggestionDatabase(input.Prompt, project.Description, plugin)
 	port := suggestScaffoldSuggestionPort(input.Prompt, serviceName)
-	enableLogging := suggestScaffoldSuggestionLogging(input.Prompt, input.ProjectDescription)
+	enableLogging := suggestScaffoldSuggestionLogging(input.Prompt, project.Description)
 
 	rationale := []string{
-		"Prompt was analyzed by the local scaffold suggestion engine.",
-		"Scaffolder plugin was selected from enabled scaffold_request plugins.",
+		"Prompt was analyzed by the local token ranking client.",
+		fmt.Sprintf("Winning plugin score: %.0f%%.", plan.Confidence*100),
+		"Scaffolder plugin was selected from enabled scaffold_request plugins only.",
 		"Service name was inferred from the user prompt and project context.",
 		"Selected plugin: " + plugin.Name + ".",
+	}
+	if len(plan.Matches) > 0 {
+		rationale = append(rationale, "Matched tokens: "+strings.Join(plan.Matches, ", ")+".")
 	}
 	if hasExplicitPort(input.Prompt) {
 		rationale = append(rationale, "Port was taken from the prompt.")
@@ -71,14 +99,15 @@ func (u *scaffoldRequestUsecase) SuggestScaffoldRequest(ctx context.Context, inp
 	if len(suggestedEnvironments) > 0 {
 		rationale = append(rationale, "Environments were inferred from the prompt or project settings.")
 	}
-	if strings.TrimSpace(input.ProjectDescription) != "" {
+	if strings.TrimSpace(project.Description) != "" {
 		rationale = append(rationale, "Project description was used as additional intent context.")
 	}
 
 	return ScaffoldRequestSuggestion{
-		Source:       "local-prompt-heuristic-v2",
+		Source:       "local-token-ranker-v1",
 		PluginID:     plugin.ID.String(),
 		PluginName:   plugin.Name,
+		Confidence:   plan.Confidence,
 		Environment:  environment,
 		Environments: suggestedEnvironments,
 		Variables: entity.ScaffoldRequestVariables{
@@ -92,62 +121,88 @@ func (u *scaffoldRequestUsecase) SuggestScaffoldRequest(ctx context.Context, inp
 	}, nil
 }
 
-func (u *scaffoldRequestUsecase) suggestScaffolderPlugin(ctx context.Context, intent string) (*entity.Plugin, error) {
+func (u *scaffoldRequestUsecase) suggestScaffolderPlugin(ctx context.Context, intent string) (*entity.Plugin, *ai.ScaffoldPlan, error) {
 	plugins, _, err := u.pluginRepository.FindAll(ctx, repository.FindAllPluginsFilter{})
 	if err != nil {
-		return nil, misc.WrapError(err, errs.NewInternalServerError("failed to load scaffold plugins", nil))
+		return nil, nil, misc.WrapError(err, errs.NewInternalServerError("failed to load scaffold plugins", nil))
 	}
 	if plugins == nil {
-		return nil, errs.NewBadRequestError("no scaffold plugins are available", nil)
+		return nil, nil, errs.NewBadRequestError("no scaffold plugins are available", nil)
 	}
 
-	var fallback *entity.Plugin
-	var best *entity.Plugin
-	bestScore := -1
-	intent = strings.ToLower(intent)
-
+	enabledPlugins := make([]entity.Plugin, 0, len(*plugins))
+	candidates := make([]ai.PluginCandidate, 0, len(*plugins))
 	for index := range *plugins {
-		plugin := &(*plugins)[index]
+		plugin := (*plugins)[index]
 		if !plugin.Enabled || plugin.Type != entity.PluginScaffolder {
 			continue
 		}
-		if fallback == nil {
-			fallback = plugin
+		enabledPlugins = append(enabledPlugins, plugin)
+		candidates = append(candidates, newScaffoldPluginCandidate(plugin))
+	}
+
+	if len(enabledPlugins) == 0 {
+		return nil, nil, errs.NewBadRequestError("no enabled scaffolder plugins are available", nil)
+	}
+
+	plan, err := u.aiClient.PlanScaffold(ctx, ai.ScaffoldPlanningInput{
+		Prompt:  intent,
+		Plugins: candidates,
+	})
+
+	if err != nil {
+		return nil, nil, misc.WrapError(err, errs.NewInternalServerError("failed to rank scaffold plugins", nil))
+	}
+
+	for index := range enabledPlugins {
+		if enabledPlugins[index].Name == plan.PluginName {
+			return &enabledPlugins[index], plan, nil
 		}
-
-		score := scoreScaffolderPlugin(intent, plugin)
-		if score > bestScore {
-			best = plugin
-			bestScore = score
-		}
 	}
 
-	if best != nil {
-		return best, nil
-	}
-	if fallback != nil {
-		return fallback, nil
-	}
-
-	return nil, errs.NewBadRequestError("no enabled scaffolder plugins are available", nil)
+	return nil, nil, errs.NewBadRequestError("ranked scaffold plugin is not available", nil)
 }
 
-func scoreScaffolderPlugin(intent string, plugin *entity.Plugin) int {
-	value := strings.ToLower(plugin.Name + " " + plugin.Description + " " + plugin.Entrypoint + " " + plugin.Runtime.String())
-	score := 0
-	for _, word := range strings.Fields(intent) {
-		word = strings.Trim(word, ".,:;()[]{}")
-		if len(word) < 3 {
-			continue
-		}
-		if strings.Contains(value, word) {
-			score += 2
+func newScaffoldPluginCandidate(plugin entity.Plugin) ai.PluginCandidate {
+	return ai.PluginCandidate{
+		ID:           plugin.ID.String(),
+		Name:         plugin.Name,
+		Type:         plugin.Type.String(),
+		Runtime:      plugin.Runtime.String(),
+		Entrypoint:   plugin.Entrypoint,
+		Description:  plugin.Description,
+		Keywords:     inferScaffoldPluginKeywords(plugin),
+		Capabilities: inferScaffoldPluginCapabilities(plugin),
+	}
+}
+
+func inferScaffoldPluginKeywords(plugin entity.Plugin) []string {
+	value := strings.ToLower(plugin.Name + " " + plugin.Description + " " + plugin.Entrypoint)
+	keywords := []string{}
+	for _, keyword := range []string{
+		"api", "backend", "database", "fastapi", "frontend", "go", "golang", "grpc", "http", "job", "mysql", "node", "postgres", "python", "react", "rest", "vue", "worker",
+	} {
+		if strings.Contains(value, keyword) {
+			keywords = append(keywords, keyword)
 		}
 	}
-	if strings.Contains(intent, plugin.Runtime.String()) {
-		score += 3
+	return keywords
+}
+
+func inferScaffoldPluginCapabilities(plugin entity.Plugin) []string {
+	value := strings.ToLower(plugin.Name + " " + plugin.Description + " " + plugin.Entrypoint)
+	capabilities := make([]string, 0)
+	for _, capability := range []string{
+		"api service", "background worker", "frontend application", "grpc service", "http service", "web application",
+	} {
+		for _, token := range strings.Fields(capability) {
+			if strings.Contains(value, token) {
+				capabilities = append(capabilities, capability)
+				break
+			}
+		}
 	}
-	return score
+	return capabilities
 }
 
 func firstNonEmpty(values ...string) string {

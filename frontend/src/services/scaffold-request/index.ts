@@ -194,10 +194,6 @@ export function useScaffoldRequestListService() {
     try {
       suggestion.value = await suggestProjectScaffoldRequest(form.project_id, {
         prompt: prompt.value.trim(),
-        project_name: selectedProject.value?.name || '',
-        project_description: selectedProject.value?.description || '',
-        environment: form.environment,
-        environments: selectedProject.value?.environments || [],
       })
       applySuggestion()
     } catch (error) {

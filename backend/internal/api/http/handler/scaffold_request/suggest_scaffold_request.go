@@ -11,17 +11,14 @@ import (
 )
 
 type suggestScaffoldRequest struct {
-	Prompt             string   `json:"prompt" binding:"required"`
-	ProjectName        string   `json:"project_name"`
-	ProjectDescription string   `json:"project_description"`
-	Environment        string   `json:"environment"`
-	Environments       []string `json:"environments"`
+	Prompt string `json:"prompt" binding:"required"`
 }
 
 type suggestScaffoldRequestResponse struct {
 	Source       string                          `json:"source" example:"local-prompt-heuristic-v1"`
 	PluginID     string                          `json:"plugin_id" example:"72bd5b8f-54b3-442a-b54f-685643f6d46e"`
 	PluginName   string                          `json:"plugin_name" example:"Go HTTP API Scaffolder"`
+	Confidence   float64                         `json:"confidence" example:"0.82"`
 	Environment  string                          `json:"environment" example:"dev"`
 	Environments []string                        `json:"environments" example:"dev,staging,prod"`
 	Variables    entity.ScaffoldRequestVariables `json:"variables"`
@@ -49,12 +46,8 @@ func (h *scaffoldRequestHandler) SuggestScaffoldRequest(c *gin.Context) {
 	}
 
 	suggestion, err := h.scaffoldRequestUsecase.SuggestScaffoldRequest(c.Request.Context(), scaffoldRequestUsecase.SuggestScaffoldRequestInput{
-		ProjectID:          c.Param("project"),
-		Prompt:             input.Prompt,
-		ProjectName:        input.ProjectName,
-		ProjectDescription: input.ProjectDescription,
-		Environment:        input.Environment,
-		Environments:       input.Environments,
+		ProjectID: c.Param("project"),
+		Prompt:    input.Prompt,
 	})
 	if err != nil {
 		httpresponse.Error(c, err)
@@ -65,6 +58,7 @@ func (h *scaffoldRequestHandler) SuggestScaffoldRequest(c *gin.Context) {
 		Source:       suggestion.Source,
 		PluginID:     suggestion.PluginID,
 		PluginName:   suggestion.PluginName,
+		Confidence:   suggestion.Confidence,
 		Environment:  suggestion.Environment,
 		Environments: suggestion.Environments,
 		Variables:    suggestion.Variables,

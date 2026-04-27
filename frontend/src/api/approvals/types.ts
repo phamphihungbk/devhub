@@ -9,9 +9,12 @@ export interface ApprovalRequestListQuery {
 export interface ApprovalRequestRecord {
   id: string
   resource: string
+  resource_name?: string
   action: string
   resource_id: string
   requested_by: string
+  requested_by_name?: string
+  scope?: string
   project_id?: string
   service_id?: string
   environment?: string
@@ -28,6 +31,7 @@ export interface ApprovalDecisionRecord {
   id: string
   approval_request_id: string
   decided_by: string
+  decided_by_name?: string
   decision: string
   comment: string
   created_at: string
@@ -36,6 +40,7 @@ export interface ApprovalDecisionRecord {
 export interface ApprovalAuditEventRecord {
   type: string
   actor_id: string
+  actor_name?: string
   summary: string
   comment?: string
   created_at: string

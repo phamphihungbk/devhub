@@ -202,10 +202,6 @@ async function generateScaffoldSuggestion() {
   try {
     scaffoldSuggestion.value = await suggestProjectScaffoldRequest(projectId.value, {
       prompt: scaffoldPrompt.value.trim(),
-      project_name: project.value?.name || '',
-      project_description: project.value?.description || '',
-      environment: scaffoldForm.environment,
-      environments: project.value?.environments || [],
     })
   } catch (error) {
     message.warning(error instanceof ApiError
@@ -719,7 +715,7 @@ onMounted(loadServiceDetails)
           <div v-if="scaffoldSuggestion" class="mt-4 grid gap-3 text-sm md:grid-cols-2">
             <div class="rounded-xl bg-white p-3 md:col-span-2">
               <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Suggested plugin</p>
-              <p class="mt-1 font-semibold text-[var(--app-text)]">{{ scaffoldSuggestion.plugin_name || 'Select manually' }}</p>
+              <p class="mt-1 font-semibold text-[var(--app-text)]">{{ scaffoldSuggestion.plugin_name || 'Select manually' }} · {{ Math.round(scaffoldSuggestion.confidence * 100) }}%</p>
             </div>
             <div class="rounded-xl bg-white p-3">
               <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Suggested service</p>

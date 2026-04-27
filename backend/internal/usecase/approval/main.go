@@ -18,17 +18,32 @@ type ApprovalUsecase interface {
 type approvalUsecase struct {
 	appConfig                 config.AppConfig
 	approvalRepository        repository.ApprovalRepository
+	deploymentRepository      repository.DeploymentRepository
+	projectRepository         repository.ProjectRepository
+	releaseRepository         repository.ReleaseRepository
 	scaffoldRequestRepository repository.ScaffoldRequestRepository
+	serviceRepository         repository.ServiceRepository
+	userRepository            repository.UserRepository
 }
 
 func NewApprovalUsecase(
 	appConfig config.AppConfig,
 	approvalRepository repository.ApprovalRepository,
+	deploymentRepository repository.DeploymentRepository,
+	projectRepository repository.ProjectRepository,
+	releaseRepository repository.ReleaseRepository,
 	scaffoldRequestRepository repository.ScaffoldRequestRepository,
+	serviceRepository repository.ServiceRepository,
+	userRepository repository.UserRepository,
 ) ApprovalUsecase {
 	return &approvalUsecase{
 		appConfig:                 appConfig,
 		approvalRepository:        approvalRepository,
+		deploymentRepository:      deploymentRepository,
+		projectRepository:         projectRepository,
+		releaseRepository:         releaseRepository,
 		scaffoldRequestRepository: scaffoldRequestRepository,
+		serviceRepository:         serviceRepository,
+		userRepository:            userRepository,
 	}
 }

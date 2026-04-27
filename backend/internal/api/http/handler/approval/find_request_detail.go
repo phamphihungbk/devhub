@@ -18,6 +18,7 @@ type approvalRequestDetailResponse struct {
 type approvalAuditEventResponse struct {
 	Type      string    `json:"type"`
 	ActorID   string    `json:"actor_id"`
+	ActorName string    `json:"actor_name,omitempty"`
 	Summary   string    `json:"summary"`
 	Comment   string    `json:"comment,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
@@ -55,8 +56,9 @@ func (h *approvalHandler) newApprovalRequestDetailResponse(output *approvalUseca
 
 	decisions := make([]approvalDecisionResponse, 0, len(output.Decisions))
 	for _, decision := range output.Decisions {
-		decision := decision
-		decisions = append(decisions, h.newApprovalDecisionResponse(&decision))
+		response := h.newApprovalDecisionResponse(&decision)
+		response.DecidedByName = output.ActorNames[decision.DecidedBy]
+		decisions = append(decisions, response)
 	}
 
 	auditEvents := make([]approvalAuditEventResponse, 0, len(output.AuditEvents))
@@ -64,14 +66,20 @@ func (h *approvalHandler) newApprovalRequestDetailResponse(output *approvalUseca
 		auditEvents = append(auditEvents, approvalAuditEventResponse{
 			Type:      event.Type,
 			ActorID:   event.ActorID.String(),
+			ActorName: event.ActorName,
 			Summary:   event.Summary,
 			Comment:   event.Comment,
 			CreatedAt: event.CreatedAt,
 		})
 	}
 
+	approvalRequest := h.newApprovalRequestResponse(output.ApprovalRequest)
+	approvalRequest.ResourceName = output.ResourceName
+	approvalRequest.RequestedByName = output.RequestedByName
+	approvalRequest.Scope = output.Scope
+
 	return approvalRequestDetailResponse{
-		ApprovalRequest: h.newApprovalRequestResponse(output.ApprovalRequest),
+		ApprovalRequest: approvalRequest,
 		Decisions:       decisions,
 		AuditEvents:     auditEvents,
 	}

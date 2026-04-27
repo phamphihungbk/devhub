@@ -26,9 +26,12 @@ type createApprovalDecisionResponse struct {
 type approvalRequestResponse struct {
 	ID                string     `json:"id"`
 	Resource          string     `json:"resource"`
+	ResourceName      string     `json:"resource_name,omitempty"`
 	Action            string     `json:"action"`
 	ResourceID        string     `json:"resource_id"`
 	RequestedBy       string     `json:"requested_by"`
+	RequestedByName   string     `json:"requested_by_name,omitempty"`
+	Scope             string     `json:"scope,omitempty"`
 	ProjectID         string     `json:"project_id,omitempty"`
 	ServiceID         string     `json:"service_id,omitempty"`
 	Environment       string     `json:"environment,omitempty"`
@@ -45,6 +48,7 @@ type approvalDecisionResponse struct {
 	ID                string    `json:"id"`
 	ApprovalRequestID string    `json:"approval_request_id"`
 	DecidedBy         string    `json:"decided_by"`
+	DecidedByName     string    `json:"decided_by_name,omitempty"`
 	Decision          string    `json:"decision"`
 	Comment           string    `json:"comment"`
 	CreatedAt         time.Time `json:"created_at"`

@@ -12,8 +12,11 @@ type ScaffoldPlanningInput struct {
 }
 
 type PluginCandidate struct {
+	ID           string         `json:"id"`
 	Name         string         `json:"name"`
 	Type         string         `json:"type"`
+	Runtime      string         `json:"runtime"`
+	Entrypoint   string         `json:"entrypoint"`
 	Description  string         `json:"description"`
 	Keywords     []string       `json:"keywords"`
 	Capabilities []string       `json:"capabilities"`
@@ -25,4 +28,5 @@ type ScaffoldPlan struct {
 	Variables  map[string]any `json:"variables"`
 	Confidence float64        `json:"confidence"`
 	Reason     string         `json:"reason"`
+	Matches    []string       `json:"matches"`
 }
