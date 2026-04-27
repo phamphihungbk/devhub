@@ -4,7 +4,7 @@ services:
       target: dev
       args:
         MODE: dev
-    command: ["go", "run", ".", "serve"]
+    command: ["air", "-c", ".air.toml"]
     environment:
       SERVICE_ENV: development
     volumes:
@@ -62,10 +62,6 @@ services:
   grafana:
     ports:
       - "${GRAFANA_HOST_PORT:-3001}:3000"
-
-  ollama:
-    ports:
-      - "${OLLAMA_HOST_PORT:-11434}:11434"
 
   gitea:
     ports:
