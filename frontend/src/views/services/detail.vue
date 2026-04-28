@@ -2,13 +2,13 @@
 import {
   NButton,
   NCard,
-  NCheckbox,
   NDataTable,
   NForm,
   NFormItem,
   NInput,
   NInputNumber,
   NModal,
+  NPopconfirm,
   NSelect,
   NStatistic,
   NTag,
@@ -18,18 +18,16 @@ import { computed, h, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { permission } from '@/services/access/rbac'
-import {
-  applyScaffoldSuggestionToForm,
-  generateScaffoldSuggestion as requestScaffoldSuggestion,
-} from '@/services/scaffold-request'
 import PageHeader from '@/components/page-header.vue'
 import {
   createDeployment,
-  createScaffoldRequest,
+  createServiceDependency,
+  deleteServiceDependency,
   fetchDeploymentById,
   fetchPlugins,
   fetchProjectById,
   fetchProjects,
+  fetchServiceDependencies,
   fetchProjectServices,
   fetchServiceDeployments,
   fetchServiceReleases,
@@ -39,13 +37,12 @@ import { useAuthStore } from '@/stores/modules/auth'
 import { getEnvironmentTagColor } from '@/theme/environment'
 import type {
   CreateDeploymentPayload,
-  CreateScaffoldRequestPayload,
   Deployment,
   PluginRecord,
   Project,
   Release,
-  ScaffoldRequestSuggestion,
   Service,
+  ServiceDependency,
 } from '@/api'
 
 const route = useRoute()
@@ -54,44 +51,37 @@ const message = useMessage()
 const authStore = useAuthStore()
 
 const serviceId = computed(() => route.params.serviceId as string)
-const projectId = computed(() => project.value?.id || service.value?.project_id || '')
 
 const loading = ref(false)
 const deploymentSubmitting = ref(false)
 const deploymentLogLoading = ref(false)
-const scaffoldSuggestionLoading = ref(false)
-const scaffoldSubmitting = ref(false)
 const deploymentModalOpen = ref(false)
 const deploymentLogModalOpen = ref(false)
-const scaffoldModalOpen = ref(false)
+const dependencyModalOpen = ref(false)
 const project = ref<Project | null>(null)
 const service = ref<Service | null>(null)
+const projectServices = ref<Service[]>([])
+const dependencies = ref<ServiceDependency[]>([])
 const releases = ref<Release[]>([])
 const deployments = ref<Deployment[]>([])
 const plugins = ref<PluginRecord[]>([])
-const scaffoldPrompt = ref('')
 const selectedReleaseTag = ref<string | null>(null)
 const selectedDeployment = ref<Deployment | null>(null)
+const dependencySubmitting = ref(false)
+
+const dependencyForm = reactive({
+  depends_on_service_id: '',
+  type: 'http',
+  protocol: 'http',
+  port: null as number | null,
+  path: '',
+})
 
 const deploymentForm = reactive<CreateDeploymentPayload>({
   plugin_id: '',
   environment: 'dev',
   version: '',
 })
-
-const scaffoldForm = reactive<CreateScaffoldRequestPayload>({
-  plugin_id: '',
-  environment: 'dev',
-  variables: {
-    service_name: '',
-    module_path: '',
-    port: 8080,
-    database: 'postgres',
-    enable_logging: true,
-  },
-})
-
-const scaffoldSuggestion = ref<ScaffoldRequestSuggestion | null>(null)
 
 const successfulReleases = computed(() =>
   releases.value.filter(item => item.status === 'completed').length,
@@ -115,12 +105,6 @@ const deployerOptions = computed(() =>
     .map(plugin => ({ label: plugin.name, value: plugin.id })),
 )
 
-const scaffolderOptions = computed(() =>
-  plugins.value
-    .filter(plugin => plugin.type === 'scaffolder' && plugin.enabled !== false)
-    .map(plugin => ({ label: plugin.name, value: plugin.id })),
-)
-
 const environmentSelectOptions = computed(() => {
   const values = project.value?.environments?.length ? project.value.environments : ['dev', 'staging', 'prod']
   return values.map(value => ({ label: value, value }))
@@ -130,8 +114,8 @@ const canCreateDeployment = computed(() =>
   authStore.canAccess({ permissions: [permission.deploymentWrite] }),
 )
 
-const canCreateScaffoldRequest = computed(() =>
-  authStore.canAccess({ permissions: [permission.scaffoldRequestWrite] }),
+const canWireService = computed(() =>
+  authStore.canAccess({ permissions: [permission.projectWrite] }),
 )
 
 const selectedRelease = computed(() =>
@@ -144,82 +128,55 @@ const visibleDeployments = computed(() =>
     : deployments.value,
 )
 
+const dependencyOptions = computed(() => {
+  const wiredServiceIds = new Set(dependencies.value.map(item => item.depends_on_service_id))
+
+  return projectServices.value
+    .filter(item => item.id !== serviceId.value && !wiredServiceIds.has(item.id))
+    .map(item => ({ label: item.name, value: item.id }))
+})
+
+const dependencyTypeOptions = [
+  { label: 'HTTP', value: 'http' },
+  { label: 'gRPC', value: 'grpc' },
+  { label: 'Queue', value: 'queue' },
+  { label: 'Database', value: 'database' },
+]
+
+const dependencyProtocolOptions = computed(() => {
+  if (dependencyForm.type === 'grpc') {
+    return [{ label: 'gRPC', value: 'grpc' }]
+  }
+  if (dependencyForm.type === 'queue' || dependencyForm.type === 'database') {
+    return [
+      { label: 'TCP', value: 'tcp' },
+      { label: 'UDP', value: 'udp' },
+    ]
+  }
+
+  return [
+    { label: 'HTTP', value: 'http' },
+    { label: 'HTTPS', value: 'https' },
+  ]
+})
+
 function resetDeploymentForm() {
   deploymentForm.plugin_id = deployerOptions.value[0]?.value || ''
   deploymentForm.environment = project.value?.environments?.[0] || 'dev'
   deploymentForm.version = selectedRelease.value?.tag || ''
 }
 
-function resetScaffoldForm() {
-  scaffoldForm.plugin_id = scaffolderOptions.value[0]?.value || ''
-  scaffoldForm.environment = project.value?.environments?.[0] || 'dev'
-  scaffoldForm.variables.service_name = normalizeServiceName(service.value?.name || project.value?.name || 'new-service')
-  scaffoldForm.variables.module_path = inferModulePath(service.value?.repo_url || '')
-  scaffoldForm.variables.port = suggestPort(scaffoldForm.variables.service_name)
-  scaffoldForm.variables.database = 'postgres'
-  scaffoldForm.variables.enable_logging = true
-  scaffoldPrompt.value = ''
-  scaffoldSuggestion.value = null
+function resetDependencyForm() {
+  dependencyForm.depends_on_service_id = dependencyOptions.value[0]?.value || ''
+  dependencyForm.type = 'http'
+  dependencyForm.protocol = 'http'
+  dependencyForm.port = null
+  dependencyForm.path = ''
 }
 
-function openScaffoldModal() {
-  resetScaffoldForm()
-  scaffoldModalOpen.value = true
-}
-
-function normalizeServiceName(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    || 'new-service'
-}
-
-function inferModulePath(repoUrl: string) {
-  const trimmed = repoUrl.trim().replace(/\.git$/, '')
-  if (!trimmed) return ''
-  return trimmed
-    .replace(/^https?:\/\//, '')
-    .replace(/^git@/, '')
-    .replace(':', '/')
-}
-
-function suggestPort(name: string) {
-  const hash = [...name].reduce((total, char) => total + char.charCodeAt(0), 0)
-  return 8000 + (hash % 1000)
-}
-
-async function generateScaffoldSuggestion() {
-  if (!projectId.value) {
-    message.warning('Project context is not available for scaffold suggestions.')
-    return
-  }
-  if (!scaffoldPrompt.value.trim()) {
-    message.warning('Describe the service first so AI can suggest a scaffold request.')
-    return
-  }
-
-  scaffoldSuggestionLoading.value = true
-
-  try {
-    scaffoldSuggestion.value = await requestScaffoldSuggestion({
-      projectId: projectId.value,
-      prompt: scaffoldPrompt.value,
-    })
-  } catch (error) {
-    message.warning(error instanceof ApiError
-      ? `Unable to suggest scaffold request: ${error.message}`
-      : 'Unable to suggest scaffold request.')
-  } finally {
-    scaffoldSuggestionLoading.value = false
-  }
-}
-
-function applyScaffoldSuggestion() {
-  if (!scaffoldSuggestion.value) return
-
-  applyScaffoldSuggestionToForm(scaffoldForm, scaffoldSuggestion.value)
+function openDependencyModal() {
+  resetDependencyForm()
+  dependencyModalOpen.value = true
 }
 
 function selectRelease(row: Release) {
@@ -377,15 +334,76 @@ const deploymentColumns = [
   },
 ]
 
+const dependencyColumns = computed(() => {
+  const columns = [
+    {
+      title: 'Depends on',
+      key: 'depends_on_service',
+      render: (row: ServiceDependency) => row.depends_on_service?.name || row.depends_on_service_id,
+    },
+    {
+      title: 'Type',
+      key: 'type',
+      render: (row: ServiceDependency) =>
+        h(
+          NTag,
+          { bordered: false, type: row.type === 'database' ? 'warning' : 'info' },
+          { default: () => row.type },
+        ),
+    },
+    {
+      title: 'Endpoint',
+      key: 'endpoint',
+      render: (row: ServiceDependency) => {
+        const protocol = row.protocol || 'default'
+        const port = row.port ? `:${row.port}` : ''
+        const path = row.path || ''
+        return `${protocol}${port}${path}`
+      },
+    },
+  ]
+
+  if (canWireService.value) {
+    columns.push({
+      title: 'Actions',
+      key: 'actions',
+      render: (row: ServiceDependency) =>
+        h(
+          NPopconfirm,
+          {
+            onPositiveClick: () => removeDependency(row),
+          },
+          {
+            trigger: () =>
+              h(
+                NButton,
+                {
+                  size: 'small',
+                  type: 'error',
+                  ghost: true,
+                  onClick: (event: MouseEvent) => event.stopPropagation(),
+                },
+                { default: () => 'Remove' },
+              ),
+            default: () => 'Remove this service dependency?',
+          },
+        ),
+    })
+  }
+
+  return columns
+})
+
 async function loadServiceDetails() {
   loading.value = true
 
   try {
-    const [serviceContext, pluginData, serviceReleases, serviceDeployments] = await Promise.all([
+    const [serviceContext, pluginData, serviceReleases, serviceDeployments, serviceDependencies] = await Promise.all([
       findServiceContext(),
       fetchPlugins(),
       fetchServiceReleases(serviceId.value),
       fetchServiceDeployments(serviceId.value, { limit: 10, sortBy: 'date', sortOrder: 'desc' }),
+      fetchServiceDependencies(serviceId.value),
     ])
 
     if (!serviceContext) {
@@ -396,10 +414,11 @@ async function loadServiceDetails() {
 
     project.value = serviceContext.project
     service.value = serviceContext.service
+    projectServices.value = serviceContext.services
     plugins.value = pluginData
     releases.value = serviceReleases
     deployments.value = serviceDeployments
-    resetScaffoldForm()
+    dependencies.value = serviceDependencies
   } catch (error) {
     message.error(error instanceof ApiError ? error.message : 'Unable to load service details.')
   } finally {
@@ -407,7 +426,7 @@ async function loadServiceDetails() {
   }
 }
 
-async function findServiceContext(): Promise<{ project: Project, service: Service } | null> {
+async function findServiceContext(): Promise<{ project: Project, service: Service, services: Service[] } | null> {
   const routeProjectId = route.params.projectId as string | undefined
 
   if (routeProjectId) {
@@ -416,7 +435,7 @@ async function findServiceContext(): Promise<{ project: Project, service: Servic
       fetchProjectServices(routeProjectId),
     ])
     const matchedService = serviceRows.find(item => item.id === serviceId.value) || null
-    return matchedService ? { project: projectData, service: matchedService } : null
+    return matchedService ? { project: projectData, service: matchedService, services: serviceRows } : null
   }
 
   const projects = await fetchProjects()
@@ -424,42 +443,47 @@ async function findServiceContext(): Promise<{ project: Project, service: Servic
     projects.map(async (projectData: Project) => {
       const serviceRows = await fetchProjectServices(projectData.id)
       const matchedService = serviceRows.find(item => item.id === serviceId.value) || null
-      return matchedService ? { project: projectData, service: matchedService } : null
+      return matchedService ? { project: projectData, service: matchedService, services: serviceRows } : null
     }),
   )
 
   return serviceGroups.find(Boolean) || null
 }
 
-async function submitScaffoldRequest() {
-  if (!scaffoldForm.plugin_id || !scaffoldForm.environment || !scaffoldForm.variables.service_name.trim()) {
-    message.warning('Complete the scaffold request form before submitting.')
+async function submitDependency() {
+  if (!dependencyForm.depends_on_service_id || !dependencyForm.type) {
+    message.warning('Choose a target service and dependency type before wiring.')
     return
   }
 
-  scaffoldSubmitting.value = true
+  dependencySubmitting.value = true
 
   try {
-    if (!projectId.value) {
-      message.warning('Project context is not available for this scaffold request.')
-      return
-    }
-
-    await createScaffoldRequest(projectId.value, {
-      ...scaffoldForm,
-      variables: {
-        ...scaffoldForm.variables,
-        service_name: scaffoldForm.variables.service_name.trim(),
-        module_path: scaffoldForm.variables.module_path.trim(),
-      },
+    await createServiceDependency(serviceId.value, {
+      depends_on_service_id: dependencyForm.depends_on_service_id,
+      type: dependencyForm.type,
+      protocol: dependencyForm.protocol,
+      port: dependencyForm.port,
+      path: dependencyForm.path.trim(),
+      config: {},
     })
-    message.success('Scaffold request created successfully.')
-    scaffoldModalOpen.value = false
-    resetScaffoldForm()
+    message.success('Service dependency wired successfully.')
+    dependencyModalOpen.value = false
+    dependencies.value = await fetchServiceDependencies(serviceId.value)
   } catch (error) {
-    message.error(error instanceof ApiError ? error.message : 'Unable to create scaffold request.')
+    message.error(error instanceof ApiError ? error.message : 'Unable to wire service dependency.')
   } finally {
-    scaffoldSubmitting.value = false
+    dependencySubmitting.value = false
+  }
+}
+
+async function removeDependency(row: ServiceDependency) {
+  try {
+    await deleteServiceDependency(serviceId.value, row.id)
+    dependencies.value = dependencies.value.filter(item => item.id !== row.id)
+    message.success('Service dependency removed.')
+  } catch (error) {
+    message.error(error instanceof ApiError ? error.message : 'Unable to remove service dependency.')
   }
 }
 
@@ -512,11 +536,12 @@ onMounted(loadServiceDetails)
           Open repository
         </NButton> -->
         <NButton
-          v-if="canCreateScaffoldRequest"
+          v-if="canWireService"
           type="primary"
-          @click="openScaffoldModal"
+          ghost
+          @click="openDependencyModal"
         >
-          New scaffold request
+          Wire service
         </NButton>
       </div>
     </PageHeader>
@@ -570,6 +595,32 @@ onMounted(loadServiceDetails)
             </div>
           </div>
         </NCard>
+
+        <NCard class="rounded-3xl border border-[var(--app-border)] shadow-[var(--app-shadow)]">
+          <template #header>
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <span class="text-lg font-600 text-[var(--app-text)]">Service wiring</span>
+              <NButton
+                v-if="canWireService"
+                size="small"
+                type="primary"
+                ghost
+                :disabled="dependencyOptions.length === 0"
+                @click="openDependencyModal"
+              >
+                Add dependency
+              </NButton>
+            </div>
+          </template>
+
+          <NDataTable
+            :columns="dependencyColumns"
+            :data="dependencies"
+            :loading="loading"
+            :pagination="{ pageSize: 5 }"
+            :bordered="false"
+          />
+        </NCard>
       </div>
 
       <div class="grid gap-6">
@@ -621,6 +672,73 @@ onMounted(loadServiceDetails)
     </div>
 
     <NModal
+      v-if="canWireService"
+      v-model:show="dependencyModalOpen"
+      preset="card"
+      title="Wire service dependency"
+      class="max-w-2xl"
+      :bordered="false"
+      segmented
+    >
+      <NForm label-placement="top">
+        <div class="grid gap-4 md:grid-cols-2">
+          <NFormItem label="Depends on">
+            <NSelect
+              v-model:value="dependencyForm.depends_on_service_id"
+              :options="dependencyOptions"
+              placeholder="Select service"
+            />
+          </NFormItem>
+
+          <NFormItem label="Type">
+            <NSelect
+              v-model:value="dependencyForm.type"
+              :options="dependencyTypeOptions"
+              placeholder="Select type"
+              @update:value="dependencyForm.protocol = dependencyProtocolOptions[0]?.value || ''"
+            />
+          </NFormItem>
+
+          <NFormItem label="Protocol">
+            <NSelect
+              v-model:value="dependencyForm.protocol"
+              :options="dependencyProtocolOptions"
+              placeholder="Select protocol"
+            />
+          </NFormItem>
+
+          <NFormItem label="Port">
+            <NInputNumber
+              v-model:value="dependencyForm.port"
+              class="w-full"
+              :min="1"
+              :max="65535"
+              placeholder="Optional"
+            />
+          </NFormItem>
+
+          <NFormItem label="Path" class="md:col-span-2">
+            <NInput
+              v-model:value="dependencyForm.path"
+              placeholder="/api/v1"
+            />
+          </NFormItem>
+        </div>
+      </NForm>
+
+      <template #action>
+        <div class="flex justify-end gap-3">
+          <NButton @click="dependencyModalOpen = false">
+            Cancel
+          </NButton>
+          <NButton type="primary" :loading="dependencySubmitting" @click="submitDependency">
+            Wire service
+          </NButton>
+        </div>
+      </template>
+    </NModal>
+
+    <NModal
       v-if="canCreateDeployment"
       v-model:show="deploymentModalOpen"
       preset="card"
@@ -664,134 +782,6 @@ onMounted(loadServiceDetails)
           </NButton>
           <NButton type="primary" :loading="deploymentSubmitting" @click="submitDeployment">
             Create deployment
-          </NButton>
-        </div>
-      </template>
-    </NModal>
-
-    <NModal
-      v-if="canCreateScaffoldRequest"
-      v-model:show="scaffoldModalOpen"
-      preset="card"
-      title="New scaffold request"
-      class="max-w-3xl"
-      :bordered="false"
-      segmented
-    >
-      <NForm label-placement="top">
-        <div class="mb-4 rounded-2xl border border-[var(--app-border)] bg-slate-50 p-4">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div class="flex flex-wrap items-center gap-2">
-                <p class="text-sm font-700 text-[var(--app-text)]">AI-assisted scaffold suggestions</p>
-                <NTag v-if="scaffoldSuggestion" size="small" :bordered="false" type="success">
-                  {{ scaffoldSuggestion.source }}
-                </NTag>
-              </div>
-              <p class="mt-1 text-xs text-[var(--app-text-muted)]">Describe the service, then AI will choose a scaffold plugin and variables.</p>
-            </div>
-            <div class="flex gap-2">
-              <NButton size="small" :loading="scaffoldSuggestionLoading" @click="generateScaffoldSuggestion">
-                Analyze prompt
-              </NButton>
-              <NButton
-                size="small"
-                type="primary"
-                ghost
-                :disabled="!scaffoldSuggestion || scaffoldSuggestionLoading"
-                @click="applyScaffoldSuggestion"
-              >
-                Apply
-              </NButton>
-            </div>
-          </div>
-
-          <NInput
-            v-model:value="scaffoldPrompt"
-            class="mt-4"
-            type="textarea"
-            :autosize="{ minRows: 3, maxRows: 5 }"
-            placeholder="Example: Create a Go payment API with Postgres, HTTP health checks, and structured logging."
-          />
-
-          <div v-if="scaffoldSuggestion" class="mt-4 grid gap-3 text-sm md:grid-cols-2">
-            <div class="rounded-xl bg-white p-3 md:col-span-2">
-              <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Suggested plugin</p>
-              <p class="mt-1 font-semibold text-[var(--app-text)]">{{ scaffoldSuggestion.plugin_name || 'Select manually' }} · {{ Math.round(scaffoldSuggestion.confidence * 100) }}%</p>
-            </div>
-            <div class="rounded-xl bg-white p-3">
-              <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Suggested service</p>
-              <p class="mt-1 font-semibold text-[var(--app-text)]">{{ scaffoldSuggestion.variables.service_name }}</p>
-            </div>
-            <div class="rounded-xl bg-white p-3">
-              <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Suggested port</p>
-              <p class="mt-1 font-semibold text-[var(--app-text)]">{{ scaffoldSuggestion.variables.port }}</p>
-            </div>
-            <div class="rounded-xl bg-white p-3">
-              <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Environment</p>
-              <p class="mt-1 font-semibold text-[var(--app-text)]">{{ scaffoldSuggestion.environment }}</p>
-            </div>
-            <div class="rounded-xl bg-white p-3">
-              <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Module path</p>
-              <p class="mt-1 break-all font-semibold text-[var(--app-text)]">{{ scaffoldSuggestion.variables.module_path || 'Manual input needed' }}</p>
-            </div>
-            <div class="rounded-xl bg-white p-3 md:col-span-2">
-              <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Reasoning</p>
-              <ul class="mt-2 grid gap-1 text-[var(--app-text-muted)]">
-                <li v-for="item in scaffoldSuggestion.rationale" :key="item">{{ item }}</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <div class="grid gap-4 md:grid-cols-2">
-          <NFormItem label="Scaffolder plugin">
-            <NSelect
-              v-model:value="scaffoldForm.plugin_id"
-              :options="scaffolderOptions"
-              placeholder="Select scaffolder"
-            />
-          </NFormItem>
-
-          <NFormItem label="Environment">
-            <NSelect
-              v-model:value="scaffoldForm.environment"
-              :options="environmentSelectOptions"
-              placeholder="Select environment"
-            />
-          </NFormItem>
-
-          <NFormItem label="Service name">
-            <NInput v-model:value="scaffoldForm.variables.service_name" placeholder="payments-api" />
-          </NFormItem>
-
-          <NFormItem label="Module path">
-            <NInput v-model:value="scaffoldForm.variables.module_path" placeholder="github.com/acme/payments-api" />
-          </NFormItem>
-
-          <NFormItem label="Port">
-            <NInputNumber v-model:value="scaffoldForm.variables.port" class="w-full" :min="1" :max="65535" />
-          </NFormItem>
-
-          <NFormItem label="Database">
-            <NInput v-model:value="scaffoldForm.variables.database" placeholder="postgres" />
-          </NFormItem>
-
-          <NFormItem label="Enable logging">
-            <NCheckbox v-model:checked="scaffoldForm.variables.enable_logging">
-              Enabled
-            </NCheckbox>
-          </NFormItem>
-        </div>
-      </NForm>
-
-      <template #action>
-        <div class="flex justify-end gap-3">
-          <NButton @click="scaffoldModalOpen = false">
-            Cancel
-          </NButton>
-          <NButton type="primary" :loading="scaffoldSubmitting" @click="submitScaffoldRequest">
-            Create scaffold request
           </NButton>
         </div>
       </template>

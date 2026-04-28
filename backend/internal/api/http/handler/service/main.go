@@ -9,6 +9,9 @@ import (
 
 type ServiceHandler interface {
 	FindAllServices(c *gin.Context)
+	FindServiceDependencies(c *gin.Context)
+	CreateServiceDependency(c *gin.Context)
+	DeleteServiceDependency(c *gin.Context)
 }
 
 type serviceHandler struct {

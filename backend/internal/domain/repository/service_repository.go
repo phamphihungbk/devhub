@@ -14,6 +14,9 @@ type ServiceRepository interface {
 	FindOne(ctx context.Context, id uuid.UUID) (*entity.Service, error)
 	FindAll(ctx context.Context, filter FindAllServicesFilter) (*entity.Services, int64, error)
 	DeleteOne(ctx context.Context, id uuid.UUID) (*entity.Service, error)
+	CreateDependency(ctx context.Context, dependency *entity.ServiceDependency) (*entity.ServiceDependency, error)
+	FindDependencies(ctx context.Context, serviceID uuid.UUID) (*entity.ServiceDependencies, error)
+	DeleteDependency(ctx context.Context, serviceID uuid.UUID, dependencyID uuid.UUID) (*entity.ServiceDependency, error)
 }
 
 type FindAllServicesFilter struct {

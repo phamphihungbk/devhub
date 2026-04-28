@@ -10,6 +10,9 @@ import (
 
 type ServiceUsecase interface {
 	FindAllServices(ctx context.Context, input FindAllServicesInput) (entity.Services, error)
+	FindServiceDependencies(ctx context.Context, input FindServiceDependenciesInput) (entity.ServiceDependencies, error)
+	CreateServiceDependency(ctx context.Context, input CreateServiceDependencyInput) (*entity.ServiceDependency, error)
+	DeleteServiceDependency(ctx context.Context, input DeleteServiceDependencyInput) (*entity.ServiceDependency, error)
 }
 
 type serviceUsecase struct {

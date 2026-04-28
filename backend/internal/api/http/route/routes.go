@@ -205,6 +205,15 @@ func (r *router) applyProjectRoutes(router *gin.Engine) {
 			r.Middleware.RequirePermissions(entity.PermissionReleaseWrite),
 			r.ReleaseHandler.CreateRelease,
 		)
+		serviceProtectedRoute.GET("/:service/dependencies", r.ServiceHandler.FindServiceDependencies)
+		serviceProtectedRoute.POST("/:service/dependencies",
+			r.Middleware.RequirePermissions(entity.PermissionProjectWrite),
+			r.ServiceHandler.CreateServiceDependency,
+		)
+		serviceProtectedRoute.DELETE("/:service/dependencies/:dependency",
+			r.Middleware.RequirePermissions(entity.PermissionProjectWrite),
+			r.ServiceHandler.DeleteServiceDependency,
+		)
 	}
 }
 
