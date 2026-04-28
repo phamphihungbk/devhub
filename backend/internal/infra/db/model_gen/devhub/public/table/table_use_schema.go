@@ -23,6 +23,7 @@ func UseSchema(schema string) {
 	Roles = Roles.FromSchema(schema)
 	ScaffoldRequests = ScaffoldRequests.FromSchema(schema)
 	SchemaMigrations = SchemaMigrations.FromSchema(schema)
+	ServiceDependencies = ServiceDependencies.FromSchema(schema)
 	Services = Services.FromSchema(schema)
 	Teams = Teams.FromSchema(schema)
 	Users = Users.FromSchema(schema)

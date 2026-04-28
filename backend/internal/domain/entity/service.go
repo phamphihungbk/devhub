@@ -17,3 +17,20 @@ type Service struct {
 }
 
 type Services []Service
+
+type ServiceDependency struct {
+	ID                 uuid.UUID
+	ServiceID          uuid.UUID
+	DependsOnServiceID uuid.UUID
+	DependsOnService   *Service
+	Type               string
+	Protocol           string
+	Port               *int
+	Path               string
+	Config             map[string]any
+	CreatedBy          uuid.UUID
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+}
+
+type ServiceDependencies []ServiceDependency
