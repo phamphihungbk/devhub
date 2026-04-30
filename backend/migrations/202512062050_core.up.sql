@@ -45,8 +45,8 @@ CREATE TABLE IF NOT EXISTS environments (
     config JSONB NOT NULL DEFAULT '{}',
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
-    UNIQUE (project_id, name)
-    CHECK (tier IN ('development', 'staging', 'production')),
+    UNIQUE (project_id, name),
+    CHECK (tier IN ('development', 'staging', 'production'))
 );
 
 -- Migration: Create services table
@@ -61,3 +61,24 @@ CREATE TABLE IF NOT EXISTS services (
     UNIQUE (project_id, name),
     UNIQUE (repo_url)
 );
+
+CREATE INDEX IF NOT EXISTS idx_users_team_id
+    ON users(team_id);
+
+CREATE INDEX IF NOT EXISTS idx_projects_owner_team_id
+    ON projects(owner_team_id);
+
+CREATE INDEX IF NOT EXISTS idx_projects_created_by
+    ON projects(created_by);
+
+CREATE INDEX IF NOT EXISTS idx_projects_created_at
+    ON projects(created_at);
+
+CREATE INDEX IF NOT EXISTS idx_environments_project_tier
+    ON environments(project_id, tier);
+
+CREATE INDEX IF NOT EXISTS idx_services_project_created
+    ON services(project_id, created_at DESC, id DESC);
+
+CREATE INDEX IF NOT EXISTS idx_services_created_by
+    ON services(created_by);

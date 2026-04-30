@@ -80,3 +80,45 @@ CREATE TABLE IF NOT EXISTS approval_decisions (
     CHECK (decision IN ('approve', 'reject')),
     UNIQUE (approval_request_id, decided_by)
 );
+
+
+CREATE INDEX IF NOT EXISTS idx_role_permissions_permission_id
+    ON role_permissions(permission_id);
+
+CREATE INDEX IF NOT EXISTS idx_user_roles_role_id
+    ON user_roles(role_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_approval_policies_unique_scope
+    ON approval_policies(resource, action, project_id, service_id, environment_id)
+    NULLS NOT DISTINCT;
+
+CREATE INDEX IF NOT EXISTS idx_approval_policies_lookup
+    ON approval_policies(
+        resource,
+        action,
+        environment_id,
+        enabled,
+        service_id,
+        project_id,
+        updated_at DESC,
+        created_at DESC
+    );
+
+CREATE INDEX IF NOT EXISTS idx_approval_requests_status_created
+    ON approval_requests(status, created_at DESC, id DESC);
+
+CREATE INDEX IF NOT EXISTS idx_approval_requests_requested_by_created
+    ON approval_requests(requested_by, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_approval_requests_resource
+    ON approval_requests(resource, action, resource_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_approval_requests_pending_resource
+    ON approval_requests(resource, action, resource_id)
+    WHERE status = 'pending';
+
+CREATE INDEX IF NOT EXISTS idx_approval_decisions_request_created
+    ON approval_decisions(approval_request_id, created_at ASC);
+
+CREATE INDEX IF NOT EXISTS idx_approval_decisions_decided_by_created
+    ON approval_decisions(decided_by, created_at DESC);
