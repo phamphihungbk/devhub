@@ -1,0 +1,6 @@
+-- 202512062050_core.down.sql
+DROP TABLE IF EXISTS services;
+DROP TABLE IF EXISTS environments;
+DROP TABLE IF EXISTS projects;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS teams;

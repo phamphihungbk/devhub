@@ -1,19 +1,22 @@
--- 202604201016_add_rbac_service.up.sql
+-- 202604250901_governance.up.sql
 
+-- Migration: Create roles table
 CREATE TABLE IF NOT EXISTS roles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(64) NOT NULL UNIQUE,
+    name VARCHAR(64) UNIQUE NOT NULL,
     description TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
+-- Migration: Create permissions table
 CREATE TABLE IF NOT EXISTS permissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(128) NOT NULL UNIQUE,
+    name VARCHAR(128) UNIQUE NOT NULL,
     description TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
+-- Migration: Create role_permissions table
 CREATE TABLE IF NOT EXISTS role_permissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
@@ -22,35 +25,42 @@ CREATE TABLE IF NOT EXISTS role_permissions (
     UNIQUE (role_id, permission_id)
 );
 
+-- Migration: Create user_roles table
+CREATE TABLE IF NOT EXISTS user_roles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    role_id UUID NOT NULL REFERENCES roles(id),
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    UNIQUE (user_id, role_id)
+);
+
+-- Migration: Create approval_policies table
 CREATE TABLE IF NOT EXISTS approval_policies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    resource VARCHAR(64) NOT NULL,
-    action VARCHAR(64) NOT NULL,
-    project_id UUID NULL REFERENCES projects(id) ON DELETE CASCADE,
-    service_id UUID NULL REFERENCES services(id) ON DELETE CASCADE,
-    environment VARCHAR(64) NULL,
+    resource VARCHAR(64) NOT NULL,  -- deployment, scaffold_request, release (future)
+    action VARCHAR(64) NOT NULL,  -- create, deploy
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    service_id UUID REFERENCES services(id) ON DELETE CASCADE,
+    environment_id UUID NOT NULL REFERENCES environments(id) ON DELETE CASCADE,
     required_approvals INT NOT NULL DEFAULT 1,
-    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    enabled BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
     CHECK (required_approvals > 0)
 );
 
-
+-- Migration: Create approval_requests table
 CREATE TABLE IF NOT EXISTS approval_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     resource VARCHAR(64) NOT NULL,
     action VARCHAR(64) NOT NULL,
     resource_id UUID NOT NULL,
     requested_by UUID NOT NULL REFERENCES users(id),
-    project_id UUID NULL REFERENCES projects(id),
-    service_id UUID NULL REFERENCES services(id),
-    environment VARCHAR(64) NULL,
     status VARCHAR(32) NOT NULL DEFAULT 'pending',
     required_approvals INT NOT NULL DEFAULT 1,
     approved_count INT NOT NULL DEFAULT 0,
     rejected_count INT NOT NULL DEFAULT 0,
-    resolved_at TIMESTAMP NULL,
+    resolved_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
     CHECK (status IN ('pending', 'approved', 'rejected', 'canceled')),
@@ -59,35 +69,14 @@ CREATE TABLE IF NOT EXISTS approval_requests (
     CHECK (rejected_count >= 0)
 );
 
-
+-- Migration: Create approval_decisions table
 CREATE TABLE IF NOT EXISTS approval_decisions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     approval_request_id UUID NOT NULL REFERENCES approval_requests(id) ON DELETE CASCADE,
     decided_by UUID NOT NULL REFERENCES users(id),
-    decision VARCHAR(16) NOT NULL,
+    decision VARCHAR(16) NOT NULL,  -- approve, reject
     comment TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     CHECK (decision IN ('approve', 'reject')),
-    UNIQUE(approval_request_id, decided_by)
+    UNIQUE (approval_request_id, decided_by)
 );
-
-CREATE INDEX IF NOT EXISTS idx_approval_policies_resource_action
-    ON approval_policies(resource, action);
-
-CREATE INDEX IF NOT EXISTS idx_approval_policies_scope
-    ON approval_policies(project_id, service_id, environment);
-
-CREATE INDEX IF NOT EXISTS idx_approval_requests_requested_by
-    ON approval_requests(requested_by);
-
-CREATE INDEX IF NOT EXISTS idx_approval_requests_status
-    ON approval_requests(status);
-
-CREATE INDEX IF NOT EXISTS idx_approval_requests_scope
-    ON approval_requests(project_id, service_id, environment);
-
-CREATE INDEX IF NOT EXISTS idx_approval_requests_resource
-    ON approval_requests(resource, action, resource_id);
-
-CREATE INDEX IF NOT EXISTS idx_approval_decisions_request
-    ON approval_decisions(approval_request_id);
