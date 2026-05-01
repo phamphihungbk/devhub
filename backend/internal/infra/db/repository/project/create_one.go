@@ -21,19 +21,8 @@ func (r *projectRepositoryImpl) CreateOne(ctx context.Context, input *entity.Pro
 	).MODEL(model.Projects{
 		Name:        input.Name,
 		Description: misc.ToPointer(input.Description),
-		Status:      input.Status.String(),
-		TeamID:      input.TeamID,
-		ScmProvider: input.ScmProvider,
+		OwnerTeamID: input.OwnerTeamID,
 		CreatedBy:   input.CreatedBy,
-		Environments: func() []string {
-			envs := make([]string, 0, len(input.Environments))
-
-			for _, env := range input.Environments {
-				envs = append(envs, env.String())
-			}
-
-			return envs
-		}(),
 	}).RETURNING(projectsTable.AllColumns)
 	query, args := stmt.Sql()
 
