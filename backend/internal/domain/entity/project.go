@@ -1,15 +1,9 @@
 package entity
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
-)
-
-var (
-	ErrInvalidProjectEnvironment = fmt.Errorf("invalid project environment")
-	ErrInvalidProjectStatus      = fmt.Errorf("invalid project status")
 )
 
 type Project struct {

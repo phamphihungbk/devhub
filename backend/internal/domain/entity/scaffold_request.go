@@ -8,6 +8,10 @@ import (
 	"github.com/google/uuid"
 )
 
+var (
+	ErrInvalidScaffoldRequestVariables = fmt.Errorf("invalid scaffold request variables")
+)
+
 type ScaffoldRequestVariables struct {
 	ServiceName   string `json:"service_name"`
 	ModulePath    string `json:"module_path"`
@@ -16,14 +20,14 @@ type ScaffoldRequestVariables struct {
 	EnableLogging bool   `json:"enable_logging"`
 }
 
-// Parse parses a string into a ProjectEnvironment. It returns an error if the string is not a valid ProjectEnvironment.
+// Parse parses a string into a ScaffoldRequestVariables. It returns an error if the string is not a valid ScaffoldRequestVariables.
 func (s ScaffoldRequestVariables) Parse(variables string) (ScaffoldRequestVariables, error) {
 
 	var scaffoldRequestVariables ScaffoldRequestVariables
 	err := json.Unmarshal([]byte(variables), &scaffoldRequestVariables)
 
 	if err != nil {
-		return ScaffoldRequestVariables{}, fmt.Errorf("%w: %s", ErrInvalidProjectEnvironment, scaffoldRequestVariables)
+		return ScaffoldRequestVariables{}, fmt.Errorf("%w: %s", ErrInvalidScaffoldRequestVariables, scaffoldRequestVariables)
 	}
 
 	return scaffoldRequestVariables, nil

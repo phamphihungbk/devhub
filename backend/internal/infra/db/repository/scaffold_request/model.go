@@ -10,41 +10,35 @@ type ScaffoldRequest struct {
 	model.ScaffoldRequests
 }
 
-func (c *ScaffoldRequest) ToEntity() *entity.ScaffoldRequest {
-	env, err := new(entity.ProjectEnvironment).Parse(c.Environment)
+func (sr *ScaffoldRequest) ToEntity() *entity.ScaffoldRequest {
+	status, err := new(entity.ScaffoldRequestStatus).Parse(sr.Status)
 	if err != nil {
 		return nil
 	}
-	status, err := new(entity.ScaffoldRequestStatus).Parse(c.Status)
-	if err != nil {
-		return nil
-	}
-	variables, err := new(entity.ScaffoldRequestVariables).Parse(c.Variables)
+	variables, err := new(entity.ScaffoldRequestVariables).Parse(sr.Variables)
 	if err != nil {
 		return nil
 	}
 
 	return &entity.ScaffoldRequest{
-		ID:            c.ID,
-		PluginID:      c.PluginID,
-		ProjectID:     c.ProjectID,
-		RequestedBy:   c.RequestedBy,
+		ID:            sr.ID,
+		ProjectID:     sr.ProjectID,
+		RequestedBy:   sr.RequestedBy,
+		ApprovedBy:    sr.ApprovedBy,
 		Status:        status,
-		Environment:   env,
 		Variables:     variables,
-		ApprovedBy:    c.ApprovedBy,
-		ResultRepoURL: misc.GetValue(c.ResultRepoURL),
-		ApprovedAt:    c.ApprovedAt,
-		CreatedAt:     c.CreatedAt,
-		UpdatedAt:     c.UpdatedAt,
+		ResultRepoURL: misc.GetValue(sr.ResultRepoURL),
+		ApprovedAt:    misc.DerefTime(sr.ApprovedAt),
+		CreatedAt:     sr.CreatedAt,
+		UpdatedAt:     sr.UpdatedAt,
 	}
 }
 
 type ScaffoldRequests []ScaffoldRequest
 
-func (ps ScaffoldRequests) ToEntities() *entity.ScaffoldRequests {
-	scaffoldRequests := make(entity.ScaffoldRequests, 0, len(ps))
-	for _, c := range ps {
+func (srs ScaffoldRequests) ToEntities() *entity.ScaffoldRequests {
+	scaffoldRequests := make(entity.ScaffoldRequests, 0, len(srs))
+	for _, c := range srs {
 		scaffoldRequest := c.ToEntity()
 		if scaffoldRequest == nil {
 			continue

@@ -11,14 +11,18 @@ type Release struct {
 }
 
 func (r *Release) ToEntity() *entity.Release {
+	releaseStatus, err := new(entity.ReleaseStatus).Parse(r.Status)
+	if err != nil {
+		return nil
+	}
+
 	return &entity.Release{
 		ID:          r.ID,
 		ServiceID:   r.ServiceID,
-		PluginID:    r.PluginID,
 		Tag:         r.Tag,
 		Target:      r.Target,
 		Name:        r.Name,
-		Status:      entity.ReleaseStatus(r.Status),
+		Status:      releaseStatus,
 		Notes:       r.Notes,
 		HTMLURL:     r.HTMLURL,
 		ExternalRef: r.ExternalRef,

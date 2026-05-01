@@ -10,23 +10,23 @@ type Service struct {
 	model.Services
 }
 
-func (c *Service) ToEntity() *entity.Service {
+func (s *Service) ToEntity() *entity.Service {
 	return &entity.Service{
-		ID:        c.ID,
-		ProjectID: c.ProjectID,
-		Name:      c.Name,
-		RepoURL:   c.RepoURL,
-		CreatedAt: c.CreatedAt,
-		UpdatedAt: c.UpdatedAt,
-		DeletedAt: c.DeletedAt,
+		ID:        s.ID,
+		ProjectID: s.ProjectID,
+		Name:      s.Name,
+		RepoURL:   s.RepoURL,
+		CreatedBy: s.CreatedBy,
+		CreatedAt: s.CreatedAt,
+		UpdatedAt: s.UpdatedAt,
 	}
 }
 
 type Services []Service
 
-func (ps Services) ToEntities() *entity.Services {
-	services := make(entity.Services, 0, len(ps))
-	for _, c := range ps {
+func (ss Services) ToEntities() *entity.Services {
+	services := make(entity.Services, 0, len(ss))
+	for _, c := range ss {
 		service := c.ToEntity()
 		if service == nil {
 			continue

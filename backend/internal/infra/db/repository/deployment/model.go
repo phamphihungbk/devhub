@@ -10,33 +10,33 @@ type Deployment struct {
 	model.Deployments
 }
 
-func (c *Deployment) ToEntity() *entity.Deployment {
-	status, err := new(entity.DeploymentStatus).Parse(c.Status)
+func (d *Deployment) ToEntity() *entity.Deployment {
+	status, err := new(entity.DeploymentStatus).Parse(d.Status)
 	if err != nil {
 		return nil
 	}
 
 	return &entity.Deployment{
-		ID:            c.ID,
-		ServiceID:     c.ServiceID,
-		EnvironmentID: c.EnvironmentID,
-		Version:       c.Version,
+		ID:            d.ID,
+		ServiceID:     d.ServiceID,
+		EnvironmentID: d.EnvironmentID,
+		Version:       d.Version,
 		Status:        status,
-		ExternalRef:   misc.GetValue(c.ExternalRef),
-		CommitSHA:     misc.GetValue(c.CommitSha),
-		TriggeredBy:   c.TriggeredBy,
-		CreatedAt:     c.CreatedAt,
-		UpdatedAt:     c.UpdatedAt,
-		StartedAt:     c.StartedAt,
-		FinishedAt:    c.FinishedAt,
+		ExternalRef:   misc.GetValue(d.ExternalRef),
+		CommitSHA:     misc.GetValue(d.CommitSha),
+		TriggeredBy:   d.TriggeredBy,
+		CreatedAt:     d.CreatedAt,
+		UpdatedAt:     d.UpdatedAt,
+		StartedAt:     misc.DerefTime(d.StartedAt),
+		FinishedAt:    misc.DerefTime(d.FinishedAt),
 	}
 }
 
 type Deployments []Deployment
 
-func (us Deployments) ToEntities() *entity.Deployments {
-	deployments := make(entity.Deployments, 0, len(us))
-	for _, c := range us {
+func (ds Deployments) ToEntities() *entity.Deployments {
+	deployments := make(entity.Deployments, 0, len(ds))
+	for _, c := range ds {
 		deployment := c.ToEntity()
 		if deployment == nil {
 			continue
