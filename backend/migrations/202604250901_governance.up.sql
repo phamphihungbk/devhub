@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS approval_requests (
     resolved_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
-    CHECK (status IN ('pending', 'approved', 'rejected', 'canceled')),
+    CHECK (status IN ('pending', 'approved', 'rejected')),
     CHECK (required_approvals > 0),
     CHECK (approved_count >= 0),
     CHECK (rejected_count >= 0)

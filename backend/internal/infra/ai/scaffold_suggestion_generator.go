@@ -130,12 +130,12 @@ func pickScaffoldSuggestionEnvironment(selected string, environments []string) s
 			return environment
 		}
 	}
-	return entity.EnvDev.String()
+	return entity.EnvDevelopment.String()
 }
 
 func inferScaffoldSuggestionEnvironments(prompt string, projectEnvironments []string) []string {
 	value := strings.ToLower(prompt)
-	known := []string{entity.EnvDev.String(), entity.EnvStaging.String(), entity.EnvProd.String()}
+	known := []string{entity.EnvDevelopment.String(), entity.EnvStaging.String(), entity.EnvProduction.String()}
 	seen := map[string]struct{}{}
 	environments := make([]string, 0, len(known))
 
@@ -163,7 +163,7 @@ func inferScaffoldSuggestionEnvironments(prompt string, projectEnvironments []st
 	}
 
 	if len(environments) == 0 {
-		return []string{entity.EnvDev.String()}
+		return []string{entity.EnvDevelopment.String()}
 	}
 
 	return environments

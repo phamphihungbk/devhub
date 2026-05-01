@@ -13,11 +13,11 @@ import (
 )
 
 type Services struct {
-	ID        uuid.UUID  `sql:"primary_key" db:"services.id"`
-	ProjectID uuid.UUID  `db:"services.project_id"`
-	Name      string     `db:"services.name"`
-	RepoURL   string     `db:"services.repo_url"`
-	CreatedAt time.Time  `db:"services.created_at"`
-	UpdatedAt time.Time  `db:"services.updated_at"`
-	DeletedAt *time.Time `db:"services.deleted_at"`
+	ID        uuid.UUID `sql:"primary_key" db:"services.id"`
+	ProjectID uuid.UUID `db:"services.project_id"`
+	Name      string    `db:"services.name"`
+	RepoURL   string    `db:"services.repo_url"`
+	CreatedBy uuid.UUID `db:"services.created_by"`
+	CreatedAt time.Time `db:"services.created_at"`
+	UpdatedAt time.Time `db:"services.updated_at"`
 }

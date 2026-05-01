@@ -15,26 +15,20 @@ func (c *Deployment) ToEntity() *entity.Deployment {
 	if err != nil {
 		return nil
 	}
-	env, err := new(entity.ProjectEnvironment).Parse(c.Environment)
-	if err != nil {
-		return nil
-	}
 
 	return &entity.Deployment{
-		ID:           c.ID,
-		ServiceID:    c.ServiceID,
-		PluginID:     c.PluginID,
-		Environment:  env,
-		Version:      c.Version,
-		Status:       status,
-		ExternalRef:  misc.GetValue(c.ExternalRef),
-		CommitSHA:    misc.GetValue(c.CommitSha),
-		RunnerOutput: misc.GetValue(c.RunnerOutput),
-		RunnerError:  misc.GetValue(c.RunnerError),
-		TriggeredBy:  c.TriggeredBy,
-		CreatedAt:    c.CreatedAt,
-		UpdatedAt:    c.UpdatedAt,
-		FinishedAt:   c.FinishedAt,
+		ID:            c.ID,
+		ServiceID:     c.ServiceID,
+		EnvironmentID: c.EnvironmentID,
+		Version:       c.Version,
+		Status:        status,
+		ExternalRef:   misc.GetValue(c.ExternalRef),
+		CommitSHA:     misc.GetValue(c.CommitSha),
+		TriggeredBy:   c.TriggeredBy,
+		CreatedAt:     c.CreatedAt,
+		UpdatedAt:     c.UpdatedAt,
+		StartedAt:     c.StartedAt,
+		FinishedAt:    c.FinishedAt,
 	}
 }
 

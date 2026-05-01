@@ -29,8 +29,8 @@ func (s ScaffoldRequestVariables) Parse(variables string) (ScaffoldRequestVariab
 	return scaffoldRequestVariables, nil
 }
 
-func (s ScaffoldRequestVariables) String() string {
-	bytes, err := json.Marshal(s)
+func (e ScaffoldRequestVariables) String() string {
+	bytes, err := json.Marshal(e)
 
 	if err != nil {
 		return ""
@@ -47,7 +47,7 @@ const (
 	ScaffoldRequestRunning   ScaffoldRequestStatus = "running"
 	ScaffoldRequestCompleted ScaffoldRequestStatus = "completed"
 	ScaffoldRequestFailed    ScaffoldRequestStatus = "failed"
-	ScaffoldRequestRejected  ScaffoldRequestStatus = "rejected"
+	// ScaffoldRequestRejected  ScaffoldRequestStatus = "rejected"
 )
 
 var scaffoldRequestStatusStringMapper = map[ScaffoldRequestStatus]string{
@@ -56,7 +56,7 @@ var scaffoldRequestStatusStringMapper = map[ScaffoldRequestStatus]string{
 	ScaffoldRequestRunning:   "running",
 	ScaffoldRequestCompleted: "completed",
 	ScaffoldRequestFailed:    "failed",
-	ScaffoldRequestRejected:  "rejected",
+	// ScaffoldRequestRejected:  "rejected",
 }
 
 func (s ScaffoldRequestStatus) String() string {
@@ -84,15 +84,13 @@ func (s ScaffoldRequestStatus) Parse(status string) (ScaffoldRequestStatus, erro
 
 type ScaffoldRequest struct {
 	ID            uuid.UUID
-	PluginID      uuid.UUID
 	ProjectID     uuid.UUID
 	RequestedBy   uuid.UUID
-	Status        ScaffoldRequestStatus
-	Environment   ProjectEnvironment
-	Variables     ScaffoldRequestVariables
 	ApprovedBy    *uuid.UUID
+	Status        ScaffoldRequestStatus
+	Variables     ScaffoldRequestVariables
 	ResultRepoURL string
-	ApprovedAt    *time.Time
+	ApprovedAt    time.Time
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }

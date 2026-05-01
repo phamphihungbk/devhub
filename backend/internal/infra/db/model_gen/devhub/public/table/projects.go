@@ -17,17 +17,13 @@ type projectsTable struct {
 	postgres.Table
 
 	// Columns
-	ID           postgres.ColumnString
-	Name         postgres.ColumnString
-	Description  postgres.ColumnString
-	Environments postgres.ColumnStringArray
-	Status       postgres.ColumnString
-	TeamID       postgres.ColumnString
-	ScmProvider  postgres.ColumnString
-	CreatedBy    postgres.ColumnString
-	CreatedAt    postgres.ColumnTimestamp
-	UpdatedAt    postgres.ColumnTimestamp
-	DeletedAt    postgres.ColumnTimestamp
+	ID          postgres.ColumnString
+	Name        postgres.ColumnString
+	Description postgres.ColumnString
+	OwnerTeamID postgres.ColumnString
+	CreatedBy   postgres.ColumnString
+	CreatedAt   postgres.ColumnTimestamp
+	UpdatedAt   postgres.ColumnTimestamp
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -69,37 +65,29 @@ func newProjectsTable(schemaName, tableName, alias string) *ProjectsTable {
 
 func newProjectsTableImpl(schemaName, tableName, alias string) projectsTable {
 	var (
-		IDColumn           = postgres.StringColumn("id")
-		NameColumn         = postgres.StringColumn("name")
-		DescriptionColumn  = postgres.StringColumn("description")
-		EnvironmentsColumn = postgres.StringArrayColumn("environments")
-		StatusColumn       = postgres.StringColumn("status")
-		TeamIDColumn       = postgres.StringColumn("team_id")
-		ScmProviderColumn  = postgres.StringColumn("scm_provider")
-		CreatedByColumn    = postgres.StringColumn("created_by")
-		CreatedAtColumn    = postgres.TimestampColumn("created_at")
-		UpdatedAtColumn    = postgres.TimestampColumn("updated_at")
-		DeletedAtColumn    = postgres.TimestampColumn("deleted_at")
-		allColumns         = postgres.ColumnList{IDColumn, NameColumn, DescriptionColumn, EnvironmentsColumn, StatusColumn, TeamIDColumn, ScmProviderColumn, CreatedByColumn, CreatedAtColumn, UpdatedAtColumn, DeletedAtColumn}
-		mutableColumns     = postgres.ColumnList{NameColumn, DescriptionColumn, EnvironmentsColumn, StatusColumn, TeamIDColumn, ScmProviderColumn, CreatedByColumn, CreatedAtColumn, UpdatedAtColumn, DeletedAtColumn}
-		defaultColumns     = postgres.ColumnList{IDColumn, CreatedAtColumn, UpdatedAtColumn}
+		IDColumn          = postgres.StringColumn("id")
+		NameColumn        = postgres.StringColumn("name")
+		DescriptionColumn = postgres.StringColumn("description")
+		OwnerTeamIDColumn = postgres.StringColumn("owner_team_id")
+		CreatedByColumn   = postgres.StringColumn("created_by")
+		CreatedAtColumn   = postgres.TimestampColumn("created_at")
+		UpdatedAtColumn   = postgres.TimestampColumn("updated_at")
+		allColumns        = postgres.ColumnList{IDColumn, NameColumn, DescriptionColumn, OwnerTeamIDColumn, CreatedByColumn, CreatedAtColumn, UpdatedAtColumn}
+		mutableColumns    = postgres.ColumnList{NameColumn, DescriptionColumn, OwnerTeamIDColumn, CreatedByColumn, CreatedAtColumn, UpdatedAtColumn}
+		defaultColumns    = postgres.ColumnList{IDColumn, CreatedAtColumn, UpdatedAtColumn}
 	)
 
 	return projectsTable{
 		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
-		ID:           IDColumn,
-		Name:         NameColumn,
-		Description:  DescriptionColumn,
-		Environments: EnvironmentsColumn,
-		Status:       StatusColumn,
-		TeamID:       TeamIDColumn,
-		ScmProvider:  ScmProviderColumn,
-		CreatedBy:    CreatedByColumn,
-		CreatedAt:    CreatedAtColumn,
-		UpdatedAt:    UpdatedAtColumn,
-		DeletedAt:    DeletedAtColumn,
+		ID:          IDColumn,
+		Name:        NameColumn,
+		Description: DescriptionColumn,
+		OwnerTeamID: OwnerTeamIDColumn,
+		CreatedBy:   CreatedByColumn,
+		CreatedAt:   CreatedAtColumn,
+		UpdatedAt:   UpdatedAtColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

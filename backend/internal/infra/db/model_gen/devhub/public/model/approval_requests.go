@@ -18,9 +18,6 @@ type ApprovalRequests struct {
 	Action            string     `db:"approval_requests.action"`
 	ResourceID        uuid.UUID  `db:"approval_requests.resource_id"`
 	RequestedBy       uuid.UUID  `db:"approval_requests.requested_by"`
-	ProjectID         *uuid.UUID `db:"approval_requests.project_id"`
-	ServiceID         *uuid.UUID `db:"approval_requests.service_id"`
-	Environment       *string    `db:"approval_requests.environment"`
 	Status            string     `db:"approval_requests.status"`
 	RequiredApprovals int32      `db:"approval_requests.required_approvals"`
 	ApprovedCount     int32      `db:"approval_requests.approved_count"`

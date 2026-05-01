@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (m *middleware) RequirePermissions(permissions ...entity.Permission) gin.HandlerFunc {
+func (m *middleware) RequirePermissions(permissions ...entity.PermissionName) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		roleValue, exists := ctx.Get("role")
 		if !exists {

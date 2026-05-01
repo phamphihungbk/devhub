@@ -21,9 +21,9 @@ type servicesTable struct {
 	ProjectID postgres.ColumnString
 	Name      postgres.ColumnString
 	RepoURL   postgres.ColumnString
+	CreatedBy postgres.ColumnString
 	CreatedAt postgres.ColumnTimestamp
 	UpdatedAt postgres.ColumnTimestamp
-	DeletedAt postgres.ColumnTimestamp
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -69,11 +69,11 @@ func newServicesTableImpl(schemaName, tableName, alias string) servicesTable {
 		ProjectIDColumn = postgres.StringColumn("project_id")
 		NameColumn      = postgres.StringColumn("name")
 		RepoURLColumn   = postgres.StringColumn("repo_url")
+		CreatedByColumn = postgres.StringColumn("created_by")
 		CreatedAtColumn = postgres.TimestampColumn("created_at")
 		UpdatedAtColumn = postgres.TimestampColumn("updated_at")
-		DeletedAtColumn = postgres.TimestampColumn("deleted_at")
-		allColumns      = postgres.ColumnList{IDColumn, ProjectIDColumn, NameColumn, RepoURLColumn, CreatedAtColumn, UpdatedAtColumn, DeletedAtColumn}
-		mutableColumns  = postgres.ColumnList{ProjectIDColumn, NameColumn, RepoURLColumn, CreatedAtColumn, UpdatedAtColumn, DeletedAtColumn}
+		allColumns      = postgres.ColumnList{IDColumn, ProjectIDColumn, NameColumn, RepoURLColumn, CreatedByColumn, CreatedAtColumn, UpdatedAtColumn}
+		mutableColumns  = postgres.ColumnList{ProjectIDColumn, NameColumn, RepoURLColumn, CreatedByColumn, CreatedAtColumn, UpdatedAtColumn}
 		defaultColumns  = postgres.ColumnList{IDColumn, CreatedAtColumn, UpdatedAtColumn}
 	)
 
@@ -85,9 +85,9 @@ func newServicesTableImpl(schemaName, tableName, alias string) servicesTable {
 		ProjectID: ProjectIDColumn,
 		Name:      NameColumn,
 		RepoURL:   RepoURLColumn,
+		CreatedBy: CreatedByColumn,
 		CreatedAt: CreatedAtColumn,
 		UpdatedAt: UpdatedAtColumn,
-		DeletedAt: DeletedAtColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

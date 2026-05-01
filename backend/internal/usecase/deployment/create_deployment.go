@@ -53,12 +53,13 @@ func (u *deploymentUsecase) CreateDeployment(ctx context.Context, input CreateDe
 	serviceID := uuid.MustParse(input.ServiceID)
 	pluginID := uuid.MustParse(input.PluginID)
 	triggeredBy := uuid.MustParse(input.TriggeredBy)
-	approvalResource, err := entity.ParseOptionalApprovalResource(input.ApprovalResource)
+
+	approvalResource, err := new(entity.ApprovalResource).Parse(input.ApprovalResource)
 	if err != nil {
 		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid approval resource", nil))
 	}
 
-	approvalAction, err := entity.ParseOptionalApprovalAction(input.ApprovalAction)
+	approvalAction, err := new(entity.ApprovalAction).Parse(input.ApprovalAction)
 	if err != nil {
 		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid approval action", nil))
 	}

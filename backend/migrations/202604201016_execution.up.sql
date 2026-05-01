@@ -50,7 +50,8 @@ CREATE TABLE IF NOT EXISTS deployments (
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
     started_at TIMESTAMP,
-    finished_at TIMESTAMP
+    finished_at TIMESTAMP,
+    CHECK (status IN ('pending', 'running', 'completed', 'failed'))
 );
 
 -- Migration: Create scaffold_requests table

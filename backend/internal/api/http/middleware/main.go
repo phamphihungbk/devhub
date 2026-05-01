@@ -8,8 +8,8 @@ import (
 
 type Middleware interface {
 	Auth(tokenSecret string) gin.HandlerFunc
-	RequirePermissions(permissions ...entity.Permission) gin.HandlerFunc
-	Authorize(tokenSecret string, permissions ...entity.Permission) gin.HandlersChain
+	RequirePermissions(permissions ...entity.PermissionName) gin.HandlerFunc
+	Authorize(tokenSecret string, permissions ...entity.PermissionName) gin.HandlersChain
 }
 
 type middleware struct{}
@@ -18,7 +18,7 @@ func New() Middleware {
 	return &middleware{}
 }
 
-func (m *middleware) Authorize(tokenSecret string, permissions ...entity.Permission) gin.HandlersChain {
+func (m *middleware) Authorize(tokenSecret string, permissions ...entity.PermissionName) gin.HandlersChain {
 	handlers := gin.HandlersChain{
 		m.Auth(tokenSecret),
 	}

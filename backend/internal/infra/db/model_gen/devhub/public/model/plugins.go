@@ -13,14 +13,14 @@ import (
 )
 
 type Plugins struct {
-	ID          uuid.UUID `sql:"primary_key" db:"plugins.id"`
-	Name        string    `db:"plugins.name"`
-	Version     string    `db:"plugins.version"`
-	Type        string    `db:"plugins.type"`
-	Runtime     string    `db:"plugins.runtime"`
-	Entrypoint  string    `db:"plugins.entrypoint"`
-	Enabled     bool      `db:"plugins.enabled"`
-	Scope       string    `db:"plugins.scope"`
-	Description *string   `db:"plugins.description"`
-	InstalledAt time.Time `db:"plugins.installed_at"`
+	ID           uuid.UUID `sql:"primary_key" db:"plugins.id"`
+	Name         string    `db:"plugins.name"`
+	Version      string    `db:"plugins.version"`
+	Type         string    `db:"plugins.type"`
+	Runtime      string    `db:"plugins.runtime"`
+	Entrypoint   string    `db:"plugins.entrypoint"`
+	ConfigSchema *string   `db:"plugins.config_schema"`
+	Description  *string   `db:"plugins.description"`
+	Enabled      bool      `db:"plugins.enabled"`
+	CreatedAt    time.Time `db:"plugins.created_at"`
 }
