@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"devhub-backend/internal/domain/entity"
+	"devhub-backend/internal/domain/repository"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,10 +13,12 @@ type Middleware interface {
 	Authorize(tokenSecret string, permissions ...entity.PermissionName) gin.HandlersChain
 }
 
-type middleware struct{}
+type middleware struct {
+	userRepository repository.UserRepository
+}
 
-func New() Middleware {
-	return &middleware{}
+func New(userRepository repository.UserRepository) Middleware {
+	return &middleware{userRepository: userRepository}
 }
 
 func (m *middleware) Authorize(tokenSecret string, permissions ...entity.PermissionName) gin.HandlersChain {

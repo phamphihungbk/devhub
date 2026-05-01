@@ -77,7 +77,7 @@ func (s *Server) setupRouteDependencies(ctx context.Context, tracerProvider *sdk
 	authUsecase := authUsecase.NewAuthUsecase(s.cfg.Token, dbUserRepo, dbRefreshTokenRepo)
 
 	// Application middleware
-	appMiddleware := middleware.New()
+	appMiddleware := middleware.New(dbUserRepo)
 
 	// Handlers
 	approvalHandler := approvalHandler.NewApprovalHandler(s.cfg.App, approvalUsecase)

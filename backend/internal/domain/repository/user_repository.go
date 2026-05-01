@@ -16,6 +16,7 @@ type UserRepository interface {
 	UpdateOne(ctx context.Context, input UpdateUserInput) (*entity.User, error)
 	DeleteOne(ctx context.Context, id uuid.UUID) (*entity.User, error)
 	FindOneByEmail(ctx context.Context, email string) (*entity.User, error)
+	HasPermissions(ctx context.Context, userID uuid.UUID, permissions []entity.PermissionName) (bool, error)
 }
 
 type FindAllUsersFilter struct {
