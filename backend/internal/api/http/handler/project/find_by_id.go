@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/util/httpresponse"
 
 	projectUsecase "devhub-backend/internal/usecase/project"
@@ -10,14 +9,11 @@ import (
 )
 
 type findOneProjectResponse struct {
-	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name         string   `json:"name" example:"Project Name"`
-	Description  string   `json:"description" example:"Project Description"`
-	Environments []string `json:"environments" example:"[development, production]"`
-	Status       string   `json:"status" example:"active"`
-	TeamID       string   `json:"team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	ScmProvider  string   `json:"scm_provider" example:"gitea"`
-	CreatedBy    string   `json:"created_by" example:"Hung Pham"`
+	ID            string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name          string `json:"name" example:"Project Name"`
+	Description   string `json:"description" example:"Project Description"`
+	OwnerTeamName string `json:"owner_team_name" example:"Team Dev"`
+	CreatedByName string `json:"created_by_name" example:"Hung"`
 }
 
 // @Summary		Find Project by ID
@@ -43,24 +39,16 @@ func (h *projectHandler) FindProjectByID(c *gin.Context) {
 	httpresponse.Success(c, h.newFindOneProjectResponse(project))
 }
 
-func (h *projectHandler) newFindOneProjectResponse(project *entity.Project) findOneProjectResponse {
+func (h *projectHandler) newFindOneProjectResponse(project *projectUsecase.ProjectDetail) findOneProjectResponse {
 	if project == nil {
 		return findOneProjectResponse{}
 	}
-	envs := make([]string, 0, len(project.Environments))
-
-	for _, env := range project.Environments {
-		envs = append(envs, env.String())
-	}
 
 	return findOneProjectResponse{
-		ID:           project.ID.String(),
-		Name:         project.Name,
-		Description:  project.Description,
-		Environments: envs,
-		Status:       project.Status.String(),
-		TeamID:       project.TeamID.String(),
-		ScmProvider:  project.ScmProvider,
-		CreatedBy:    project.CreatedByName,
+		ID:            project.ID.String(),
+		Name:          project.Name,
+		Description:   project.Description,
+		OwnerTeamName: project.OwnerTeamName,
+		CreatedByName: project.CreatorName,
 	}
 }

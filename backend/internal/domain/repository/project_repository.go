@@ -27,11 +27,8 @@ type FindAllProjectsFilter struct {
 }
 
 type UpdateProjectInput struct {
-	ID           uuid.UUID
-	Name         *string
-	Description  *string
-	Environments *[]string
-	Status       *entity.ProjectStatus
-	TeamID       *uuid.UUID
-	ScmProvider  *string
+	ID          uuid.UUID
+	Name        *string
+	Description *string
+	OwnerTeamID *uuid.UUID
 }

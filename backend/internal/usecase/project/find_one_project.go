@@ -16,7 +16,15 @@ type FindOneProjectInput struct {
 	ID string `json:"id" validate:"required,uuid4"`
 }
 
-func (u *projectUsecase) FindOneProject(ctx context.Context, input FindOneProjectInput) (project *entity.Project, err error) {
+type ProjectDetail struct {
+	ID            uuid.UUID
+	Name          string
+	Description   string
+	OwnerTeamName string
+	CreatorName   string
+}
+
+func (u *projectUsecase) FindOneProject(ctx context.Context, input FindOneProjectInput) (projectDetail *ProjectDetail, err error) {
 	const errLocation = "[usecase project/find_one_project FindOneProject] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
@@ -41,7 +49,7 @@ func (u *projectUsecase) FindOneProject(ctx context.Context, input FindOneProjec
 		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid user ID", nil))
 	}
 
-	project, err = u.projectRepository.FindOne(ctx, userID)
+	project, err := u.projectRepository.FindOne(ctx, userID)
 
 	if err != nil {
 		if !errors.As(err, &errs.NotFoundError{}) { // If the error is not a NotFoundError, wrap it as an internal server error
@@ -50,7 +58,29 @@ func (u *projectUsecase) FindOneProject(ctx context.Context, input FindOneProjec
 		return nil, err // Return the NotFoundError directly
 	}
 
-	u.enrichProjectCreator(ctx, project)
+	return u.enrichProjectDetail(ctx, project), nil
+}
 
-	return project, nil
+func (u *projectUsecase) enrichProjectDetail(ctx context.Context, project *entity.Project) *ProjectDetail {
+	if project == nil {
+		return nil
+	}
+
+	detail := &ProjectDetail{
+		ID:          project.ID,
+		Name:        project.Name,
+		Description: project.Description,
+	}
+
+	ownerTeam, err := u.teamRepository.FindOne(ctx, project.OwnerTeamID)
+	if err == nil && ownerTeam != nil {
+		detail.OwnerTeamName = ownerTeam.Name
+	}
+
+	creator, err := u.userRepository.FindOne(ctx, project.CreatedBy)
+	if err == nil && creator != nil {
+		detail.CreatorName = creator.Name
+	}
+
+	return detail
 }

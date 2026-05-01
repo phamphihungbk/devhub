@@ -65,7 +65,7 @@ func (s *Server) setupRouteDependencies(ctx context.Context, tracerProvider *sdk
 	// Usecases
 	approvalUsecase := approvalUsecase.NewApprovalUsecase(s.cfg.App, dbApprovalRepo, dbDeploymentRepo, dbProjectRepo, dbReleaseRepo, dbScaffoldRequestRepo, dbServiceRepo, dbUserRepo)
 	userUsecase := userUsecase.NewUserUsecase(s.cfg.App, dbUserRepo)
-	projectUsecase := projectUsecase.NewProjectUsecase(s.cfg.App, dbProjectRepo, dbEnvironmentRepo, dbUserRepo)
+	projectUsecase := projectUsecase.NewProjectUsecase(s.cfg.App, dbProjectRepo, dbEnvironmentRepo, dbUserRepo, dbTeamRepo)
 	deploymentUsecase := deploymentUsecase.NewDeploymentUsecase(s.cfg.App, dbApprovalRepo, dbDeploymentRepo, dbPluginRepo)
 	releaseUsecase := releaseUsecase.NewReleaseUsecase(s.cfg.App, dbPluginRepo, dbReleaseRepo)
 	pluginUsecase := pluginUsecase.NewPluginUsecase(s.cfg.App, dbPluginRepo)

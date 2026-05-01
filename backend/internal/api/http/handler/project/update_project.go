@@ -12,23 +12,19 @@ import (
 )
 
 type updateProjectRequest struct {
-	Name         *string   `json:"name" example:"Project Name"`
-	Description  *string   `json:"description" example:"Project Description"`
-	Environments *[]string `json:"environments" example:"[development, production]"`
-	Status       *string   `json:"status" example:"active" binding:"required"`
-	TeamID       *string   `json:"team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	ScmProvider  *string   `json:"scm_provider" example:"gitea" binding:"required"`
+	Name         *string                     `json:"name" example:"Project Name"`
+	Description  *string                     `json:"description" example:"Project Description"`
+	OwnerTeamID  *string                     `json:"owner_team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Environments *[]createEnvironmentRequest `json:"environments,omitempty"`
 }
 
 type updateProjectResponse struct {
-	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name         string   `json:"name" example:"Project Name"`
-	Description  string   `json:"description" example:"Project Description"`
-	Environments []string `json:"environments" example:"[development, production]"`
-	Status       string   `json:"status" example:"active"`
-	TeamID       string   `json:"team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	ScmProvider  string   `json:"scm_provider" example:"gitea"`
-	CreatedBy    string   `json:"created_by" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ID           string                          `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name         string                          `json:"name" example:"Project Name"`
+	Description  string                          `json:"description" example:"Project Description"`
+	OwnerTeamID  string                          `json:"owner_team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Environments []findOneProjectEnvironmentItem `json:"environments"`
+	CreatedBy    string                          `json:"created_by" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
 // @Summary		Update Project
@@ -55,10 +51,8 @@ func (h *projectHandler) UpdateProject(c *gin.Context) {
 		ID:           projectID,
 		Name:         input.Name,
 		Description:  input.Description,
-		Environments: input.Environments,
-		Status:       input.Status,
-		TeamID:       input.TeamID,
-		ScmProvider:  input.ScmProvider,
+		OwnerTeamID:  input.OwnerTeamID,
+		Environments: h.constructUpdateEnvironmentInput(input.Environments),
 	})
 
 	if err != nil {
@@ -73,20 +67,43 @@ func (h *projectHandler) newUpdateProjectResponse(project *entity.Project) updat
 	if project == nil {
 		return updateProjectResponse{}
 	}
-	envs := make([]string, 0, len(project.Environments))
-
-	for _, env := range project.Environments {
-		envs = append(envs, env.String())
-	}
-
 	return updateProjectResponse{
 		ID:           project.ID.String(),
 		Name:         project.Name,
 		Description:  project.Description,
-		Environments: envs,
-		Status:       project.Status.String(),
-		TeamID:       project.TeamID.String(),
-		ScmProvider:  project.ScmProvider,
+		OwnerTeamID:  project.OwnerTeamID.String(),
+		Environments: h.constructEnvironmentResponse(project.Environments),
 		CreatedBy:    project.CreatedBy.String(),
 	}
+}
+
+func (h *projectHandler) constructUpdateEnvironmentInput(input *[]createEnvironmentRequest) *[]projectUsecase.CreateEnvironmentInput {
+	if input == nil {
+		return nil
+	}
+
+	environments := make([]projectUsecase.CreateEnvironmentInput, 0, len(*input))
+	for _, environment := range *input {
+		environments = append(environments, projectUsecase.CreateEnvironmentInput{
+			Name:           environment.Name,
+			Tier:           environment.Tier,
+			Cluster:        environment.Cluster,
+			Namespace:      environment.Namespace,
+			ArgoCDInstance: environment.ArgoCDInstance,
+			Config: func() *projectUsecase.CreateEnvironmentConfigInput {
+				if environment.Config == nil {
+					return nil
+				}
+				return &projectUsecase.CreateEnvironmentConfigInput{
+					Domain:       environment.Config.Domain,
+					APIDomain:    environment.Config.APIDomain,
+					Region:       environment.Config.Region,
+					IngressClass: environment.Config.IngressClass,
+					PublicAccess: environment.Config.PublicAccess,
+				}
+			}(),
+		})
+	}
+
+	return &environments
 }
