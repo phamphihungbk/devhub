@@ -15,18 +15,23 @@ func (r *pluginRepositoryImpl) CreateOne(ctx context.Context, input *entity.Plug
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
 	pluginsTable := table.Plugins
+	var configSchema *string
+	if !input.ConfigSchema.IsZero() {
+		configSchema = misc.ToPointer(input.ConfigSchema.String())
+	}
+
 	// SQL statement
 	stmt := pluginsTable.INSERT(
 		pluginsTable.AllColumns.Except(pluginsTable.DefaultColumns), // Exclude columns with default values
 	).MODEL(model.Plugins{
-		Name:        input.Name,
-		Type:        input.Type.String(),
-		Version:     input.Version,
-		Runtime:     input.Runtime.String(),
-		Entrypoint:  input.Entrypoint,
-		Enabled:     input.Enabled,
-		Scope:       input.Scope.String(),
-		Description: &input.Description,
+		Name:         input.Name,
+		Type:         input.Type.String(),
+		Version:      input.Version,
+		Runtime:      input.Runtime.String(),
+		Entrypoint:   input.Entrypoint,
+		ConfigSchema: configSchema,
+		Enabled:      input.Enabled,
+		Description:  &input.Description,
 	}).RETURNING(pluginsTable.AllColumns)
 	query, args := stmt.Sql()
 

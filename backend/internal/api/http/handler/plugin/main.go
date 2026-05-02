@@ -8,12 +8,10 @@ import (
 )
 
 type PluginHandler interface {
-	CreatePlugin(c *gin.Context)
-	FindPluginByID(c *gin.Context)
 	FindAllPlugins(c *gin.Context)
+	FindPluginByID(c *gin.Context)
 	SyncPlugins(c *gin.Context)
-	UpdatePlugin(c *gin.Context)
-	DeletePlugin(c *gin.Context)
+	DisablePlugin(c *gin.Context)
 }
 
 type pluginHandler struct {

@@ -3,6 +3,7 @@ package handler
 import (
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/util/httpresponse"
+	"time"
 
 	pluginUsecase "devhub-backend/internal/usecase/plugin"
 
@@ -10,15 +11,15 @@ import (
 )
 
 type findOnePluginResponse struct {
-	ID          string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name        string `json:"name" example:"Plugin Name"`
-	Type        string `json:"type" example:"scaffolder"`
-	Version     string `json:"version" example:"1.0.0"`
-	Runtime     string `json:"runtime" example:"python"`
-	Entrypoint  string `json:"entrypoint" example:"/app/plugins/scaffolders/go_http_api/action.py"`
-	Enabled     bool   `json:"enabled" example:"true"`
-	Scope       string `json:"scope" example:"global"`
-	Description string `json:"description" example:"Plugin Description"`
+	ID          string    `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name        string    `json:"name" example:"Plugin Name"`
+	Type        string    `json:"type" example:"scaffolder"`
+	Version     string    `json:"version" example:"1.0.0"`
+	Runtime     string    `json:"runtime" example:"python"`
+	Entrypoint  string    `json:"entrypoint" example:"/app/plugins/scaffolders/go_http_api/action.py"`
+	Enabled     bool      `json:"enabled" example:"true"`
+	Description string    `json:"description" example:"Plugin Description"`
+	CreatedAt   time.Time `json:"created_at" example:"2024-01-01T00:00:00Z"`
 }
 
 // @Summary		Find Plugin by ID
@@ -57,7 +58,7 @@ func (h *pluginHandler) newFindOnePluginResponse(plugin *entity.Plugin) findOneP
 		Runtime:     plugin.Runtime.String(),
 		Entrypoint:  plugin.Entrypoint,
 		Enabled:     plugin.Enabled,
-		Scope:       plugin.Scope.String(),
 		Description: plugin.Description,
+		CreatedAt:   plugin.CreatedAt,
 	}
 }

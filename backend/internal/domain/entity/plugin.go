@@ -15,9 +15,8 @@ var (
 )
 
 const (
-	PluginScaffold   PluginType = "scaffold"
-	PluginDeployment PluginType = "deployment"
-	PluginRelease    PluginType = "release"
+	PluginScaffoldRequest PluginType = "scaffold_request"
+	PluginDeployment      PluginType = "deployment"
 )
 
 const (
@@ -31,17 +30,17 @@ type PluginType string
 type PluginRuntime string
 
 type PluginSchemaProperty struct {
-	Type        string                          `json:"type"` // string, number, boolean, object
-	Description string                          `json:"description,omitempty"`
-	Default     interface{}                     `json:"default,omitempty"`
-	Enum        []string                        `json:"enum,omitempty"`       // allowed values
-	Properties  map[string]PluginSchemaProperty `json:"properties,omitempty"` // nested
+	Type        string                          `json:"type" yaml:"type"` // string, number, boolean, object
+	Description string                          `json:"description,omitempty" yaml:"description,omitempty"`
+	Default     interface{}                     `json:"default,omitempty" yaml:"default,omitempty"`
+	Enum        []string                        `json:"enum,omitempty" yaml:"enum,omitempty"`             // allowed values
+	Properties  map[string]PluginSchemaProperty `json:"properties,omitempty" yaml:"properties,omitempty"` // nested
 }
 
 type PluginConfigSchema struct {
-	Type       string                          `json:"type"` // usually "object"
-	Required   []string                        `json:"required,omitempty"`
-	Properties map[string]PluginSchemaProperty `json:"properties"`
+	Type       string                          `json:"type" yaml:"type"` // usually "object"
+	Required   []string                        `json:"required,omitempty" yaml:"required,omitempty"`
+	Properties map[string]PluginSchemaProperty `json:"properties" yaml:"properties"`
 }
 
 func (p PluginConfigSchema) Parse(input string) (PluginConfigSchema, error) {
@@ -66,10 +65,13 @@ func (p PluginConfigSchema) String() string {
 	return string(bytes)
 }
 
+func (p PluginConfigSchema) IsZero() bool {
+	return p.Type == "" && len(p.Required) == 0 && len(p.Properties) == 0
+}
+
 var pluginTypeStringMapper = map[PluginType]string{
-	PluginScaffold:   "scaffold",
-	PluginDeployment: "deployment",
-	PluginRelease:    "release",
+	PluginScaffoldRequest: "scaffold_request",
+	PluginDeployment:      "deployment",
 }
 
 var pluginRuntimeStringMapper = map[PluginRuntime]string{
@@ -84,7 +86,7 @@ func (pt PluginType) String() string {
 
 func (pt PluginType) IsValid() bool {
 	switch pt {
-	case PluginScaffold, PluginDeployment, PluginRelease:
+	case PluginScaffoldRequest, PluginDeployment:
 		return true
 	default:
 		return false

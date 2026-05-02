@@ -1,5 +1,22 @@
 -- 202604201016_execution.up.sql
 
+-- Migration: Create releases table
+CREATE TABLE IF NOT EXISTS releases (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    service_id UUID NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+    tag VARCHAR(64) NOT NULL,  -- v1.2.3
+    target VARCHAR(255) NOT NULL,  -- branch or commit
+    name VARCHAR(255) NOT NULL,  -- release title
+    status VARCHAR(32) NOT NULL,  -- pending, running, completed, failed
+    notes TEXT NOT NULL DEFAULT '',
+    html_url TEXT NOT NULL,  -- link to GitHub/GitLab release
+    external_ref VARCHAR(255) NOT NULL,  -- release ID in SCM
+    triggered_by UUID NOT NULL REFERENCES users(id),
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    UNIQUE (service_id, tag),
+    CHECK (status IN ('pending', 'running', 'completed', 'failed'))
+);
+
 -- Migration: Create plugins table
 CREATE TABLE IF NOT EXISTS plugins (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -42,7 +59,7 @@ CREATE TABLE IF NOT EXISTS deployments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     service_id UUID NOT NULL REFERENCES services(id) ON DELETE CASCADE,
     environment_id UUID NOT NULL REFERENCES environments(id) ON DELETE CASCADE,
-    version VARCHAR(64) NOT NULL,  -- image tag / git sha
+    release_id UUID NOT NULL REFERENCES releases(id) ON DELETE RESTRICT,
     status VARCHAR(32) NOT NULL,  -- pending, running, completed, failed
     external_ref VARCHAR(255),  -- ArgoCD app / sync ID
     commit_sha VARCHAR(64),  -- Git commit
@@ -67,23 +84,6 @@ CREATE TABLE IF NOT EXISTS scaffold_requests (
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
     CHECK (status IN ('pending', 'approved', 'running', 'completed', 'failed', 'rejected'))
-);
-
--- Migration: Create releases table
-CREATE TABLE IF NOT EXISTS releases (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    service_id UUID NOT NULL REFERENCES services(id) ON DELETE CASCADE,
-    tag VARCHAR(64) NOT NULL,  -- v1.2.3
-    target VARCHAR(255) NOT NULL,  -- branch or commit
-    name VARCHAR(255) NOT NULL,  -- release title
-    status VARCHAR(32) NOT NULL,  -- pending, running, completed, failed
-    notes TEXT NOT NULL DEFAULT '',
-    html_url TEXT NOT NULL,  -- link to GitHub/GitLab release
-    external_ref VARCHAR(255) NOT NULL,  -- release ID in SCM
-    triggered_by UUID NOT NULL REFERENCES users(id),
-    created_at TIMESTAMP NOT NULL DEFAULT now(),
-    UNIQUE (service_id, tag),
-    CHECK (status IN ('pending', 'running', 'completed', 'failed'))
 );
 
 -- Migration: Create refresh_tokens table
