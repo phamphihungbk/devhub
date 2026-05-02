@@ -11,6 +11,7 @@ type User struct {
 	Name         string
 	Email        string
 	PasswordHash string
+	Roles        []string
 	TeamID       uuid.UUID
 	CreatedAt    time.Time
 	UpdatedAt    time.Time

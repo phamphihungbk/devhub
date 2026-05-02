@@ -109,29 +109,6 @@ var seedRolePermissions = map[string][]string{
 	entity.RoleViewer.String(): {},
 }
 
-var seedApprovalPolicies = []seedApprovalPolicy{
-	{
-		Resource:          entity.ApprovalResourceScaffoldRequest.String(),
-		Action:            entity.ApprovalActionCreate.String(),
-		RequiredApprovals: 1,
-		Enabled:           true,
-	},
-	{
-		Resource:          entity.ApprovalResourceRelease.String(),
-		Action:            entity.ApprovalActionCreate.String(),
-		Environment:       misc.ToPointer("development"),
-		RequiredApprovals: 1,
-		Enabled:           true,
-	},
-	{
-		Resource:          entity.ApprovalResourceDeployment.String(),
-		Action:            entity.ApprovalActionCreate.String(),
-		Environment:       misc.ToPointer("development"),
-		RequiredApprovals: 1,
-		Enabled:           true,
-	},
-}
-
 var seedTeams = []seedTeam{
 	{
 		Name:         "phamphihungbk",
@@ -286,61 +263,11 @@ func runSeedCmd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	for _, policy := range seedApprovalPolicies {
-		if policy.Environment == nil {
-			continue
-		}
-
-		if _, err := tx.ExecContext(ctx, `
-			UPDATE approval_policies
-			SET required_approvals = $4::int,
-				enabled = $5::boolean,
-				updated_at = now()
-			WHERE resource = $1::varchar
-				AND action = $2::varchar
-				AND project_id IS NULL
-				AND service_id IS NULL
-				AND environment_id IN (
-					SELECT id
-					FROM environments
-					WHERE name = $3::varchar
-				)
-		`, policy.Resource, policy.Action, policy.Environment, policy.RequiredApprovals, policy.Enabled); err != nil {
-			return fmt.Errorf("update approval policy %q/%q: %w", policy.Resource, policy.Action, err)
-		}
-
-		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO approval_policies (
-				resource,
-				action,
-				project_id,
-				service_id,
-				environment_id,
-				required_approvals,
-				enabled
-			)
-			SELECT $1::varchar, $2::varchar, NULL, NULL, e.id, $4::int, $5::boolean
-			FROM environments e
-			WHERE e.name = $3::varchar
-				AND NOT EXISTS (
-					SELECT 1
-					FROM approval_policies
-					WHERE resource = $1::varchar
-						AND action = $2::varchar
-						AND project_id IS NULL
-						AND service_id IS NULL
-						AND environment_id = e.id
-				)
-		`, policy.Resource, policy.Action, policy.Environment, policy.RequiredApprovals, policy.Enabled); err != nil {
-			return fmt.Errorf("seed approval policy %q/%q: %w", policy.Resource, policy.Action, err)
-		}
-	}
-
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit transaction: %w", err)
 	}
 	tx = nil
 
-	fmt.Fprintln(cmd.OutOrStdout(), "seed complete")
+	fmt.Fprintln(cmd.OutOrStdout(), "Seed complete.")
 	return nil
 }

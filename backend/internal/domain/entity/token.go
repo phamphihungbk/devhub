@@ -9,20 +9,20 @@ import (
 
 type AccessToken struct {
 	UserID    uuid.UUID
-	Role      UserRole
+	Roles     []string
 	Issuer    string
 	IssuedAt  time.Time
 	ExpiresAt time.Time
 }
 
 type AccessTokenClaims struct {
-	Role string
+	Roles []string `json:"roles"`
 	jwt.RegisteredClaims
 }
 
 func (t AccessToken) ToJWTClaims() AccessTokenClaims {
 	return AccessTokenClaims{
-		Role: t.Role.String(),
+		Roles: t.Roles,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    t.Issuer,
 			Subject:   t.UserID.String(),
