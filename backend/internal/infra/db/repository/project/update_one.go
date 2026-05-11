@@ -33,11 +33,6 @@ func (r *projectRepositoryImpl) UpdateOne(ctx context.Context, input repository.
 		columns = append(columns, projectsTable.Description)
 	}
 
-	if input.OwnerTeamID != nil {
-		updateModel.OwnerTeamID = *input.OwnerTeamID
-		columns = append(columns, projectsTable.OwnerTeamID)
-	}
-
 	if len(columns) == 0 {
 		return nil, errs.NewBadRequestError("no fields provided to update", nil)
 	}

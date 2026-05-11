@@ -1,5 +1,5 @@
-from scaffolders.models.payload import ScaffoldPayload
-from scaffolders import fail
+from scaffold_request.models.payload import ScaffoldPayload
+from scaffold_request import fail
 
 
 class ScaffoldBootstrapper:

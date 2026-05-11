@@ -72,6 +72,7 @@ func (u *projectUsecase) enrichProjectDetail(ctx context.Context, project *entit
 		Description: project.Description,
 	}
 
+	// TODO: maybe should move to repo with join query instead
 	ownerTeam, err := u.teamRepository.FindOne(ctx, project.OwnerTeamID)
 	if err == nil && ownerTeam != nil {
 		detail.OwnerTeamName = ownerTeam.Name

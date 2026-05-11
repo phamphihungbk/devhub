@@ -15,14 +15,17 @@ func (r *approvalRepositoryImpl) CreateApprovalPolicy(ctx context.Context, polic
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
 	approvalPoliciesTable := table.ApprovalPolicies
+	// TODO: remove default value from migration
 	stmt := approvalPoliciesTable.INSERT(
-		approvalPoliciesTable.AllColumns.Except(approvalPoliciesTable.DefaultColumns),
+		approvalPoliciesTable.Resource,
+		approvalPoliciesTable.ServiceID,
+		approvalPoliciesTable.EnvironmentID,
+		approvalPoliciesTable.RequiredApprovals,
+		approvalPoliciesTable.Enabled,
 	).MODEL(model.ApprovalPolicies{
 		Resource:          policy.Resource,
-		Action:            policy.Action,
-		ProjectID:         policy.ProjectID,
 		ServiceID:         policy.ServiceID,
-		Environment:       policy.Environment,
+		EnvironmentID:     policy.EnvironmentID,
 		RequiredApprovals: int32(policy.RequiredApprovals),
 		Enabled:           policy.Enabled,
 	}).RETURNING(approvalPoliciesTable.AllColumns)

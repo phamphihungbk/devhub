@@ -21,6 +21,7 @@ import (
 	dbApprovalRepo "devhub-backend/internal/infra/db/repository/approval"
 	dbDeploymentRepo "devhub-backend/internal/infra/db/repository/deployment"
 	dbEnvironmentRepo "devhub-backend/internal/infra/db/repository/environment"
+	dbJobRepo "devhub-backend/internal/infra/db/repository/job"
 	dbPluginRepo "devhub-backend/internal/infra/db/repository/plugin"
 	dbProjectRepo "devhub-backend/internal/infra/db/repository/project"
 	dbRefreshTokenRepo "devhub-backend/internal/infra/db/repository/refresh_token"
@@ -55,6 +56,7 @@ func (s *Server) setupRouteDependencies(ctx context.Context, tracerProvider *sdk
 	dbProjectRepo := dbProjectRepo.NewProjectRepository(dbConn)
 	dbDeploymentRepo := dbDeploymentRepo.NewDeploymentRepository(dbConn)
 	dbEnvironmentRepo := dbEnvironmentRepo.NewEnvironmentRepository(dbConn)
+	dbJobRepo := dbJobRepo.NewJobRepository(dbConn)
 	dbPluginRepo := dbPluginRepo.NewPluginRepository(dbConn)
 	dbScaffoldRequestRepo := dbScaffoldRequestRepo.NewScaffoldRequestRepository(dbConn)
 	dbReleaseRepo := dbReleaseRepo.NewReleaseRepository(dbConn)
@@ -63,11 +65,11 @@ func (s *Server) setupRouteDependencies(ctx context.Context, tracerProvider *sdk
 	dbRefreshTokenRepo := dbRefreshTokenRepo.NewRefreshTokenRepository(dbConn)
 
 	// Usecases
-	approvalUsecase := approvalUsecase.NewApprovalUsecase(s.cfg.App, dbApprovalRepo, dbDeploymentRepo, dbProjectRepo, dbReleaseRepo, dbScaffoldRequestRepo, dbServiceRepo, dbUserRepo)
+	approvalUsecase := approvalUsecase.NewApprovalUsecase(s.cfg.App, dbApprovalRepo, dbDeploymentRepo, dbEnvironmentRepo, dbJobRepo, dbProjectRepo, dbReleaseRepo, dbScaffoldRequestRepo, dbServiceRepo, dbUserRepo)
 	userUsecase := userUsecase.NewUserUsecase(s.cfg.App, dbUserRepo)
 	projectUsecase := projectUsecase.NewProjectUsecase(s.cfg.App, dbProjectRepo, dbEnvironmentRepo, dbUserRepo, dbTeamRepo)
 	deploymentUsecase := deploymentUsecase.NewDeploymentUsecase(s.cfg.App, dbApprovalRepo, dbDeploymentRepo, dbPluginRepo)
-	releaseUsecase := releaseUsecase.NewReleaseUsecase(s.cfg.App, dbPluginRepo, dbReleaseRepo)
+	releaseUsecase := releaseUsecase.NewReleaseUsecase(s.cfg.App, dbPluginRepo, dbReleaseRepo, dbServiceRepo)
 	pluginUsecase := pluginUsecase.NewPluginUsecase(s.cfg.App, dbPluginRepo)
 	localAIClient := ai.NewLocalClient()
 	localScaffoldSuggestionGenerator := ai.NewLocalScaffoldSuggestionGenerator()

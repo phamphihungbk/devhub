@@ -2,6 +2,7 @@ package userrepo
 
 import (
 	"context"
+
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/domain/errs"
 	table "devhub-backend/internal/infra/db/model_gen/devhub/public/table"
@@ -18,6 +19,9 @@ func (r *userRepositoryImpl) FindAll(ctx context.Context, filter repository.Find
 
 	// Build WHERE conditions for filtering
 	whereClauses := []postgres.BoolExpression{}
+	if filter.TeamID != nil {
+		whereClauses = append(whereClauses, table.Users.TeamID.EQ(postgres.UUID(*filter.TeamID)))
+	}
 	if filter.StartDate != nil {
 		whereClauses = append(whereClauses, table.Users.CreatedAt.GT_EQ(postgres.TimestampT(*filter.StartDate)))
 	}
@@ -41,9 +45,27 @@ func (r *userRepositoryImpl) FindAll(ctx context.Context, filter repository.Find
 	}
 
 	// Get users with the same filter
+	usersTable := table.Users
+	userRolesTable := table.UserRoles
+	rolesTable := table.Roles
 	stmt := postgres.SELECT(
-		table.Users.AllColumns,
-	).FROM(table.Users)
+		usersTable.AllColumns,
+		postgres.RawString("COALESCE(jsonb_agg(roles.name ORDER BY roles.name) FILTER (WHERE roles.id IS NOT NULL), '[]'::jsonb)").AS("roles_json"),
+	).FROM(
+		usersTable.
+			LEFT_JOIN(userRolesTable, userRolesTable.UserID.EQ(usersTable.ID)).
+			LEFT_JOIN(rolesTable, rolesTable.ID.EQ(userRolesTable.RoleID)),
+	).
+		GROUP_BY(
+			usersTable.ID,
+			usersTable.Name,
+			usersTable.Email,
+			usersTable.PasswordHash,
+			usersTable.TeamID,
+			usersTable.CreatedAt,
+			usersTable.UpdatedAt,
+			usersTable.DeletedAt,
+		)
 
 	if len(whereClauses) > 0 {
 		stmt = stmt.WHERE(postgres.AND(whereClauses...))

@@ -16,7 +16,7 @@ import (
 const RunnerName = "deployment"
 
 type DeploymentJob struct {
-	entity.Deployment
+	entity.Job
 }
 
 func (j DeploymentJob) GetID() uuid.UUID {
@@ -43,18 +43,19 @@ func NewDeploymentPollingRunner(
 	cfg *config.Config,
 	pluginRepository repository.PluginRepository,
 	serviceRepository repository.ServiceRepository,
+	jobRepository repository.JobRepository,
 	deploymentRepository repository.DeploymentRepository,
 	pollDelay time.Duration,
 ) (core.Runner, error) {
-	executor := NewPythonDeploymentExecutor(cfg, pluginRepository, serviceRepository)
+	executor := NewPythonDeploymentExecutor(cfg, pluginRepository, serviceRepository, deploymentRepository)
 
 	return core.NewPollingRunner[DeploymentJob, DeploymentExecutionResult](
 		core.PollingRunnerConfig{
 			Name:      RunnerName,
 			PollDelay: pollDelay,
 		},
-		NewQueueSourceAdapter(deploymentRepository),
-		NewStatePersistence(deploymentRepository),
+		NewQueueSourceAdapter(jobRepository),
+		NewStatePersistence(jobRepository, deploymentRepository),
 		NewDeploymentExecutorAdapter(executor),
 		observer,
 	)

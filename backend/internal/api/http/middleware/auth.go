@@ -32,6 +32,7 @@ func (m *middleware) Auth(tokenSecret string) gin.HandlerFunc {
 		}
 
 		ctx.Set("user_id", claims.Subject)
+		ctx.Set("roles", claims.Roles)
 
 		ctx.Next()
 	}

@@ -29,6 +29,7 @@ type Dependencies struct {
 	pluginRepository          repository.PluginRepository
 	projectRepository         repository.ProjectRepository
 	teamRepository            repository.TeamRepository
+	jobRepository             repository.JobRepository
 	scaffoldRequestRepository repository.ScaffoldRequestRepository
 	deploymentRepository      repository.DeploymentRepository
 	releaseRepository         repository.ReleaseRepository
@@ -41,6 +42,7 @@ func NewDependencies(
 	pluginRepository repository.PluginRepository,
 	projectRepository repository.ProjectRepository,
 	teamRepository repository.TeamRepository,
+	jobRepository repository.JobRepository,
 	scaffoldRequestRepository repository.ScaffoldRequestRepository,
 	deploymentRepository repository.DeploymentRepository,
 	releaseRepository repository.ReleaseRepository,
@@ -52,6 +54,7 @@ func NewDependencies(
 		pluginRepository:          pluginRepository,
 		projectRepository:         projectRepository,
 		teamRepository:            teamRepository,
+		jobRepository:             jobRepository,
 		scaffoldRequestRepository: scaffoldRequestRepository,
 		deploymentRepository:      deploymentRepository,
 		releaseRepository:         releaseRepository,
@@ -129,8 +132,7 @@ func buildScaffoldRunner(deps *Dependencies, observer Observability, cfg Factory
 		observer,
 		deps.cfg,
 		deps.pluginRepository,
-		deps.projectRepository,
-		deps.teamRepository,
+		deps.jobRepository,
 		deps.scaffoldRequestRepository,
 		deps.serviceRepository,
 		cfg.PollDelay,
@@ -147,6 +149,7 @@ func buildDeploymentRunner(deps *Dependencies, observer Observability, cfg Facto
 		deps.cfg,
 		deps.pluginRepository,
 		deps.serviceRepository,
+		deps.jobRepository,
 		deps.deploymentRepository,
 		cfg.PollDelay,
 	)

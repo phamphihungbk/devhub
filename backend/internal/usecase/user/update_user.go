@@ -42,16 +42,6 @@ func (u *userUsecase) UpdateUser(ctx context.Context, input UpdateUserInput) (us
 	updated, err := u.userRepository.UpdateOne(ctx, repository.UpdateUserInput{
 		ID:   uuid.MustParse(input.ID),
 		Name: input.Name,
-		Role: func() *entity.UserRole {
-			if input.Role == nil {
-				return nil
-			}
-			role, err := new(entity.UserRole).Parse(*input.Role)
-			if err != nil {
-				return nil
-			}
-			return &role
-		}(),
 		TeamID: func() *uuid.UUID {
 			if input.TeamID == nil {
 				return nil

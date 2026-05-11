@@ -15,17 +15,17 @@ type createEnvironmentConfigRequest struct {
 	Domain       string `json:"domain" binding:"required"`
 	APIDomain    string `json:"api_domain" binding:"required"`
 	Region       string `json:"region" binding:"required"`
-	IngressClass string `json:"ingress_class,omitempty" binding:"required"`
-	PublicAccess bool   `json:"public_access,omitempty" binding:"required"`
+	IngressClass string `json:"ingress_class" binding:"required"`
+	PublicAccess bool   `json:"public_access"`
 }
 
 type createEnvironmentRequest struct {
-	Name           string                          `json:"name" binding:"required"` // dev, prod
-	Tier           string                          `json:"tier" binding:"required"` // development, production
-	Cluster        string                          `json:"cluster" binding:"required"`
-	Namespace      string                          `json:"namespace" binding:"required"`
-	ArgoCDInstance string                          `json:"argocd_instance" binding:"required"`
-	Config         *createEnvironmentConfigRequest `json:"config,omitempty"`
+	Name           string                         `json:"name" binding:"required"` // dev, prod
+	Tier           string                         `json:"tier" binding:"required"` // development, production
+	Cluster        string                         `json:"cluster" binding:"required"`
+	Namespace      string                         `json:"namespace" binding:"required"`
+	ArgoCDInstance string                         `json:"argocd_instance" binding:"required"`
+	Config         createEnvironmentConfigRequest `json:"config" binding:"required"`
 }
 
 type createProjectRequest struct {
@@ -100,6 +100,7 @@ func (h *projectHandler) newCreateProjectResponse(project *entity.Project) creat
 
 func (h *projectHandler) constructEnvironmentInput(input createProjectRequest) []projectUsecase.CreateEnvironmentInput {
 	environments := make([]projectUsecase.CreateEnvironmentInput, 0, len(input.Environments))
+
 	for _, environment := range input.Environments {
 		environments = append(environments, projectUsecase.CreateEnvironmentInput{
 			Name:           environment.Name,
@@ -107,11 +108,8 @@ func (h *projectHandler) constructEnvironmentInput(input createProjectRequest) [
 			Cluster:        environment.Cluster,
 			Namespace:      environment.Namespace,
 			ArgoCDInstance: environment.ArgoCDInstance,
-			Config: func() *projectUsecase.CreateEnvironmentConfigInput {
-				if environment.Config == nil {
-					return nil
-				}
-				return &projectUsecase.CreateEnvironmentConfigInput{
+			Config: func() projectUsecase.CreateEnvironmentConfigInput {
+				return projectUsecase.CreateEnvironmentConfigInput{
 					Domain:       environment.Config.Domain,
 					APIDomain:    environment.Config.APIDomain,
 					Region:       environment.Config.Region,

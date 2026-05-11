@@ -19,11 +19,10 @@ func (r *scaffoldRequestRepositoryImpl) CreateOne(ctx context.Context, input *en
 	stmt := scaffoldRequestsTable.INSERT(
 		scaffoldRequestsTable.AllColumns.Except(scaffoldRequestsTable.DefaultColumns),
 	).MODEL(model.ScaffoldRequests{
-		PluginID:    input.PluginID,
 		RequestedBy: input.RequestedBy,
 		Status:      input.Status.String(),
 		ProjectID:   input.ProjectID,
-		Environment: input.Environment.String(),
+		PluginID:    input.PluginID,
 		Variables:   input.Variables.String(),
 	}).RETURNING(scaffoldRequestsTable.AllColumns)
 	query, args := stmt.Sql()

@@ -14,6 +14,7 @@ import (
 type FindAllUsersQuery struct {
 	StartDate *time.Time `form:"startDate" time_format:"2006-01-02"`
 	EndDate   *time.Time `form:"endDate" time_format:"2006-01-02"`
+	TeamID    *string    `form:"team_id"`
 	Limit     *int64     `form:"limit"`
 	Offset    *int64     `form:"offset"`
 	SortBy    *string    `form:"sortBy"`
@@ -21,11 +22,11 @@ type FindAllUsersQuery struct {
 }
 
 type findAllUsersResponse struct {
-	ID     string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name   string `json:"name" example:"User Name"`
-	Email  string `json:"email" example:"user@example.com"`
-	Role   string `json:"role" example:"platform_admin"`
-	TeamID string `json:"team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ID     string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name   string   `json:"name" example:"User Name"`
+	Email  string   `json:"email" example:"user@example.com"`
+	Roles  []string `json:"roles" example:"platform_admin,developer"`
+	TeamID string   `json:"team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
 // @Summary		List Users
@@ -58,6 +59,7 @@ func (h *userHandler) FindAllUsers(c *gin.Context) {
 		sortOrder = misc.ToPointer(entity.SortOrderAsc) // Default sort order
 		err       error
 	)
+
 	if query.Limit != nil {
 		limit = query.Limit
 	}
@@ -77,6 +79,7 @@ func (h *userHandler) FindAllUsers(c *gin.Context) {
 	users, err := h.userUsecase.FindAllUsers(c.Request.Context(), userUsecase.FindAllUsersInput{
 		StartDate: query.StartDate,
 		EndDate:   query.EndDate,
+		TeamID:    query.TeamID,
 		Limit:     limit,
 		Offset:    offset,
 		SortBy:    sortBy,
@@ -101,7 +104,7 @@ func (h *userHandler) newFindAllUsersResponse(users entity.Users) []findAllUsers
 			ID:     user.ID.String(),
 			Name:   user.Name,
 			Email:  user.Email,
-			Role:   user.Role.String(),
+			Roles:  user.Roles,
 			TeamID: user.TeamID.String(),
 		}
 		response = append(response, item)

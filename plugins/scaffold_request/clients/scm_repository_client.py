@@ -5,8 +5,8 @@ import urllib.parse
 import urllib.request
 from typing import Any
 
-from scaffolders import fail
-from scaffolders.models.payload import GitOpsConfig
+from scaffold_request import fail
+from scaffold_request.models.payload import GitOpsConfig
 
 
 class SCMRepositoryClient:

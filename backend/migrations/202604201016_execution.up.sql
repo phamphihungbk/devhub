@@ -36,11 +36,11 @@ CREATE TABLE IF NOT EXISTS plugins (
 CREATE TABLE IF NOT EXISTS jobs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     type VARCHAR(64) NOT NULL,  -- scaffold, deployment, release, sync_env
-    status VARCHAR(32) NOT NULL DEFAULT 'queued',
+    status VARCHAR(32) NOT NULL,  -- queued, running, completed, failed
     resource_type VARCHAR(64) NOT NULL,  -- scaffold_request, deployment, release
     resource_id UUID NOT NULL,
     plugin_id UUID NOT NULL REFERENCES plugins(id),
-    payload JSONB NOT NULL DEFAULT '{}',
+    payload JSONB NOT NULL,
     result JSONB NOT NULL DEFAULT '{}',
     error TEXT,
     attempts INT NOT NULL DEFAULT 0,
@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS deployments (
     service_id UUID NOT NULL REFERENCES services(id) ON DELETE CASCADE,
     environment_id UUID NOT NULL REFERENCES environments(id) ON DELETE CASCADE,
     release_id UUID NOT NULL REFERENCES releases(id) ON DELETE RESTRICT,
+    plugin_id UUID NOT NULL REFERENCES plugins(id),
     status VARCHAR(32) NOT NULL,  -- pending, running, completed, failed
     external_ref VARCHAR(255),  -- ArgoCD app / sync ID
     commit_sha VARCHAR(64),  -- Git commit
@@ -75,10 +76,11 @@ CREATE TABLE IF NOT EXISTS deployments (
 CREATE TABLE IF NOT EXISTS scaffold_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    plugin_id UUID NOT NULL REFERENCES plugins(id),
     requested_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     approved_by UUID REFERENCES users(id) ON DELETE CASCADE,
     status VARCHAR(16) NOT NULL,  -- pending, approved, running, completed, failed, rejected
-    variables JSONB NOT NULL DEFAULT '{}',  -- user input
+    variables JSONB NOT NULL,  -- user input
     result_repo_url TEXT,  -- created repo
     approved_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT now(),

@@ -92,7 +92,7 @@ func newJobsTableImpl(schemaName, tableName, alias string) jobsTable {
 		FinishedAtColumn   = postgres.TimestampColumn("finished_at")
 		allColumns         = postgres.ColumnList{IDColumn, TypeColumn, StatusColumn, ResourceTypeColumn, ResourceIDColumn, PluginIDColumn, PayloadColumn, ResultColumn, ErrorColumn, AttemptsColumn, MaxAttemptsColumn, CreatedByColumn, CreatedAtColumn, UpdatedAtColumn, StartedAtColumn, FinishedAtColumn}
 		mutableColumns     = postgres.ColumnList{TypeColumn, StatusColumn, ResourceTypeColumn, ResourceIDColumn, PluginIDColumn, PayloadColumn, ResultColumn, ErrorColumn, AttemptsColumn, MaxAttemptsColumn, CreatedByColumn, CreatedAtColumn, UpdatedAtColumn, StartedAtColumn, FinishedAtColumn}
-		defaultColumns     = postgres.ColumnList{IDColumn, StatusColumn, PayloadColumn, ResultColumn, AttemptsColumn, MaxAttemptsColumn, CreatedAtColumn, UpdatedAtColumn}
+		defaultColumns     = postgres.ColumnList{IDColumn, ResultColumn, AttemptsColumn, MaxAttemptsColumn, CreatedAtColumn, UpdatedAtColumn}
 	)
 
 	return jobsTable{

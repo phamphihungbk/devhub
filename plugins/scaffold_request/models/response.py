@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from scaffolders import read_required_str
+from scaffold_request import read_required_str
 
 
 @dataclass(frozen=True)

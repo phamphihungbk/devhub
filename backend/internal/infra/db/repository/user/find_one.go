@@ -18,12 +18,21 @@ func (r *userRepositoryImpl) FindOne(ctx context.Context, id uuid.UUID) (user *e
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
 	usersTable := table.Users
+	userRolesTable := table.UserRoles
+	rolesTable := table.Roles
+
 	// SQL statement
 	stmt := postgres.SELECT(
 		usersTable.AllColumns,
+		postgres.RawString("COALESCE(jsonb_agg(roles.name ORDER BY roles.name) FILTER (WHERE roles.id IS NOT NULL), '[]'::jsonb)").AS("roles_json"),
 	).
-		FROM(table.Users).
-		WHERE(table.Users.ID.EQ(postgres.UUID(id)))
+		FROM(
+			usersTable.
+				LEFT_JOIN(userRolesTable, userRolesTable.UserID.EQ(usersTable.ID)).
+				LEFT_JOIN(rolesTable, rolesTable.ID.EQ(userRolesTable.RoleID)),
+		).
+		WHERE(usersTable.ID.EQ(postgres.UUID(id))).
+		GROUP_BY(usersTable.ID)
 
 	query, args := stmt.Sql()
 

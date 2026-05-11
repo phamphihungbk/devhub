@@ -3,17 +3,10 @@
   "required": [
     "environment",
     "service_name",
+    "team_owner",
     "port",
     "database",
-    "image_tag",
-    "module_path",
-    "ci_registry_host",
-    "ci_server_url",
-    "cd_project_name",
-    "cd_repo_url",
-    "cd_target_revision",
-    "cd_namespace",
-    "cd_image_repository"
+    "module_path"
   ],
   "properties": {
     "environment": {
@@ -22,8 +15,13 @@
     },
     "service_name": {
       "type": "string",
-      "pattern": "^[a-z0-9][a-z0-9-]*$",
-      "description": "Kebab-case service name."
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9 _-]*$",
+      "description": "Service name. Spaces and underscores are normalized to hyphens by the plugin."
+    },
+    "team_owner": {
+      "type": "string",
+      "minLength": 1
     },
     "port": {
       "type": "integer",
@@ -40,34 +38,6 @@
     },
     "module_path": {
       "type": "string",
-      "minLength": 1
-    },
-    "ci_registry_host": {
-      "type": "string",
-      "minLength": 1
-    },
-    "ci_server_url": {
-      "type": "string",
-      "minLength": 1
-    },
-    "cd_project_name": {
-      "type": "string",
-      "minLength": 1
-    },
-    "cd_repo_url": {
-      "type": "string",
-      "minLength": 1
-    },
-    "cd_target_revision": {
-      "type": "string",
-      "minLength": 1
-    },
-    "cd_namespace": {
-      "type": "string",
-      "minLength": 1
-    },
-    "cd_image_repository": {
-       "type": "string",
       "minLength": 1
     }
   },

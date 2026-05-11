@@ -16,7 +16,8 @@ type Deployments struct {
 	ID            uuid.UUID  `sql:"primary_key" db:"deployments.id"`
 	ServiceID     uuid.UUID  `db:"deployments.service_id"`
 	EnvironmentID uuid.UUID  `db:"deployments.environment_id"`
-	Version       string     `db:"deployments.version"`
+	ReleaseID     uuid.UUID  `db:"deployments.release_id"`
+	PluginID      uuid.UUID  `db:"deployments.plugin_id"`
 	Status        string     `db:"deployments.status"`
 	ExternalRef   *string    `db:"deployments.external_ref"`
 	CommitSha     *string    `db:"deployments.commit_sha"`

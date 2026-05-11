@@ -10,15 +10,10 @@ import (
 
 var (
 	ErrInvalidScaffoldRequestVariables = fmt.Errorf("invalid scaffold request variables")
+	ErrInvalidScaffoldRequestStatus    = fmt.Errorf("invalid scaffold request status")
 )
 
-type ScaffoldRequestVariables struct {
-	ServiceName   string `json:"service_name"`
-	ModulePath    string `json:"module_path"`
-	Port          int    `json:"port"`
-	Database      string `json:"database"`
-	EnableLogging bool   `json:"enable_logging"`
-}
+type ScaffoldRequestVariables map[string]interface{}
 
 // Parse parses a string into a ScaffoldRequestVariables. It returns an error if the string is not a valid ScaffoldRequestVariables.
 func (s ScaffoldRequestVariables) Parse(variables string) (ScaffoldRequestVariables, error) {
@@ -27,7 +22,7 @@ func (s ScaffoldRequestVariables) Parse(variables string) (ScaffoldRequestVariab
 	err := json.Unmarshal([]byte(variables), &scaffoldRequestVariables)
 
 	if err != nil {
-		return ScaffoldRequestVariables{}, fmt.Errorf("%w: %s", ErrInvalidScaffoldRequestVariables, scaffoldRequestVariables)
+		return ScaffoldRequestVariables{}, fmt.Errorf("%w: %s", ErrInvalidScaffoldRequestVariables, variables)
 	}
 
 	return scaffoldRequestVariables, nil
@@ -69,7 +64,7 @@ func (s ScaffoldRequestStatus) String() string {
 
 func (s ScaffoldRequestStatus) IsValid() bool {
 	switch s {
-	case ScaffoldRequestPending, ScaffoldRequestApproved, ScaffoldRequestRunning, ScaffoldRequestCompleted, ScaffoldRequestFailed, ScaffoldRequestRejected:
+	case ScaffoldRequestPending, ScaffoldRequestApproved, ScaffoldRequestRunning, ScaffoldRequestCompleted, ScaffoldRequestFailed:
 		return true
 	default:
 		return false
@@ -81,7 +76,7 @@ func (s ScaffoldRequestStatus) Parse(status string) (ScaffoldRequestStatus, erro
 	scaffoldRequestStatus := ScaffoldRequestStatus(status)
 
 	if !scaffoldRequestStatus.IsValid() {
-		return "", fmt.Errorf("invalid scaffold request status: %s", status)
+		return "", fmt.Errorf("%w: %s", ErrInvalidScaffoldRequestStatus, scaffoldRequestStatus)
 	}
 	return scaffoldRequestStatus, nil
 }
@@ -89,6 +84,7 @@ func (s ScaffoldRequestStatus) Parse(status string) (ScaffoldRequestStatus, erro
 type ScaffoldRequest struct {
 	ID            uuid.UUID
 	ProjectID     uuid.UUID
+	PluginID      uuid.UUID
 	RequestedBy   uuid.UUID
 	ApprovedBy    *uuid.UUID
 	Status        ScaffoldRequestStatus

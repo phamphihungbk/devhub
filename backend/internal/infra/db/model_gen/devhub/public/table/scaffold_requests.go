@@ -19,6 +19,7 @@ type scaffoldRequestsTable struct {
 	// Columns
 	ID            postgres.ColumnString
 	ProjectID     postgres.ColumnString
+	PluginID      postgres.ColumnString
 	RequestedBy   postgres.ColumnString
 	ApprovedBy    postgres.ColumnString
 	Status        postgres.ColumnString
@@ -70,6 +71,7 @@ func newScaffoldRequestsTableImpl(schemaName, tableName, alias string) scaffoldR
 	var (
 		IDColumn            = postgres.StringColumn("id")
 		ProjectIDColumn     = postgres.StringColumn("project_id")
+		PluginIDColumn      = postgres.StringColumn("plugin_id")
 		RequestedByColumn   = postgres.StringColumn("requested_by")
 		ApprovedByColumn    = postgres.StringColumn("approved_by")
 		StatusColumn        = postgres.StringColumn("status")
@@ -78,9 +80,9 @@ func newScaffoldRequestsTableImpl(schemaName, tableName, alias string) scaffoldR
 		ApprovedAtColumn    = postgres.TimestampColumn("approved_at")
 		CreatedAtColumn     = postgres.TimestampColumn("created_at")
 		UpdatedAtColumn     = postgres.TimestampColumn("updated_at")
-		allColumns          = postgres.ColumnList{IDColumn, ProjectIDColumn, RequestedByColumn, ApprovedByColumn, StatusColumn, VariablesColumn, ResultRepoURLColumn, ApprovedAtColumn, CreatedAtColumn, UpdatedAtColumn}
-		mutableColumns      = postgres.ColumnList{ProjectIDColumn, RequestedByColumn, ApprovedByColumn, StatusColumn, VariablesColumn, ResultRepoURLColumn, ApprovedAtColumn, CreatedAtColumn, UpdatedAtColumn}
-		defaultColumns      = postgres.ColumnList{IDColumn, VariablesColumn, CreatedAtColumn, UpdatedAtColumn}
+		allColumns          = postgres.ColumnList{IDColumn, ProjectIDColumn, PluginIDColumn, RequestedByColumn, ApprovedByColumn, StatusColumn, VariablesColumn, ResultRepoURLColumn, ApprovedAtColumn, CreatedAtColumn, UpdatedAtColumn}
+		mutableColumns      = postgres.ColumnList{ProjectIDColumn, PluginIDColumn, RequestedByColumn, ApprovedByColumn, StatusColumn, VariablesColumn, ResultRepoURLColumn, ApprovedAtColumn, CreatedAtColumn, UpdatedAtColumn}
+		defaultColumns      = postgres.ColumnList{IDColumn, CreatedAtColumn, UpdatedAtColumn}
 	)
 
 	return scaffoldRequestsTable{
@@ -89,6 +91,7 @@ func newScaffoldRequestsTableImpl(schemaName, tableName, alias string) scaffoldR
 		//Columns
 		ID:            IDColumn,
 		ProjectID:     ProjectIDColumn,
+		PluginID:      PluginIDColumn,
 		RequestedBy:   RequestedByColumn,
 		ApprovedBy:    ApprovedByColumn,
 		Status:        StatusColumn,

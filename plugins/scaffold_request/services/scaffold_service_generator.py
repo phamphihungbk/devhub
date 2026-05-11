@@ -3,8 +3,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from scaffolders.models.payload import ScaffoldPayload
-from scaffolders import (
+from scaffold_request.models.payload import ScaffoldPayload
+from scaffold_request import (
     read_payload,
     render_template,
     resolve_service_dir,

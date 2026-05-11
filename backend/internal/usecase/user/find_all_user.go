@@ -9,11 +9,14 @@ import (
 	repository "devhub-backend/internal/domain/repository"
 	"devhub-backend/internal/util/misc"
 	"devhub-backend/pkg/validator"
+
+	"github.com/google/uuid"
 )
 
 type FindAllUsersInput struct {
 	StartDate *time.Time        `json:"start_date" validate:"omitempty"`
 	EndDate   *time.Time        `json:"end_date" validate:"omitempty,gtfield=StartDate"`
+	TeamID    *string           `json:"team_id" validate:"omitempty,uuid"`
 	Limit     *int64            `json:"limit" validate:"required,gte=1,lte=100"`
 	Offset    *int64            `json:"offset" validate:"required,gte=0"`
 	SortBy    *string           `json:"sort_by" validate:"required_with=SortOrder,omitempty,oneof=date name email"`
@@ -44,10 +47,17 @@ func (u *userUsecase) FindAllUsers(ctx context.Context, input FindAllUsersInput)
 
 func (u *userUsecase) findAllUsers(ctx context.Context, input FindAllUsersInput) entity.PageProvider[entity.User] {
 	return func() ([]entity.User, entity.PageProvider[entity.User], entity.Pagination, error) {
+		var teamID *uuid.UUID
+		if input.TeamID != nil {
+			value := uuid.MustParse(*input.TeamID)
+			teamID = &value
+		}
+
 		// Fetch all users with optional filters
 		users, count, err := u.userRepository.FindAll(ctx, repository.FindAllUsersFilter{
 			StartDate: input.StartDate,
 			EndDate:   input.EndDate,
+			TeamID:    teamID,
 			Limit:     input.Limit,
 			Offset:    input.Offset,
 			SortBy:    input.SortBy,
@@ -71,6 +81,7 @@ func (u *userUsecase) findAllUsers(ctx context.Context, input FindAllUsersInput)
 			Offset:    misc.ToPointer((*input.Limit) + (*input.Offset)),
 			SortBy:    input.SortBy,
 			SortOrder: input.SortOrder,
+			TeamID:    input.TeamID,
 		}
 		return misc.GetValue(users), u.findAllUsers(ctx, nextSearchCriteria), pagination, nil
 	}

@@ -4,13 +4,18 @@ import (
 	"context"
 
 	"devhub-backend/internal/domain/entity"
+	"devhub-backend/internal/domain/errs"
 	table "devhub-backend/internal/infra/db/model_gen/devhub/public/table"
+	"devhub-backend/internal/util/misc"
 
 	postgres "github.com/go-jet/jet/v2/postgres"
 	"github.com/google/uuid"
 )
 
-func (r *userRepositoryImpl) HasPermissions(ctx context.Context, userID uuid.UUID, permissions []entity.PermissionName) (bool, error) {
+func (r *userRepositoryImpl) HasPermissions(ctx context.Context, userID uuid.UUID, permissions []entity.PermissionName) (allowed bool, err error) {
+	const errLocation = "[repository user/has_permissions HasPermissions] "
+	defer misc.WrapErrorWithPrefix(errLocation, &err)
+
 	if len(permissions) == 0 {
 		return true, nil
 	}
@@ -28,7 +33,7 @@ func (r *userRepositoryImpl) HasPermissions(ctx context.Context, userID uuid.UUI
 	permissionsTable := table.Permissions
 
 	stmt := postgres.SELECT(
-		permissionsTable.Name,
+		postgres.COUNT(postgres.DISTINCT(permissionsTable.Name)).AS("count"),
 	).
 		FROM(
 			userRolesTable.
@@ -38,17 +43,16 @@ func (r *userRepositoryImpl) HasPermissions(ctx context.Context, userID uuid.UUI
 		WHERE(
 			userRolesTable.UserID.EQ(postgres.UUID(userID)).
 				AND(permissionsTable.Name.IN(permissionExpressions...)),
-		).
-		GROUP_BY(permissionsTable.Name)
+		)
 
 	query, args := stmt.Sql()
 
-	var matchedPermissions []struct {
-		Name string `db:"name"`
+	var result struct {
+		Count int64 `db:"count"`
 	}
-	if err := r.execer.SelectContext(ctx, &matchedPermissions, query, args...); err != nil {
-		return false, err
+	if err := r.execer.GetContext(ctx, &result, query, args...); err != nil {
+		return false, misc.WrapError(err, errs.NewDatabaseError("error while checking user permissions", err.Error()))
 	}
 
-	return len(matchedPermissions) == len(requiredPermissions), nil
+	return result.Count == int64(len(requiredPermissions)), nil
 }

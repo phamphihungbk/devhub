@@ -22,6 +22,7 @@ type UserRepository interface {
 type FindAllUsersFilter struct {
 	StartDate *time.Time
 	EndDate   *time.Time
+	TeamID    *uuid.UUID
 	Limit     *int64
 	Offset    *int64
 	SortBy    *string
@@ -31,6 +32,5 @@ type FindAllUsersFilter struct {
 type UpdateUserInput struct {
 	ID     uuid.UUID
 	Name   *string
-	Role   *entity.UserRole
 	TeamID *uuid.UUID
 }

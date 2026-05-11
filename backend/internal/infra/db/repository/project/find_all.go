@@ -24,6 +24,12 @@ func (r *projectRepositoryImpl) FindAll(ctx context.Context, filter repository.F
 	if filter.EndDate != nil {
 		whereClauses = append(whereClauses, table.Projects.CreatedAt.LT_EQ(postgres.TimestampT(*filter.EndDate)))
 	}
+	if filter.OwnerTeamID != nil {
+		whereClauses = append(whereClauses, table.Projects.OwnerTeamID.EQ(postgres.UUID(*filter.OwnerTeamID)))
+	}
+	if filter.CreatedBy != nil {
+		whereClauses = append(whereClauses, table.Projects.CreatedBy.EQ(postgres.UUID(*filter.CreatedBy)))
+	}
 
 	// Get total count of projects matching the filter
 	countStmt := postgres.SELECT(

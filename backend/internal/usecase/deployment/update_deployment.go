@@ -57,7 +57,6 @@ func (u *deploymentUsecase) UpdateDeployment(ctx context.Context, input UpdateDe
 
 	updated, err := u.deploymentRepository.UpdateOne(ctx, repository.UpdateDeploymentInput{
 		ID:           uuid.MustParse(input.ID),
-		Environment:  (*entity.ProjectEnvironment)(input.Environment),
 		Status:       (*entity.DeploymentStatus)(input.Status),
 		Version:      input.Version,
 		ExternalRef:  input.ExternalRef,

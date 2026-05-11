@@ -3,14 +3,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from scaffolders.models.payload import GitOpsConfig, ScaffoldPayload
-from scaffolders.models.response import ScaffoldResponse
-from scaffolders import fail, success
-from scaffolders.clients.scm_repository_client import SCMRepositoryClient
-from scaffolders.clients.git_repository_publisher import GitRepositoryPublisher
-from scaffolders.clients.gitops_values_publisher import GitOpsValuesPublisher
-from scaffolders.services.scaffold_service_generator import ScaffoldServiceGenerator
-from scaffolders.services.scaffold_bootstrapper import ScaffoldBootstrapper
+from scaffold_request.models.payload import GitOpsConfig, ScaffoldPayload
+from scaffold_request.models.response import ScaffoldResponse
+from scaffold_request import fail, success
+from scaffold_request.clients.scm_repository_client import SCMRepositoryClient
+from scaffold_request.clients.git_repository_publisher import GitRepositoryPublisher
+from scaffold_request.clients.gitops_values_publisher import GitOpsValuesPublisher
+from scaffold_request.services.scaffold_service_generator import ScaffoldServiceGenerator
+from scaffold_request.services.scaffold_bootstrapper import ScaffoldBootstrapper
 
 SCHEMA_PATH = Path(__file__).with_name("schema.json")
 LOCAL_TEMPLATE_DIR = Path(__file__).with_name("template")
@@ -52,7 +52,7 @@ def run() -> None:
 
         response = ScaffoldResponse.from_dict(
             {
-                "repo_url": payload.cd_repo_url,
+                "repo_url": payload.scm_repo_url,
                 "path": str(service_dir),
             }
         )

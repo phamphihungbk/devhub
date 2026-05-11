@@ -19,6 +19,8 @@ type approvalUsecase struct {
 	appConfig                 config.AppConfig
 	approvalRepository        repository.ApprovalRepository
 	deploymentRepository      repository.DeploymentRepository
+	environmentRepository     repository.EnvironmentRepository
+	jobRepository             repository.JobRepository
 	projectRepository         repository.ProjectRepository
 	releaseRepository         repository.ReleaseRepository
 	scaffoldRequestRepository repository.ScaffoldRequestRepository
@@ -30,6 +32,8 @@ func NewApprovalUsecase(
 	appConfig config.AppConfig,
 	approvalRepository repository.ApprovalRepository,
 	deploymentRepository repository.DeploymentRepository,
+	environmentRepository repository.EnvironmentRepository,
+	jobRepository repository.JobRepository,
 	projectRepository repository.ProjectRepository,
 	releaseRepository repository.ReleaseRepository,
 	scaffoldRequestRepository repository.ScaffoldRequestRepository,
@@ -40,6 +44,8 @@ func NewApprovalUsecase(
 		appConfig:                 appConfig,
 		approvalRepository:        approvalRepository,
 		deploymentRepository:      deploymentRepository,
+		environmentRepository:     environmentRepository,
+		jobRepository:             jobRepository,
 		projectRepository:         projectRepository,
 		releaseRepository:         releaseRepository,
 		scaffoldRequestRepository: scaffoldRequestRepository,

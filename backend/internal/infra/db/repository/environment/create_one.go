@@ -16,7 +16,13 @@ func (r *environmentRepositoryImpl) CreateOne(ctx context.Context, input *entity
 
 	environmentsTable := table.Environments
 	stmt := environmentsTable.INSERT(
-		environmentsTable.AllColumns.Except(environmentsTable.DefaultColumns),
+		environmentsTable.ProjectID,
+		environmentsTable.Name,
+		environmentsTable.Tier,
+		environmentsTable.Cluster,
+		environmentsTable.Namespace,
+		environmentsTable.ArgocdInstance,
+		environmentsTable.Config,
 	).MODEL(model.Environments{
 		ProjectID:      input.ProjectID,
 		Name:           input.Name,

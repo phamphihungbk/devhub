@@ -12,12 +12,14 @@ import (
 )
 
 type FindAllProjectsQuery struct {
-	StartDate *time.Time `form:"startDate" time_format:"2006-01-02"`
-	EndDate   *time.Time `form:"endDate" time_format:"2006-01-02"`
-	Limit     *int64     `form:"limit"`
-	Offset    *int64     `form:"offset"`
-	SortBy    *string    `form:"sortBy"`
-	SortOrder *string    `form:"sortOrder"`
+	StartDate   *time.Time `form:"startDate" time_format:"2006-01-02"`
+	EndDate     *time.Time `form:"endDate" time_format:"2006-01-02"`
+	OwnerTeamID *string    `form:"owner_team_id"`
+	CreatedBy   *string    `form:"created_by"`
+	Limit       *int64     `form:"limit"`
+	Offset      *int64     `form:"offset"`
+	SortBy      *string    `form:"sortBy"`
+	SortOrder   *string    `form:"sortOrder"`
 }
 
 type findAllProjectsResponse struct {
@@ -75,12 +77,14 @@ func (h *projectHandler) FindAllProjects(c *gin.Context) {
 	}
 
 	projects, err := h.projectUsecase.FindAllProjects(c.Request.Context(), projectUsecase.FindAllProjectsInput{
-		StartDate: query.StartDate,
-		EndDate:   query.EndDate,
-		Limit:     limit,
-		Offset:    offset,
-		SortBy:    sortBy,
-		SortOrder: sortOrder,
+		StartDate:   query.StartDate,
+		EndDate:     query.EndDate,
+		OwnerTeamID: query.OwnerTeamID,
+		CreatedBy:   query.CreatedBy,
+		Limit:       limit,
+		Offset:      offset,
+		SortBy:      sortBy,
+		SortOrder:   sortOrder,
 	})
 	if err != nil {
 		httpresponse.Error(c, err)

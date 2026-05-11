@@ -14,6 +14,7 @@ func (r *userRepositoryImpl) CreateOne(ctx context.Context, input *entity.User) 
 	const errLocation = "[repository user/create_one CreateOne] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
 
+	// TODO: create user with roles or assign roles later
 	usersTable := table.Users
 	// SQL statement
 	stmt := usersTable.INSERT(
@@ -21,7 +22,6 @@ func (r *userRepositoryImpl) CreateOne(ctx context.Context, input *entity.User) 
 	).MODEL(model.Users{
 		Name:         input.Name,
 		Email:        input.Email,
-		Role:         input.Role.String(),
 		PasswordHash: input.PasswordHash,
 		TeamID:       input.TeamID,
 	}).RETURNING(usersTable.AllColumns)

@@ -19,7 +19,6 @@ type approvalRequestsTable struct {
 	// Columns
 	ID                postgres.ColumnString
 	Resource          postgres.ColumnString
-	Action            postgres.ColumnString
 	ResourceID        postgres.ColumnString
 	RequestedBy       postgres.ColumnString
 	Status            postgres.ColumnString
@@ -72,7 +71,6 @@ func newApprovalRequestsTableImpl(schemaName, tableName, alias string) approvalR
 	var (
 		IDColumn                = postgres.StringColumn("id")
 		ResourceColumn          = postgres.StringColumn("resource")
-		ActionColumn            = postgres.StringColumn("action")
 		ResourceIDColumn        = postgres.StringColumn("resource_id")
 		RequestedByColumn       = postgres.StringColumn("requested_by")
 		StatusColumn            = postgres.StringColumn("status")
@@ -82,9 +80,9 @@ func newApprovalRequestsTableImpl(schemaName, tableName, alias string) approvalR
 		ResolvedAtColumn        = postgres.TimestampColumn("resolved_at")
 		CreatedAtColumn         = postgres.TimestampColumn("created_at")
 		UpdatedAtColumn         = postgres.TimestampColumn("updated_at")
-		allColumns              = postgres.ColumnList{IDColumn, ResourceColumn, ActionColumn, ResourceIDColumn, RequestedByColumn, StatusColumn, RequiredApprovalsColumn, ApprovedCountColumn, RejectedCountColumn, ResolvedAtColumn, CreatedAtColumn, UpdatedAtColumn}
-		mutableColumns          = postgres.ColumnList{ResourceColumn, ActionColumn, ResourceIDColumn, RequestedByColumn, StatusColumn, RequiredApprovalsColumn, ApprovedCountColumn, RejectedCountColumn, ResolvedAtColumn, CreatedAtColumn, UpdatedAtColumn}
-		defaultColumns          = postgres.ColumnList{IDColumn, StatusColumn, RequiredApprovalsColumn, ApprovedCountColumn, RejectedCountColumn, CreatedAtColumn, UpdatedAtColumn}
+		allColumns              = postgres.ColumnList{IDColumn, ResourceColumn, ResourceIDColumn, RequestedByColumn, StatusColumn, RequiredApprovalsColumn, ApprovedCountColumn, RejectedCountColumn, ResolvedAtColumn, CreatedAtColumn, UpdatedAtColumn}
+		mutableColumns          = postgres.ColumnList{ResourceColumn, ResourceIDColumn, RequestedByColumn, StatusColumn, RequiredApprovalsColumn, ApprovedCountColumn, RejectedCountColumn, ResolvedAtColumn, CreatedAtColumn, UpdatedAtColumn}
+		defaultColumns          = postgres.ColumnList{IDColumn, CreatedAtColumn, UpdatedAtColumn}
 	)
 
 	return approvalRequestsTable{
@@ -93,7 +91,6 @@ func newApprovalRequestsTableImpl(schemaName, tableName, alias string) approvalR
 		//Columns
 		ID:                IDColumn,
 		Resource:          ResourceColumn,
-		Action:            ActionColumn,
 		ResourceID:        ResourceIDColumn,
 		RequestedBy:       RequestedByColumn,
 		Status:            StatusColumn,

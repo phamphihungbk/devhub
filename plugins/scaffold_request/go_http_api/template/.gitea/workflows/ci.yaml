@@ -16,6 +16,8 @@ jobs:
       IMAGE_NAME: [[ SERVICE_NAME ]]
       REGISTRY: [[ CI_REGISTRY_HOST ]]
       SERVER_URL: [[ CI_SERVER_URL ]]
+      DEVHUB_WEBHOOK_URL: ${{ secrets.DEVHUB_WEBHOOK_URL }}
+      DEVHUB_WEBHOOK_TOKEN: ${{ secrets.DEVHUB_WEBHOOK_TOKEN }}
 
     steps:
       - name: Install git
@@ -34,3 +36,29 @@ jobs:
 
       - name: Push Docker image
         run: docker push "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
+
+      - name: Notify DevHub release webhook
+        run: |
+          if [ -z "$DEVHUB_WEBHOOK_URL" ]; then
+            echo "DEVHUB_WEBHOOK_URL secret is required"
+            exit 1
+          fi
+          if [ -z "$DEVHUB_WEBHOOK_TOKEN" ]; then
+            echo "DEVHUB_WEBHOOK_TOKEN secret is required"
+            exit 1
+          fi
+
+          apk add --no-cache curl
+          curl -fsS -X POST "$DEVHUB_WEBHOOK_URL/webhooks/ci/releases" \
+            -H "Content-Type: application/json" \
+            -H "X-Devhub-Webhook-Token: $DEVHUB_WEBHOOK_TOKEN" \
+            -d "{
+              \"repo_url\": \"[[ CD_REPO_URL ]]\",
+              \"repo_owner\": \"${{ github.repository_owner }}\",
+              \"repo_name\": \"${{ github.event.repository.name }}\",
+              \"tag\": \"$IMAGE_TAG\",
+              \"target\": \"${{ github.sha }}\",
+              \"image\": \"$REGISTRY/$IMAGE_NAME:$IMAGE_TAG\",
+              \"html_url\": \"${{ github.server_url }}/${{ github.repository }}/releases/tag/$IMAGE_TAG\",
+              \"notes\": \"Built by CI from ${{ github.sha }}\"
+            }"

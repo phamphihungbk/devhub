@@ -4,6 +4,7 @@ import (
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/infra/db/model_gen/devhub/public/model"
 	"devhub-backend/internal/util/misc"
+	"encoding/json"
 )
 
 type ScaffoldRequest struct {
@@ -15,7 +16,8 @@ func (sr *ScaffoldRequest) ToEntity() *entity.ScaffoldRequest {
 	if err != nil {
 		return nil
 	}
-	variables, err := new(entity.ScaffoldRequestVariables).Parse(sr.Variables)
+	variables := make(map[string]interface{})
+	err = json.Unmarshal([]byte(sr.Variables), &variables)
 	if err != nil {
 		return nil
 	}
@@ -23,6 +25,7 @@ func (sr *ScaffoldRequest) ToEntity() *entity.ScaffoldRequest {
 	return &entity.ScaffoldRequest{
 		ID:            sr.ID,
 		ProjectID:     sr.ProjectID,
+		PluginID:      sr.PluginID,
 		RequestedBy:   sr.RequestedBy,
 		ApprovedBy:    sr.ApprovedBy,
 		Status:        status,

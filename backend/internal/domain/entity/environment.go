@@ -17,8 +17,8 @@ type EnvironmentConfig struct {
 	Domain       string `json:"domain"`
 	APIDomain    string `json:"api_domain"`
 	Region       string `json:"region"`
-	IngressClass string `json:"ingress_class,omitempty"`
-	PublicAccess bool   `json:"public_access,omitempty"`
+	IngressClass string `json:"ingress_class"`
+	PublicAccess bool   `json:"public_access"`
 }
 
 func (e EnvironmentConfig) Parse(variables string) (EnvironmentConfig, error) {

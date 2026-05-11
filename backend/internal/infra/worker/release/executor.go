@@ -98,7 +98,7 @@ func (e *PythonReleaseExecutor) Execute(
 		return ReleaseExecutionResult{}, err
 	}
 
-	service, err := e.serviceRepository.FindOne(ctx, job.ServiceID)
+	service, err := e.serviceRepository.FindOne(ctx, job.PluginID)
 	if err != nil {
 		if !errors.As(err, &errs.NotFoundError{}) {
 			return ReleaseExecutionResult{}, misc.WrapError(
@@ -125,12 +125,12 @@ func (e *PythonReleaseExecutor) Execute(
 
 	payload := releasePluginPayload{
 		ReleaseID: job.ID.String(),
-		ServiceID: job.ServiceID.String(),
+		ServiceID: job.Payload.EnvironmentID,
 		PluginID:  job.PluginID.String(),
-		Tag:       job.Tag,
-		Target:    job.Target,
-		Name:      job.Name,
-		Notes:     job.Notes,
+		Tag:       "job.Tag",
+		Target:    "job.Target",
+		Name:      "job.Name",
+		Notes:     "job.Notes",
 		RepoURL:   service.RepoURL,
 	}
 
@@ -197,7 +197,7 @@ func (e *PythonReleaseExecutor) Execute(
 	}
 
 	if result.ExternalRef == "" {
-		result.ExternalRef = job.Tag
+		result.ExternalRef = "job.Tag"
 	}
 
 	return result, nil

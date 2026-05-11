@@ -34,6 +34,7 @@ func (m *middleware) RequirePermissions(permissions ...entity.PermissionName) gi
 			return
 		}
 
+		// TODO: store permission on redis cache so no need to query again
 		allowed, err := m.userRepository.HasPermissions(ctx.Request.Context(), userID, permissions)
 		if err != nil {
 			httpresponse.Error(ctx, errs.NewInternalServerError("Failed to check permissions", nil))

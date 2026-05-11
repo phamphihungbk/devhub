@@ -15,6 +15,7 @@ import (
 type ScaffoldRequests struct {
 	ID            uuid.UUID  `sql:"primary_key" db:"scaffold_requests.id"`
 	ProjectID     uuid.UUID  `db:"scaffold_requests.project_id"`
+	PluginID      uuid.UUID  `db:"scaffold_requests.plugin_id"`
 	RequestedBy   uuid.UUID  `db:"scaffold_requests.requested_by"`
 	ApprovedBy    *uuid.UUID `db:"scaffold_requests.approved_by"`
 	Status        string     `db:"scaffold_requests.status"`

@@ -2,6 +2,7 @@ package approvalrepo
 
 import (
 	"context"
+	"fmt"
 
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/domain/errs"
@@ -13,18 +14,14 @@ import (
 func (r *approvalRepositoryImpl) CreateApprovalRequest(ctx context.Context, request *entity.ApprovalRequest) (_ *entity.ApprovalRequest, err error) {
 	const errLocation = "[repository approval/create_request CreateApprovalRequest] "
 	defer misc.WrapErrorWithPrefix(errLocation, &err)
-
+	fmt.Println(request.RequiredApprovals, "hungdeptrai1")
 	approvalRequestsTable := table.ApprovalRequests
 	stmt := approvalRequestsTable.INSERT(
 		approvalRequestsTable.AllColumns.Except(approvalRequestsTable.DefaultColumns),
 	).MODEL(model.ApprovalRequests{
 		Resource:          request.Resource,
-		Action:            request.Action,
 		ResourceID:        request.ResourceID,
 		RequestedBy:       request.RequestedBy,
-		ProjectID:         request.ProjectID,
-		ServiceID:         request.ServiceID,
-		Environment:       request.Environment,
 		Status:            request.Status.String(),
 		RequiredApprovals: int32(request.RequiredApprovals),
 		ApprovedCount:     int32(request.ApprovedCount),

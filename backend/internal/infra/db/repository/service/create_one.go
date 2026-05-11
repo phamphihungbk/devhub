@@ -21,6 +21,7 @@ func (r *serviceRepositoryImpl) CreateOne(ctx context.Context, input *entity.Ser
 		ProjectID: input.ProjectID,
 		Name:      input.Name,
 		RepoURL:   input.RepoURL,
+		CreatedBy: input.CreatedBy,
 	}).RETURNING(servicesTable.AllColumns)
 
 	query, args := stmt.Sql()

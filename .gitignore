@@ -13,3 +13,5 @@ frontend/.vite/
 frontend/.pnpm-store/
 .gocache
 backend/tmp
+skills-lock.json
+.agents

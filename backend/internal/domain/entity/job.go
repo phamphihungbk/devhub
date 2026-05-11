@@ -3,6 +3,7 @@ package entity
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,10 +19,28 @@ var (
 type JobPayload struct {
 	Action        string                 `json:"action"`
 	Variables     map[string]interface{} `json:"variables,omitempty"`
-	ServiceID     *string                `json:"service_id,omitempty"`
-	EnvironmentID *string                `json:"environment_id,omitempty"`
+	ServiceID     string                 `json:"service_id,omitempty"`
+	EnvironmentID string                 `json:"environment_id,omitempty"`
 	Version       *string                `json:"version,omitempty"`
 	TargetVersion *string                `json:"target_version,omitempty"`
+}
+
+func (j JobPayload) VariableString(key string) string {
+	if j.Variables == nil {
+		return ""
+	}
+
+	value, ok := j.Variables[key]
+	if !ok || value == nil {
+		return ""
+	}
+
+	switch typed := value.(type) {
+	case string:
+		return strings.TrimSpace(typed)
+	default:
+		return strings.TrimSpace(fmt.Sprint(typed))
+	}
 }
 
 func (j JobPayload) Parse(variables string) (JobPayload, error) {

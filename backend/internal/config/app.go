@@ -9,6 +9,7 @@ type AppConfig struct {
 	AdminAPISecret string
 	Timezone       string
 	SeatLockTTL    time.Duration
+	WebhookToken   string
 	// Add business feature flags here
 }
 
@@ -18,5 +19,6 @@ func LoadAppConfig(cfg *ViperConfig) AppConfig {
 		AdminAPISecret: cfg.GetString(AdminAPISecret),
 		Timezone:       cfg.GetString(AppTimezoneKey),
 		SeatLockTTL:    cfg.GetDuration(SeatLockTTLKey),
+		WebhookToken:   cfg.GetString(WebhookTokenKey),
 	}
 }

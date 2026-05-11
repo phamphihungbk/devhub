@@ -14,8 +14,6 @@ func (ap *ApprovalPolicy) toEntity() *entity.ApprovalPolicy {
 	return &entity.ApprovalPolicy{
 		ID:                ap.ID,
 		Resource:          ap.Resource,
-		Action:            ap.Action,
-		ProjectID:         ap.ProjectID,
 		ServiceID:         ap.ServiceID,
 		EnvironmentID:     ap.EnvironmentID,
 		RequiredApprovals: int(ap.RequiredApprovals),
@@ -38,7 +36,6 @@ func (ar *ApprovalRequest) toEntity() *entity.ApprovalRequest {
 	return &entity.ApprovalRequest{
 		ID:                ar.ID,
 		Resource:          ar.Resource,
-		Action:            ar.Action,
 		ResourceID:        ar.ResourceID,
 		RequestedBy:       ar.RequestedBy,
 		Status:            status,

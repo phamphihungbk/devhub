@@ -15,7 +15,6 @@ import (
 type ApprovalRequests struct {
 	ID                uuid.UUID  `sql:"primary_key" db:"approval_requests.id"`
 	Resource          string     `db:"approval_requests.resource"`
-	Action            string     `db:"approval_requests.action"`
 	ResourceID        uuid.UUID  `db:"approval_requests.resource_id"`
 	RequestedBy       uuid.UUID  `db:"approval_requests.requested_by"`
 	Status            string     `db:"approval_requests.status"`

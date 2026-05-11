@@ -15,7 +15,7 @@ import (
 const RunnerName = "release"
 
 type ReleaseJob struct {
-	entity.Release
+	entity.Job
 }
 
 func (j ReleaseJob) GetID() uuid.UUID {

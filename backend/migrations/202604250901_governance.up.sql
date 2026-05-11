@@ -38,8 +38,6 @@ CREATE TABLE IF NOT EXISTS user_roles (
 CREATE TABLE IF NOT EXISTS approval_policies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     resource VARCHAR(64) NOT NULL,  -- deployment, scaffold_request, release (future)
-    action VARCHAR(64) NOT NULL,  -- create, deploy
-    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
     service_id UUID REFERENCES services(id) ON DELETE CASCADE,
     environment_id UUID NOT NULL REFERENCES environments(id) ON DELETE CASCADE,
     required_approvals INT NOT NULL DEFAULT 1,
@@ -53,13 +51,12 @@ CREATE TABLE IF NOT EXISTS approval_policies (
 CREATE TABLE IF NOT EXISTS approval_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     resource VARCHAR(64) NOT NULL,
-    action VARCHAR(64) NOT NULL,
     resource_id UUID NOT NULL,
     requested_by UUID NOT NULL REFERENCES users(id),
-    status VARCHAR(32) NOT NULL DEFAULT 'pending',
-    required_approvals INT NOT NULL DEFAULT 1,
-    approved_count INT NOT NULL DEFAULT 0,
-    rejected_count INT NOT NULL DEFAULT 0,
+    status VARCHAR(32) NOT NULL,
+    required_approvals INT NOT NULL,
+    approved_count INT NOT NULL,
+    rejected_count INT NOT NULL,
     resolved_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
@@ -89,17 +86,15 @@ CREATE INDEX IF NOT EXISTS idx_user_roles_role_id
     ON user_roles(role_id);
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_approval_policies_unique_scope
-    ON approval_policies(resource, action, project_id, service_id, environment_id)
+    ON approval_policies(resource, service_id, environment_id)
     NULLS NOT DISTINCT;
 
 CREATE INDEX IF NOT EXISTS idx_approval_policies_lookup
     ON approval_policies(
         resource,
-        action,
         environment_id,
         enabled,
         service_id,
-        project_id,
         updated_at DESC,
         created_at DESC
     );
@@ -111,10 +106,10 @@ CREATE INDEX IF NOT EXISTS idx_approval_requests_requested_by_created
     ON approval_requests(requested_by, created_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_approval_requests_resource
-    ON approval_requests(resource, action, resource_id);
+    ON approval_requests(resource, resource_id);
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_approval_requests_pending_resource
-    ON approval_requests(resource, action, resource_id)
+    ON approval_requests(resource, resource_id)
     WHERE status = 'pending';
 
 CREATE INDEX IF NOT EXISTS idx_approval_decisions_request_created

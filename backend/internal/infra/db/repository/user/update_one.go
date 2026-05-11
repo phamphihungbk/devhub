@@ -28,11 +28,6 @@ func (r *userRepositoryImpl) UpdateOne(ctx context.Context, input repository.Upd
 		columns = append(columns, usersTable.Name)
 	}
 
-	if input.Role != nil {
-		updateModel.Role = string(misc.GetValue(input.Role))
-		columns = append(columns, usersTable.Role)
-	}
-
 	if input.TeamID != nil {
 		updateModel.TeamID = *input.TeamID
 		columns = append(columns, usersTable.TeamID)

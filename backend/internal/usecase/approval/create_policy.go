@@ -12,13 +12,11 @@ import (
 )
 
 type CreateApprovalPolicyInput struct {
-	Resource          string  `json:"resource" validate:"required"`
-	Action            string  `json:"action" validate:"required"`
-	ProjectID         *string `json:"project_id" validate:"omitempty,uuid"`
+	Resource          string  `json:"resource" validate:"required,oneof=scaffold_request deployment"`
 	ServiceID         *string `json:"service_id" validate:"omitempty,uuid"`
-	Environment       *string `json:"environment" validate:"omitempty,oneof=dev staging prod"`
+	EnvironmentID     string  `json:"environment_id" validate:"required,uuid"`
 	RequiredApprovals int     `json:"required_approvals" validate:"required,min=1"`
-	Enabled           *bool   `json:"enabled"`
+	Enabled           bool    `json:"enabled"`
 }
 
 func (u *approvalUsecase) CreateApprovalPolicy(ctx context.Context, input CreateApprovalPolicyInput) (_ *entity.ApprovalPolicy, err error) {
@@ -36,31 +34,19 @@ func (u *approvalUsecase) CreateApprovalPolicy(ctx context.Context, input Create
 		return nil, misc.WrapError(err, errs.NewBadRequestError("the request is invalid", map[string]string{"details": err.Error()}))
 	}
 
-	var (
-		projectID *uuid.UUID
-		serviceID *uuid.UUID
-	)
-
-	if input.ProjectID != nil {
-		value := uuid.MustParse(*input.ProjectID)
-		projectID = &value
-	}
+	var serviceID *uuid.UUID
 	if input.ServiceID != nil {
 		value := uuid.MustParse(*input.ServiceID)
 		serviceID = &value
 	}
+	environmentID := uuid.MustParse(input.EnvironmentID)
 
 	policy := &entity.ApprovalPolicy{
 		Resource:          input.Resource,
-		Action:            input.Action,
-		ProjectID:         projectID,
 		ServiceID:         serviceID,
-		Environment:       input.Environment,
+		EnvironmentID:     environmentID,
 		RequiredApprovals: input.RequiredApprovals,
-		Enabled:           misc.GetValue(input.Enabled),
-	}
-	if input.Enabled == nil {
-		policy.Enabled = true
+		Enabled:           input.Enabled,
 	}
 
 	created, err := u.approvalRepository.CreateApprovalPolicy(ctx, policy)

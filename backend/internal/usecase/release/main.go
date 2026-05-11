@@ -9,6 +9,7 @@ import (
 
 type ReleaseUsecase interface {
 	CreateRelease(ctx context.Context, input CreateReleaseInput) (*entity.Release, error)
+	CreateReleaseFromCI(ctx context.Context, input CreateReleaseFromCIInput) (*entity.Release, error)
 	FindAllReleases(ctx context.Context, input FindAllReleasesInput) (entity.Releases, error)
 }
 
@@ -16,17 +17,20 @@ type releaseUsecase struct {
 	pluginRepository  repository.PluginRepository
 	appConfig         config.AppConfig
 	releaseRepository repository.ReleaseRepository
+	serviceRepository repository.ServiceRepository
 }
 
 func NewReleaseUsecase(
 	appConfig config.AppConfig,
 	pluginRepository repository.PluginRepository,
 	releaseRepository repository.ReleaseRepository,
+	serviceRepository repository.ServiceRepository,
 ) ReleaseUsecase {
 
 	return &releaseUsecase{
 		pluginRepository:  pluginRepository,
 		appConfig:         appConfig,
 		releaseRepository: releaseRepository,
+		serviceRepository: serviceRepository,
 	}
 }

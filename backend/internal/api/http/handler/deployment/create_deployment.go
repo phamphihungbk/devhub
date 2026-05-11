@@ -13,23 +13,22 @@ import (
 )
 
 type createDeploymentRequest struct {
-	PluginID    string `json:"plugin_id" example:"123e4567-e89b-12d3-a456-426614174000" binding:"required"`
-	Environment string `json:"environment" example:"prod" binding:"required"`
-	Version     string `json:"version" example:"v1.0.0" binding:"required"`
+	PluginID      string `json:"plugin_id" example:"123e4567-e89b-12d3-a456-426614174000" binding:"required"`
+	ReleaseID     string `json:"release_id" example:"123e4567-e89b-12d3-a456-426614174000" binding:"required"`
+	EnvironmentID string `json:"environment_id" example:"123e4567-e89b-12d3-a456-426614174000" binding:"required"`
 }
 
 type createDeploymentResponse struct {
-	ID           string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	ServiceID    string `json:"service_id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	PluginID     string `json:"plugin_id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Environment  string `json:"environment" example:"prod"`
-	Version      string `json:"version" example:"1.0.0"`
-	Status       string `json:"status" example:"Deployment Status"`
-	ExternalRef  string `json:"external_ref" example:"argocd-sync-123"`
-	CommitSHA    string `json:"commit_sha" example:"abc123def456"`
-	RunnerOutput string `json:"runner_output,omitempty"`
-	RunnerError  string `json:"runner_error,omitempty"`
-	TriggeredBy  string `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ID            string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ServiceID     string `json:"service_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ReleaseID     string `json:"release_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	EnvironmentID string `json:"environment_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Status        string `json:"status" example:"Deployment Status"`
+	ExternalRef   string `json:"external_ref" example:"argocd-sync-123"`
+	CommitSHA     string `json:"commit_sha" example:"abc123def456"`
+	RunnerOutput  string `json:"runner_output,omitempty"`
+	RunnerError   string `json:"runner_error,omitempty"`
+	TriggeredBy   string `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
 // @Summary		Create Deployment
@@ -60,10 +59,9 @@ func (h *deploymentHandler) CreateDeployment(c *gin.Context) {
 	}
 
 	usecaseInput := deploymentUsecase.CreateDeploymentInput{
-		ServiceID:   serviceID,
-		PluginID:    input.PluginID,
-		Environment: input.Environment,
-		Version:     input.Version,
+		ServiceID: serviceID,
+		PluginID:  input.PluginID,
+		// Environment: input.Environment,
 		TriggeredBy: userID.(string),
 	}
 
@@ -88,16 +86,11 @@ func (h *deploymentHandler) newCreateDeploymentResponse(deployment *entity.Deplo
 	}
 
 	return createDeploymentResponse{
-		ID:           deployment.ID.String(),
-		ServiceID:    deployment.ServiceID.String(),
-		PluginID:     deployment.PluginID.String(),
-		Environment:  deployment.Environment.String(),
-		Version:      deployment.Version,
-		Status:       deployment.Status.String(),
-		ExternalRef:  deployment.ExternalRef,
-		CommitSHA:    deployment.CommitSHA,
-		RunnerOutput: deployment.RunnerOutput,
-		RunnerError:  deployment.RunnerError,
-		TriggeredBy:  deployment.TriggeredBy.String(),
+		ID:          deployment.ID.String(),
+		ServiceID:   deployment.ServiceID.String(),
+		Status:      deployment.Status.String(),
+		ExternalRef: deployment.ExternalRef,
+		CommitSHA:   deployment.CommitSHA,
+		TriggeredBy: deployment.TriggeredBy.String(),
 	}
 }

@@ -19,11 +19,12 @@ import (
 )
 
 type PythonDeploymentExecutor struct {
-	PythonBin         string
-	Timeout           time.Duration
-	cfg               *config.Config
-	pluginRepository  repository.PluginRepository
-	serviceRepository repository.ServiceRepository
+	PythonBin            string
+	Timeout              time.Duration
+	cfg                  *config.Config
+	pluginRepository     repository.PluginRepository
+	serviceRepository    repository.ServiceRepository
+	deploymentRepository repository.DeploymentRepository
 }
 
 type DeploymentExecutionResult struct {
@@ -78,13 +79,15 @@ func NewPythonDeploymentExecutor(
 	cfg *config.Config,
 	pluginRepository repository.PluginRepository,
 	serviceRepository repository.ServiceRepository,
+	deploymentRepository repository.DeploymentRepository,
 ) *PythonDeploymentExecutor {
 	return &PythonDeploymentExecutor{
-		PythonBin:         "python3",
-		cfg:               cfg,
-		pluginRepository:  pluginRepository,
-		serviceRepository: serviceRepository,
-		Timeout:           10 * time.Minute,
+		PythonBin:            "python3",
+		cfg:                  cfg,
+		pluginRepository:     pluginRepository,
+		serviceRepository:    serviceRepository,
+		deploymentRepository: deploymentRepository,
+		Timeout:              10 * time.Minute,
 	}
 }
 
@@ -103,6 +106,9 @@ func (e *PythonDeploymentExecutor) Execute(
 	if e.serviceRepository == nil {
 		return DeploymentExecutionResult{}, errors.New("service repository is required")
 	}
+	if e.deploymentRepository == nil {
+		return DeploymentExecutionResult{}, errors.New("deployment repository is required")
+	}
 
 	plugin, err := e.pluginRepository.FindOne(ctx, job.PluginID)
 	if err != nil {
@@ -115,7 +121,21 @@ func (e *PythonDeploymentExecutor) Execute(
 		return DeploymentExecutionResult{}, err
 	}
 
-	service, err := e.serviceRepository.FindOne(ctx, job.ServiceID)
+	deployment, err := e.deploymentRepository.FindOne(ctx, job.ResourceID)
+	if err != nil {
+		if !errors.As(err, &errs.NotFoundError{}) {
+			return DeploymentExecutionResult{}, misc.WrapError(
+				err,
+				errs.NewInternalServerError("failed to find deployment by ID", nil),
+			)
+		}
+		return DeploymentExecutionResult{}, err
+	}
+	if deployment == nil {
+		return DeploymentExecutionResult{}, errors.New("deployment is required")
+	}
+
+	service, err := e.serviceRepository.FindOne(ctx, deployment.ServiceID)
 	if err != nil {
 		if !errors.As(err, &errs.NotFoundError{}) {
 			return DeploymentExecutionResult{}, misc.WrapError(
@@ -145,13 +165,13 @@ func (e *PythonDeploymentExecutor) Execute(
 	}
 
 	payload := deploymentPluginPayload{
-		DeploymentID:    job.ID.String(),
+		DeploymentID:    deployment.ID.String(),
 		ProjectID:       service.ProjectID.String(),
-		ServiceID:       job.ServiceID.String(),
+		ServiceID:       service.ID.String(),
 		Service:         strings.TrimSpace(service.Name),
 		PluginID:        job.PluginID.String(),
-		Environment:     job.Environment.String(),
-		Version:         job.Version,
+		Environment:     deployment.EnvironmentID.String(),
+		Version:         firstNonEmpty(job.Payload.TargetVersion, job.Payload.Version, deployment.Version),
 		RepoURL:         strings.TrimSpace(service.RepoURL),
 		SCMAPIURL:       strings.TrimSpace(e.cfg.ScmConfig.APIURL),
 		SCMToken:        strings.TrimSpace(e.cfg.ScmConfig.Token),
@@ -231,8 +251,24 @@ func (e *PythonDeploymentExecutor) Execute(
 	}
 
 	if result.ExternalRef == "" {
-		result.ExternalRef = fmt.Sprintf("%s-%s", job.ServiceID.String(), job.Environment)
+		result.ExternalRef = fmt.Sprintf("%s-%s", deployment.ID.String(), deployment.EnvironmentID.String())
 	}
 
 	return result, nil
+}
+
+func firstNonEmpty(values ...interface{}) string {
+	for _, value := range values {
+		switch v := value.(type) {
+		case string:
+			if strings.TrimSpace(v) != "" {
+				return strings.TrimSpace(v)
+			}
+		case *string:
+			if v != nil && strings.TrimSpace(*v) != "" {
+				return strings.TrimSpace(*v)
+			}
+		}
+	}
+	return ""
 }

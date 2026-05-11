@@ -106,17 +106,13 @@ func (h *deploymentHandler) newFindAllDeploymentsResponse(deployments entity.Dep
 	response := make([]findAllDeploymentsResponse, 0, len(deployments))
 	for _, deployment := range deployments {
 		response = append(response, findAllDeploymentsResponse{
-			ID:           deployment.ID.String(),
-			ServiceID:    deployment.ServiceID.String(),
-			PluginID:     deployment.PluginID.String(),
-			Environment:  deployment.Environment.String(),
-			Version:      deployment.Version,
-			Status:       deployment.Status.String(),
-			ExternalRef:  deployment.ExternalRef,
-			CommitSHA:    deployment.CommitSHA,
-			RunnerOutput: deployment.RunnerOutput,
-			RunnerError:  deployment.RunnerError,
-			TriggeredBy:  deployment.TriggeredBy.String(),
+			ID:          deployment.ID.String(),
+			ServiceID:   deployment.ServiceID.String(),
+			Version:     deployment.Version,
+			Status:      deployment.Status.String(),
+			ExternalRef: deployment.ExternalRef,
+			CommitSHA:   deployment.CommitSHA,
+			TriggeredBy: deployment.TriggeredBy.String(),
 		})
 	}
 	return response

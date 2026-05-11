@@ -11,20 +11,36 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type updateEnvironmentConfigRequest struct {
+	Domain       string `json:"domain" binding:"required"`
+	APIDomain    string `json:"api_domain" binding:"required"`
+	Region       string `json:"region" binding:"required"`
+	IngressClass string `json:"ingress_class" binding:"required"`
+	PublicAccess bool   `json:"public_access"`
+}
+
+type updateEnvironmentRequest struct {
+	Name           string                         `json:"name" binding:"required"` // dev, prod
+	Tier           string                         `json:"tier" binding:"required"` // development, production
+	Cluster        string                         `json:"cluster" binding:"required"`
+	Namespace      string                         `json:"namespace" binding:"required"`
+	ArgoCDInstance string                         `json:"argocd_instance" binding:"required"`
+	Config         updateEnvironmentConfigRequest `json:"config" binding:"required"`
+}
+
 type updateProjectRequest struct {
 	Name         *string                     `json:"name" example:"Project Name"`
 	Description  *string                     `json:"description" example:"Project Description"`
 	OwnerTeamID  *string                     `json:"owner_team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Environments *[]createEnvironmentRequest `json:"environments,omitempty"`
+	Environments *[]updateEnvironmentRequest `json:"environments,omitempty"`
 }
 
 type updateProjectResponse struct {
-	ID           string                          `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name         string                          `json:"name" example:"Project Name"`
-	Description  string                          `json:"description" example:"Project Description"`
-	OwnerTeamID  string                          `json:"owner_team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Environments []findOneProjectEnvironmentItem `json:"environments"`
-	CreatedBy    string                          `json:"created_by" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ID          string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name        string `json:"name" example:"Project Name"`
+	Description string `json:"description" example:"Project Description"`
+	OwnerTeamID string `json:"owner_team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	CreatedBy   string `json:"created_by" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
 // @Summary		Update Project
@@ -48,11 +64,9 @@ func (h *projectHandler) UpdateProject(c *gin.Context) {
 	}
 
 	updatedProject, err := h.projectUsecase.UpdateProject(c.Request.Context(), projectUsecase.UpdateProjectInput{
-		ID:           projectID,
-		Name:         input.Name,
-		Description:  input.Description,
-		OwnerTeamID:  input.OwnerTeamID,
-		Environments: h.constructUpdateEnvironmentInput(input.Environments),
+		ID:          projectID,
+		Name:        input.Name,
+		Description: input.Description,
 	})
 
 	if err != nil {
@@ -68,42 +82,10 @@ func (h *projectHandler) newUpdateProjectResponse(project *entity.Project) updat
 		return updateProjectResponse{}
 	}
 	return updateProjectResponse{
-		ID:           project.ID.String(),
-		Name:         project.Name,
-		Description:  project.Description,
-		OwnerTeamID:  project.OwnerTeamID.String(),
-		Environments: h.constructEnvironmentResponse(project.Environments),
-		CreatedBy:    project.CreatedBy.String(),
+		ID:          project.ID.String(),
+		Name:        project.Name,
+		Description: project.Description,
+		OwnerTeamID: project.OwnerTeamID.String(),
+		CreatedBy:   project.CreatedBy.String(),
 	}
-}
-
-func (h *projectHandler) constructUpdateEnvironmentInput(input *[]createEnvironmentRequest) *[]projectUsecase.CreateEnvironmentInput {
-	if input == nil {
-		return nil
-	}
-
-	environments := make([]projectUsecase.CreateEnvironmentInput, 0, len(*input))
-	for _, environment := range *input {
-		environments = append(environments, projectUsecase.CreateEnvironmentInput{
-			Name:           environment.Name,
-			Tier:           environment.Tier,
-			Cluster:        environment.Cluster,
-			Namespace:      environment.Namespace,
-			ArgoCDInstance: environment.ArgoCDInstance,
-			Config: func() *projectUsecase.CreateEnvironmentConfigInput {
-				if environment.Config == nil {
-					return nil
-				}
-				return &projectUsecase.CreateEnvironmentConfigInput{
-					Domain:       environment.Config.Domain,
-					APIDomain:    environment.Config.APIDomain,
-					Region:       environment.Config.Region,
-					IngressClass: environment.Config.IngressClass,
-					PublicAccess: environment.Config.PublicAccess,
-				}
-			}(),
-		})
-	}
-
-	return &environments
 }

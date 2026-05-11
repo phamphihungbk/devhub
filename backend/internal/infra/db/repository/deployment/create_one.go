@@ -20,9 +20,6 @@ func (r *deploymentRepositoryImpl) CreateOne(ctx context.Context, input *entity.
 		deploymentsTable.AllColumns.Except(deploymentsTable.DefaultColumns), // Exclude columns with default values
 	).MODEL(model.Deployments{
 		ServiceID:   input.ServiceID,
-		PluginID:    input.PluginID,
-		Environment: input.Environment.String(),
-		Version:     input.Version,
 		Status:      input.Status.String(),
 		TriggeredBy: input.TriggeredBy,
 	}).RETURNING(deploymentsTable.AllColumns)

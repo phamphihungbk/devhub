@@ -27,5 +27,6 @@ func (a *QueueSourceAdapter) Dequeue(ctx context.Context) (*ReleaseJob, error) {
 		return nil, nil
 	}
 
-	return &ReleaseJob{Release: *release}, nil
+	// return &ReleaseJob{Release: *release}, nil
+	return nil, nil
 }

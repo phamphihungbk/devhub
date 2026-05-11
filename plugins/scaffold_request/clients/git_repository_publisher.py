@@ -3,7 +3,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from scaffolders import fail
+from scaffold_request import fail
 
 INITIAL_COMMIT_MESSAGE = "Initial scaffold from DevHub"
 

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from scaffolders import (  # noqa: E402
+from scaffold_request import (  # noqa: E402
     read_optional_str,
     read_payload,
     read_required_str,

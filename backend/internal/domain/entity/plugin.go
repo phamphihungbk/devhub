@@ -30,17 +30,24 @@ type PluginType string
 type PluginRuntime string
 
 type PluginSchemaProperty struct {
-	Type        string                          `json:"type" yaml:"type"` // string, number, boolean, object
-	Description string                          `json:"description,omitempty" yaml:"description,omitempty"`
-	Default     interface{}                     `json:"default,omitempty" yaml:"default,omitempty"`
-	Enum        []string                        `json:"enum,omitempty" yaml:"enum,omitempty"`             // allowed values
-	Properties  map[string]PluginSchemaProperty `json:"properties,omitempty" yaml:"properties,omitempty"` // nested
+	Type                 string                          `json:"type" yaml:"type"` // string, number, boolean, object
+	Description          string                          `json:"description,omitempty" yaml:"description,omitempty"`
+	Default              interface{}                     `json:"default,omitempty" yaml:"default,omitempty"`
+	Enum                 []string                        `json:"enum,omitempty" yaml:"enum,omitempty"` // allowed values
+	Properties           map[string]PluginSchemaProperty `json:"properties,omitempty" yaml:"properties,omitempty"`
+	Required             []string                        `json:"required,omitempty" yaml:"required,omitempty"`
+	AdditionalProperties *bool                           `json:"additional_properties,omitempty" yaml:"additional_properties,omitempty"`
+	MinLength            *int                            `json:"min_length,omitempty" yaml:"min_length,omitempty"`
+	Minimum              *float64                        `json:"minimum,omitempty" yaml:"minimum,omitempty"`
+	Maximum              *float64                        `json:"maximum,omitempty" yaml:"maximum,omitempty"`
+	Pattern              string                          `json:"pattern,omitempty" yaml:"pattern,omitempty"`
 }
 
 type PluginConfigSchema struct {
-	Type       string                          `json:"type" yaml:"type"` // usually "object"
-	Required   []string                        `json:"required,omitempty" yaml:"required,omitempty"`
-	Properties map[string]PluginSchemaProperty `json:"properties" yaml:"properties"`
+	Type                 string                          `json:"type" yaml:"type"` // usually "object"
+	Required             []string                        `json:"required,omitempty" yaml:"required,omitempty"`
+	Properties           map[string]PluginSchemaProperty `json:"properties" yaml:"properties"`
+	AdditionalProperties *bool                           `json:"additional_properties,omitempty" yaml:"additional_properties,omitempty"`
 }
 
 func (p PluginConfigSchema) Parse(input string) (PluginConfigSchema, error) {

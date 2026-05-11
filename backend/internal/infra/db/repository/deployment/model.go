@@ -20,7 +20,7 @@ func (d *Deployment) ToEntity() *entity.Deployment {
 		ID:            d.ID,
 		ServiceID:     d.ServiceID,
 		EnvironmentID: d.EnvironmentID,
-		Version:       d.Version,
+		PluginID:      d.PluginID,
 		Status:        status,
 		ExternalRef:   misc.GetValue(d.ExternalRef),
 		CommitSHA:     misc.GetValue(d.CommitSha),

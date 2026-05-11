@@ -4,30 +4,31 @@ import (
 	"context"
 	"fmt"
 
+	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/domain/repository"
 	core "devhub-backend/internal/infra/worker/core"
 )
 
 type ScaffoldQueueSourceAdapter struct {
-	scaffoldRequestRepository repository.ScaffoldRequestRepository
+	jobRepository repository.JobRepository
 }
 
 var _ core.QueueSourceAdapter[ScaffoldJob] = (*ScaffoldQueueSourceAdapter)(nil)
 
-func NewScaffoldQueueSourceAdapter(scaffoldRequestRepository repository.ScaffoldRequestRepository) *ScaffoldQueueSourceAdapter {
-	return &ScaffoldQueueSourceAdapter{scaffoldRequestRepository: scaffoldRequestRepository}
+func NewScaffoldQueueSourceAdapter(jobRepository repository.JobRepository) *ScaffoldQueueSourceAdapter {
+	return &ScaffoldQueueSourceAdapter{jobRepository: jobRepository}
 }
 
 func (a *ScaffoldQueueSourceAdapter) Dequeue(ctx context.Context) (*ScaffoldJob, error) {
-	scaffoldRequest, err := a.scaffoldRequestRepository.FindOnePending(ctx)
+	job, err := a.jobRepository.FindOnePending(ctx, entity.JobTypeScaffold)
 	if err != nil {
-		return nil, fmt.Errorf("dequeue scaffold request: %w", err)
+		return nil, fmt.Errorf("dequeue scaffold job: %w", err)
 	}
-	if scaffoldRequest == nil {
+	if job == nil {
 		return nil, nil
 	}
 
 	return &ScaffoldJob{
-		ScaffoldRequest: *scaffoldRequest,
+		Job: *job,
 	}, nil
 }

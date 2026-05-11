@@ -13,24 +13,26 @@ import (
 )
 
 type createReleaseRequest struct {
-	PluginID string `json:"plugin_id" example:"123e4567-e89b-12d3-a456-426614174000" binding:"required"`
-	Tag    string `json:"tag" example:"v1.0.0" binding:"required"`
-	Target string `json:"target" example:"main"`
-	Name   string `json:"name" example:"v1.0.0"`
-	Notes  string `json:"notes" example:"First stable release."`
-}
-
-type createReleaseResponse struct {
-	ID          string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	ServiceID   string `json:"service_id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	PluginID    string `json:"plugin_id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Tag         string `json:"tag" example:"v1.0.0"`
+	ServiceID   string `json:"service_id" example:"123e4567-e89b-12d3-a456-426614174000" binding:"required"`
+	PluginID    string `json:"plugin_id" example:"123e4567-e89b-12d3-a456-426614174000" binding:"required"`
+	Tag         string `json:"tag" example:"v1.0.0" binding:"required"`
 	Target      string `json:"target" example:"main"`
 	Name        string `json:"name" example:"v1.0.0"`
 	Notes       string `json:"notes" example:"First stable release."`
-	HTMLURL     string `json:"html_url" example:"https://gitea.devhub.local/acme/service/releases/tag/v1.0.0"`
-	ExternalRef string `json:"external_ref" example:"123"`
-	TriggeredBy string `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000"`
+	TriggeredBy string `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000" binding:"required"`
+}
+
+type createReleaseResponse struct {
+	ID          string    `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ServiceID   string    `json:"service_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	PluginID    string    `json:"plugin_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Tag         string    `json:"tag" example:"v1.0.0"`
+	Target      string    `json:"target" example:"main"`
+	Name        string    `json:"name" example:"v1.0.0"`
+	Notes       string    `json:"notes" example:"First stable release."`
+	HTMLURL     string    `json:"html_url" example:"https://gitea.devhub.local/acme/service/releases/tag/v1.0.0"`
+	ExternalRef string    `json:"external_ref" example:"123"`
+	TriggeredBy string    `json:"triggered_by" example:"123e4567-e89b-12d3-a456-426614174000"`
 	CreatedAt   time.Time `json:"created_at"`
 }
 
@@ -44,15 +46,8 @@ type createReleaseResponse struct {
 // @Failure		400		{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
 // @Failure		409		{object}	httpresponse.ErrorResponse{data=nil}									"Conflict"
 // @Failure		500		{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
-// @Router			/services/:service/releases [post]
+// @Router			/releases [post]
 func (h *releaseHandler) CreateRelease(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		httpresponse.Error(c, errs.NewBadRequestError("unauthorized", nil))
-		return
-	}
-
-	serviceID := c.Param("service")
 	var input createReleaseRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
 		err = misc.WrapError(err, errs.NewBadRequestError("unable to parse request", map[string]string{"details": err.Error()}))
@@ -61,13 +56,13 @@ func (h *releaseHandler) CreateRelease(c *gin.Context) {
 	}
 
 	release, err := h.releaseUsecase.CreateRelease(c.Request.Context(), releaseUsecase.CreateReleaseInput{
-		ServiceID:   serviceID,
+		ServiceID:   input.ServiceID,
 		PluginID:    input.PluginID,
 		Tag:         input.Tag,
 		Target:      input.Target,
 		Name:        input.Name,
 		Notes:       input.Notes,
-		TriggeredBy: userID.(string),
+		TriggeredBy: input.TriggeredBy,
 	})
 	if err != nil {
 		httpresponse.Error(c, err)
@@ -85,7 +80,7 @@ func (h *releaseHandler) newCreateReleaseResponse(release *entity.Release) creat
 	return createReleaseResponse{
 		ID:          release.ID.String(),
 		ServiceID:   release.ServiceID.String(),
-		PluginID:    release.PluginID.String(),
+		PluginID:    release.ServiceID.String(),
 		Tag:         release.Tag,
 		Target:      release.Target,
 		Name:        release.Name,

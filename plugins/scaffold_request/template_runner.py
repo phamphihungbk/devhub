@@ -4,14 +4,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scaffolders import fail, render_template, resolve_service_dir, scaffold_from_directory, success
-from scaffolders.clients.git_repository_publisher import GitRepositoryPublisher
-from scaffolders.clients.gitops_values_publisher import GitOpsValuesPublisher
-from scaffolders.clients.scm_repository_client import SCMRepositoryClient
-from scaffolders.models.payload import GitOpsConfig, ScaffoldPayload
-from scaffolders.models.response import ScaffoldResponse
-from scaffolders.services.scaffold_bootstrapper import ScaffoldBootstrapper
-from scaffolders import read_payload
+from scaffold_request import fail, render_template, resolve_service_dir, scaffold_from_directory, success
+from scaffold_request.clients.git_repository_publisher import GitRepositoryPublisher
+from scaffold_request.clients.gitops_values_publisher import GitOpsValuesPublisher
+from scaffold_request.clients.scm_repository_client import SCMRepositoryClient
+from scaffold_request.models.payload import GitOpsConfig, ScaffoldPayload
+from scaffold_request.models.response import ScaffoldResponse
+from scaffold_request.services.scaffold_bootstrapper import ScaffoldBootstrapper
+from scaffold_request import read_payload
 
 
 DEFAULT_REQUIRED_FIELDS = [
@@ -21,13 +21,6 @@ DEFAULT_REQUIRED_FIELDS = [
     "database",
     "image_tag",
     "module_path",
-    "ci_registry_host",
-    "ci_server_url",
-    "cd_project_name",
-    "cd_repo_url",
-    "cd_target_revision",
-    "cd_namespace",
-    "cd_image_repository",
 ]
 
 
@@ -67,7 +60,7 @@ def run_template_plugin(plugin_dir: Path) -> None:
         bootstrapper.bootstrap(payload, service_dir, values_content)
 
         success(ScaffoldResponse.from_dict({
-            "repo_url": payload.cd_repo_url,
+            "repo_url": payload.scm_repo_url,
             "path": str(service_dir),
         }).to_dict())
     finally:
