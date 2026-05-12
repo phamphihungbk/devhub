@@ -53,7 +53,7 @@ jobs:
             -H "Content-Type: application/json" \
             -H "X-Devhub-Webhook-Token: $DEVHUB_WEBHOOK_TOKEN" \
             -d "{
-              \"repo_url\": \"[[ CD_REPO_URL ]]\",
+              \"repo_url\": \"[[ SCM_REPO_URL ]]\",
               \"repo_owner\": \"${{ github.repository_owner }}\",
               \"repo_name\": \"${{ github.event.repository.name }}\",
               \"tag\": \"$IMAGE_TAG\",

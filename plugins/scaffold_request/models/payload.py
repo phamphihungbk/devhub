@@ -68,6 +68,7 @@ class ScaffoldPayload:
             "CD_PROJECT_NAME": self.cd_project_name,
             "CD_IMAGE_REPOSITORY": self.cd_image_repository,
             "CD_REPO_URL": self.cd_repo_url,
+            "SCM_REPO_URL": self.scm_repo_url,
             "CD_TARGET_REVISION": self.cd_target_revision,
             "CD_NAMESPACE": self.cd_namespace,
             "CI_REGISTRY_HOST": self.ci_registry_host,
