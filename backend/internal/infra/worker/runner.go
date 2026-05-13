@@ -11,7 +11,6 @@ import (
 	infraLogger "devhub-backend/internal/infra/logger"
 	core "devhub-backend/internal/infra/worker/core"
 	deployment "devhub-backend/internal/infra/worker/deployment"
-	"devhub-backend/internal/infra/worker/release"
 	scaffold "devhub-backend/internal/infra/worker/scaffold"
 )
 
@@ -20,7 +19,6 @@ const (
 	defaultPollDelay = core.DefaultPollDelay
 	RunnerScaffold   = "scaffold"
 	RunnerDeployment = "deployment"
-	RunnerRelease    = "release"
 )
 
 type Dependencies struct {
@@ -98,7 +96,6 @@ func BuildRunnersWithConfig(deps *Dependencies, cfg BuildRunnersConfig) ([]Runne
 	factories := map[string]RunnerFactory{
 		RunnerScaffold:   buildScaffoldRunner,
 		RunnerDeployment: buildDeploymentRunner,
-		RunnerRelease:    buildReleaseRunner,
 	}
 
 	for _, kind := range workerTypes {
@@ -151,20 +148,6 @@ func buildDeploymentRunner(deps *Dependencies, observer Observability, cfg Facto
 		deps.serviceRepository,
 		deps.jobRepository,
 		deps.deploymentRepository,
-		deps.releaseRepository,
-		cfg.PollDelay,
-	)
-}
-
-func buildReleaseRunner(deps *Dependencies, observer Observability, cfg FactoryConfig) (Runner, error) {
-	if deps == nil || deps.releaseRepository == nil {
-		return nil, fmt.Errorf("release repository is required")
-	}
-
-	return release.NewReleasePollingRunner(
-		observer,
-		deps.pluginRepository,
-		deps.serviceRepository,
 		deps.releaseRepository,
 		cfg.PollDelay,
 	)
