@@ -48,9 +48,9 @@ func (p *ScaffoldStatePersistence) MarkRunning(ctx context.Context, id uuid.UUID
 	if scaffoldRequest == nil {
 		return fmt.Errorf("scaffold request %s not found", job.ResourceID)
 	}
-	if scaffoldRequest.Status != entity.ScaffoldRequestApproved {
-		return fmt.Errorf("scaffold request %s is not approved", job.ResourceID)
-	}
+	// if scaffoldRequest.Status != entity.ScaffoldRequestApproved {
+	// 	return fmt.Errorf("scaffold request %s is not approved", job.ResourceID)
+	// }
 
 	now := time.Now()
 	jobStatus := entity.JobStatusRunning

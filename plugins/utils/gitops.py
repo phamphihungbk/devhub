@@ -173,7 +173,7 @@ def push_directory_to_remote(
 
         has_changes = stage_and_detect_changes(repo_dir)
         if has_changes:
-            run_git(repo_dir, "commit", "-m", "Initial scaffold from DevHub")
+            run_git(repo_dir, "commit", "-m", "")
             run_git(repo_dir, "push", "-u", "origin", default_branch)
 
 

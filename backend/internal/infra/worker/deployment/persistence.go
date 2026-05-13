@@ -9,6 +9,7 @@ import (
 	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/domain/repository"
 	core "devhub-backend/internal/infra/worker/core"
+	"devhub-backend/internal/util/misc"
 
 	"github.com/google/uuid"
 )
@@ -43,9 +44,9 @@ func (p *StatePersistence) MarkRunning(ctx context.Context, id uuid.UUID) error 
 	if deployment == nil {
 		return fmt.Errorf("deployment %s not found", job.ResourceID)
 	}
-	if deployment.Status != entity.DeploymentStatusPending {
-		return fmt.Errorf("deployment %s is not pending", job.ResourceID)
-	}
+	// if deployment.Status != entity.DeploymentStatusPending {
+	// 	return fmt.Errorf("deployment %s is not pending", job.ResourceID)
+	// }
 
 	now := time.Now().UTC()
 	jobStatus := entity.JobStatusRunning
@@ -93,20 +94,15 @@ func (p *StatePersistence) MarkCompleted(ctx context.Context, id uuid.UUID, resu
 		return fmt.Errorf("deployment %s is not running", job.ResourceID)
 	}
 
+	finishedAt := time.Now()
 	status := entity.DeploymentStatusCompleted
-	finishedAt := result.FinishedAt
-	if finishedAt.IsZero() {
-		finishedAt = time.Now().UTC()
-	}
 
 	if _, err := p.deploymentRepository.UpdateOne(ctx, repository.UpdateDeploymentInput{
-		ID:           job.ResourceID,
-		Status:       &status,
-		ExternalRef:  optionalString(result.ExternalRef),
-		CommitSHA:    optionalString(result.CommitSHA),
-		RunnerOutput: optionalString(result.RunnerOutput),
-		RunnerError:  optionalString(result.RunnerError),
-		FinishedAt:   &finishedAt,
+		ID:          job.ResourceID,
+		Status:      misc.ToPointer(status),
+		ExternalRef: misc.ToPointer(result.ExternalRef),
+		CommitSHA:   misc.ToPointer(result.CommitSHA),
+		FinishedAt:  misc.ToPointer(finishedAt),
 	}); err != nil {
 		return fmt.Errorf("mark deployment completed: %w", err)
 	}
@@ -122,9 +118,9 @@ func (p *StatePersistence) MarkCompleted(ctx context.Context, id uuid.UUID, resu
 	resultJSON := string(resultBytes)
 	if _, err := p.jobRepository.UpdateOne(ctx, repository.UpdateJobInput{
 		ID:         id,
-		Status:     &jobStatus,
-		Result:     &resultJSON,
-		FinishedAt: &finishedAt,
+		Status:     misc.ToPointer(jobStatus),
+		Result:     misc.ToPointer(resultJSON),
+		FinishedAt: misc.ToPointer(finishedAt),
 	}); err != nil {
 		return fmt.Errorf("mark deployment job completed: %w", err)
 	}
@@ -159,10 +155,9 @@ func (p *StatePersistence) MarkFailed(ctx context.Context, id uuid.UUID, reason 
 	finishedAt := time.Now().UTC()
 
 	if _, err := p.deploymentRepository.UpdateOne(ctx, repository.UpdateDeploymentInput{
-		ID:          job.ResourceID,
-		Status:      &status,
-		RunnerError: optionalString(reason),
-		FinishedAt:  &finishedAt,
+		ID:         job.ResourceID,
+		Status:     misc.ToPointer(status),
+		FinishedAt: misc.ToPointer(finishedAt),
 	}); err != nil {
 		return fmt.Errorf("mark deployment failed: %w", err)
 	}
@@ -170,19 +165,12 @@ func (p *StatePersistence) MarkFailed(ctx context.Context, id uuid.UUID, reason 
 	jobStatus := entity.JobStatusFailed
 	if _, err := p.jobRepository.UpdateOne(ctx, repository.UpdateJobInput{
 		ID:         id,
-		Status:     &jobStatus,
-		Error:      optionalString(reason),
-		FinishedAt: &finishedAt,
+		Status:     misc.ToPointer(jobStatus),
+		Error:      misc.ToPointer(reason),
+		FinishedAt: misc.ToPointer(finishedAt),
 	}); err != nil {
 		return fmt.Errorf("mark deployment job failed: %w", err)
 	}
 
 	return nil
-}
-
-func optionalString(v string) *string {
-	if v == "" {
-		return nil
-	}
-	return &v
 }

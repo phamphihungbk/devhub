@@ -151,6 +151,7 @@ func buildDeploymentRunner(deps *Dependencies, observer Observability, cfg Facto
 		deps.serviceRepository,
 		deps.jobRepository,
 		deps.deploymentRepository,
+		deps.releaseRepository,
 		cfg.PollDelay,
 	)
 }

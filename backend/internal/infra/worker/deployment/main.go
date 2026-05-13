@@ -45,9 +45,14 @@ func NewDeploymentPollingRunner(
 	serviceRepository repository.ServiceRepository,
 	jobRepository repository.JobRepository,
 	deploymentRepository repository.DeploymentRepository,
+	releaseRepository repository.ReleaseRepository,
 	pollDelay time.Duration,
 ) (core.Runner, error) {
-	executor := NewPythonDeploymentExecutor(cfg, pluginRepository, serviceRepository, deploymentRepository)
+	_ = cfg
+	_ = serviceRepository
+	_ = deploymentRepository
+	_ = releaseRepository
+	executor := NewPythonDeploymentExecutor(pluginRepository)
 
 	return core.NewPollingRunner[DeploymentJob, DeploymentExecutionResult](
 		core.PollingRunnerConfig{

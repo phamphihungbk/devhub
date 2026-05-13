@@ -57,6 +57,7 @@ type Deployment struct {
 	ID            uuid.UUID
 	ServiceID     uuid.UUID
 	EnvironmentID uuid.UUID
+	ReleaseID     uuid.UUID
 	PluginID      uuid.UUID
 	Version       string
 	Status        DeploymentStatus

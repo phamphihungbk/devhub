@@ -48,17 +48,34 @@ jobs:
             exit 1
           fi
 
-          apk add --no-cache curl
+          apk add --no-cache curl jq
+
+          RELEASE_NOTES="$(git tag -l --format='%(contents)' "$IMAGE_TAG")"
+          if [ -z "$RELEASE_NOTES" ]; then
+            RELEASE_NOTES="Built by CI from ${{ github.sha }}"
+          fi
+
+          jq -n \
+            --arg repo_url "[[ SCM_REPO_URL ]]" \
+            --arg repo_owner "${{ github.repository_owner }}" \
+            --arg repo_name "${{ github.event.repository.name }}" \
+            --arg tag "$IMAGE_TAG" \
+            --arg target "${{ github.sha }}" \
+            --arg image "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG" \
+            --arg html_url "${{ github.server_url }}/${{ github.repository }}/releases/tag/$IMAGE_TAG" \
+            --arg notes "$RELEASE_NOTES" \
+            '{
+              repo_url: $repo_url,
+              repo_owner: $repo_owner,
+              repo_name: $repo_name,
+              tag: $tag,
+              target: $target,
+              image: $image,
+              html_url: $html_url,
+              notes: $notes
+            }' > release-payload.json
+
           curl -fsS -X POST "$DEVHUB_WEBHOOK_URL/webhooks/ci/releases" \
             -H "Content-Type: application/json" \
             -H "X-Devhub-Webhook-Token: $DEVHUB_WEBHOOK_TOKEN" \
-            -d "{
-              \"repo_url\": \"[[ SCM_REPO_URL ]]\",
-              \"repo_owner\": \"${{ github.repository_owner }}\",
-              \"repo_name\": \"${{ github.event.repository.name }}\",
-              \"tag\": \"$IMAGE_TAG\",
-              \"target\": \"${{ github.sha }}\",
-              \"image\": \"$REGISTRY/$IMAGE_NAME:$IMAGE_TAG\",
-              \"html_url\": \"${{ github.server_url }}/${{ github.repository }}/releases/tag/$IMAGE_TAG\",
-              \"notes\": \"Built by CI from ${{ github.sha }}\"
-            }"
+            --data @release-payload.json

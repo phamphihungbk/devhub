@@ -35,7 +35,6 @@ type UpdateDeploymentInput struct {
 	Version       *string
 	ExternalRef   *string
 	CommitSHA     *string
-	RunnerOutput  *string
-	RunnerError   *string
-	FinishedAt    *time.Time
+	// TODO: remove FinishedAt
+	FinishedAt *time.Time
 }

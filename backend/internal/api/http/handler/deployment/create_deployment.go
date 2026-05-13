@@ -14,7 +14,7 @@ import (
 
 type createDeploymentRequest struct {
 	PluginID      string `json:"plugin_id" example:"123e4567-e89b-12d3-a456-426614174000" binding:"required"`
-	ReleaseID     string `json:"release_id" example:"123e4567-e89b-12d3-a456-426614174000" binding:"required"`
+	ReleaseID     string `json:"release_id" example:"123e4567-e89b-12d3-a456-426614174000"`
 	EnvironmentID string `json:"environment_id" example:"123e4567-e89b-12d3-a456-426614174000" binding:"required"`
 }
 
@@ -59,10 +59,11 @@ func (h *deploymentHandler) CreateDeployment(c *gin.Context) {
 	}
 
 	usecaseInput := deploymentUsecase.CreateDeploymentInput{
-		ServiceID: serviceID,
-		PluginID:  input.PluginID,
-		// Environment: input.Environment,
-		TriggeredBy: userID.(string),
+		ServiceID:     serviceID,
+		PluginID:      input.PluginID,
+		ReleaseID:     input.ReleaseID,
+		EnvironmentID: input.EnvironmentID,
+		TriggeredBy:   userID.(string),
 	}
 
 	if approvalTarget, ok := approvaltarget.ApprovalTargetFromContext(c); ok {
@@ -86,11 +87,13 @@ func (h *deploymentHandler) newCreateDeploymentResponse(deployment *entity.Deplo
 	}
 
 	return createDeploymentResponse{
-		ID:          deployment.ID.String(),
-		ServiceID:   deployment.ServiceID.String(),
-		Status:      deployment.Status.String(),
-		ExternalRef: deployment.ExternalRef,
-		CommitSHA:   deployment.CommitSHA,
-		TriggeredBy: deployment.TriggeredBy.String(),
+		ID:            deployment.ID.String(),
+		ServiceID:     deployment.ServiceID.String(),
+		ReleaseID:     deployment.ReleaseID.String(),
+		EnvironmentID: deployment.EnvironmentID.String(),
+		Status:        deployment.Status.String(),
+		ExternalRef:   deployment.ExternalRef,
+		CommitSHA:     deployment.CommitSHA,
+		TriggeredBy:   deployment.TriggeredBy.String(),
 	}
 }

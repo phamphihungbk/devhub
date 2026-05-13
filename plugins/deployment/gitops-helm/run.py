@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scaffold_request import (  # noqa: E402
     read_optional_str,
     read_payload,
+    read_required_env,
     read_required_str,
     success,
     fail,
@@ -19,19 +20,12 @@ from scaffold_request import (  # noqa: E402
 
 SCHEMA_PATH = Path(__file__).with_name("schema.json")
 
-DEFAULT_GITOPS_BRANCH = "main"
-DEFAULT_GITOPS_BASE_PATH = "envs"
-DEFAULT_COMMIT_USER_NAME = "devhub-bot"
-DEFAULT_COMMIT_USER_EMAIL = "devhub-bot@local"
-
 def log(msg: str):
     print(msg, file=sys.stderr)
 
 
 @dataclass(frozen=True)
 class DeploymentPayload:
-    deployment_id: str
-    project_id: str
     service: str
     environment: str
     version: str
@@ -51,23 +45,21 @@ class DeploymentPayload:
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "DeploymentPayload":
         return cls(
-            deployment_id=read_optional_str(payload, "deployment_id"),
-            project_id=read_optional_str(payload, "project_id"),
             service=read_required_str(payload, "service"),
             environment=read_required_str(payload, "environment"),
             version=read_required_str(payload, "version"),
             repo_url=read_optional_str(payload, "repo_url"),
-            scm_api_url=read_required_str(payload, "scm_api_url").rstrip("/"),
-            scm_token=read_required_str(payload, "scm_token"),
-            gitops_repo_owner=read_required_str(payload, "gitops_repo_owner"),
-            gitops_repo_name=read_required_str(payload, "gitops_repo_name"),
-            gitops_branch=read_optional_str(payload, "gitops_branch", DEFAULT_GITOPS_BRANCH),
-            gitops_base_path=read_optional_str(payload, "gitops_base_path", DEFAULT_GITOPS_BASE_PATH),
-            commit_user_name=read_optional_str(payload, "commit_user_name", DEFAULT_COMMIT_USER_NAME),
-            commit_user_email=read_optional_str(payload, "commit_user_email", DEFAULT_COMMIT_USER_EMAIL),
-            argocd_server=read_optional_str(payload, "argocd_server"),
-            argocd_auth_token=read_optional_str(payload, "argocd_auth_token"),
-            argocd_insecure=bool(payload.get("argocd_insecure", False)),
+            scm_api_url=read_required_env("SCM_API_URL"),
+            scm_token=read_required_env("SCM_TOKEN"),
+            gitops_repo_owner=read_required_env("GITOPS_REPO_OWNER"),
+            gitops_repo_name=read_required_env("GITOPS_REPO_NAME"),
+            gitops_branch=read_required_env("GITOPS_BRANCH"),
+            gitops_base_path=read_required_env("GITOPS_BASE_PATH"),
+            commit_user_name=read_required_env("GITOPS_COMMIT_USER_NAME"),
+            commit_user_email=read_required_env("GITOPS_COMMIT_USER_EMAIL"),
+            argocd_server=read_required_env("ARGOCD_SERVER"),
+            argocd_auth_token=read_required_env("ARGOCD_AUTH_TOKEN"),
+            argocd_insecure=read_required_env("ARGOCD_INSECURE").lower() in ("1", "true", "yes"),
         )
 
 
@@ -97,6 +89,8 @@ def http_request(method: str, url: str, token: str, body: dict | None = None):
             return resp.getcode(), resp.read().decode()
     except urllib.error.HTTPError as e:
         raise RuntimeError(f"HTTP {e.code}: {e.read().decode()}") from e
+    except urllib.error.URLError as e:
+        raise RuntimeError(f"cannot connect to {url}: {e.reason}") from e
 
 
 def get_file(payload: DeploymentPayload, path: str):
@@ -196,6 +190,8 @@ def sync_argocd(payload: DeploymentPayload, app_name: str):
         urllib.request.urlopen(req)
     except urllib.error.HTTPError as e:
         log(f"ArgoCD sync failed (ignored): {e.read().decode()}")
+    except urllib.error.URLError as e:
+        log(f"ArgoCD sync failed (ignored): {e.reason}")
 
 
 def run():
@@ -232,7 +228,6 @@ def run():
         {
             "external_ref": app_name,
             "commit_sha": commit_sha,
-            "finished_at": datetime.now(timezone.utc).isoformat(),
         }
     )
 

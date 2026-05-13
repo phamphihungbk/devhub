@@ -129,6 +129,18 @@ func (u *approvalUsecase) CreateApprovalDecision(ctx context.Context, input Crea
 		if err != nil {
 			return nil, misc.WrapError(err, errs.NewInternalServerError("failed to find deployment after approval", nil))
 		}
+		release, err := u.releaseRepository.FindOne(ctx, deployment.ReleaseID)
+		if err != nil {
+			return nil, misc.WrapError(err, errs.NewInternalServerError("failed to find deployment release after approval", nil))
+		}
+		service, err := u.serviceRepository.FindOne(ctx, deployment.ServiceID)
+		if err != nil {
+			return nil, misc.WrapError(err, errs.NewInternalServerError("failed to find deployment service after approval", nil))
+		}
+		environment, err := u.environmentRepository.FindOne(ctx, deployment.EnvironmentID)
+		if err != nil {
+			return nil, misc.WrapError(err, errs.NewInternalServerError("failed to find deployment environment after approval", nil))
+		}
 		if _, err := u.jobRepository.CreateOne(ctx, &entity.Job{
 			Type:         entity.JobTypeDeployment,
 			Status:       entity.JobStatusQueued,
@@ -136,9 +148,17 @@ func (u *approvalUsecase) CreateApprovalDecision(ctx context.Context, input Crea
 			ResourceID:   deployment.ID,
 			PluginID:     deployment.PluginID,
 			Payload: entity.JobPayload{
-				Action:        entity.JobTypeDeployment.String(),
-				ServiceID:     deployment.ServiceID.String(),
-				EnvironmentID: deployment.EnvironmentID.String(),
+				Action: entity.JobTypeDeployment.String(),
+				Variables: map[string]interface{}{
+					"deployment_id": deployment.ID.String(),
+					"project_id":    service.ProjectID.String(),
+					"service_id":    service.ID.String(),
+					"plugin_id":     deployment.PluginID.String(),
+					"service":       service.Name,
+					"environment":   environment.Name,
+					"version":       release.Tag,
+					"repo_url":      service.RepoURL,
+				},
 			},
 			CreatedBy: updatedRequest.RequestedBy,
 		}); err != nil {
