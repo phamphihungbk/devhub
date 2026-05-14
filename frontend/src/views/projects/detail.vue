@@ -4,7 +4,6 @@ import {
   NCard,
   NDataTable,
   NStatistic,
-  NTag,
 } from 'naive-ui'
 
 import PageHeader from '@/components/page-header.vue'
@@ -15,11 +14,9 @@ const {
   deployments,
   failedDeployments,
   failedReleases,
-  getEnvironmentTagColor,
   loading,
   openProjects,
   openService,
-  ownerContact,
   ownerTeamName,
   project,
   releaseColumns,
@@ -67,29 +64,6 @@ const {
       <div class="grid gap-6">
         <NCard class="rounded-3xl border border-[var(--app-border)] shadow-[var(--app-shadow)]" title="Project posture">
           <div class="grid gap-4 text-sm leading-6 text-[var(--app-text-muted)] md:grid-cols-2">
-            <div class="md:col-span-2">
-              <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">
-                Environments
-              </p>
-              <div class="mt-3 flex flex-wrap gap-2">
-                <NTag
-                  v-for="environment in project?.environments || []"
-                  :key="environment"
-                  :bordered="false"
-                  :color="getEnvironmentTagColor(environment)"
-                >
-                  {{ environment }}
-                </NTag>
-              </div>
-            </div>
-            <div>
-              <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">
-                Status
-              </p>
-              <p class="mt-1 text-base font-semibold text-[var(--app-text)]">
-                {{ project?.status || 'Unknown' }}
-              </p>
-            </div>
             <div>
               <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">
                 Owner team
@@ -100,18 +74,18 @@ const {
             </div>
             <div>
               <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">
-                SCM provider
+                Created by
               </p>
               <p class="mt-1 text-base font-semibold text-[var(--app-text)]">
-                {{ project?.scm_provider || 'Not set' }}
+                {{ project?.created_by_name || project?.created_by || 'Not set' }}
               </p>
             </div>
             <div>
               <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">
-                Owner contact
+                Project ID
               </p>
               <p class="mt-1 text-base font-semibold text-[var(--app-text)]">
-                {{ ownerContact }}
+                {{ project?.id || 'Not set' }}
               </p>
             </div>
           </div>

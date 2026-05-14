@@ -7,7 +7,6 @@ import { useProjectListService } from '@/services/project'
 const {
   canCreateProject,
   columns,
-  environmentSelectOptions,
   filteredRows,
   filters,
   loadProjects,
@@ -16,7 +15,6 @@ const {
   openProjectCreate,
   ownerTeamOptions,
   resetFilters,
-  statusOptions,
 } = useProjectListService()
 </script>
 
@@ -38,22 +36,10 @@ const {
     </PageHeader>
 
     <NCard class="rounded-3xl border border-[var(--app-border)] shadow-[var(--app-shadow)]">
-      <div class="mb-5 grid gap-3 lg:grid-cols-[1.3fr_0.8fr_0.8fr_0.8fr_auto]">
+      <div class="mb-5 grid gap-3 lg:grid-cols-[1fr_0.55fr_auto]">
         <NInput
           v-model:value="filters.keyword"
-          placeholder="Filter by name, description, owner team, or status"
-          clearable
-        />
-        <NSelect
-          v-model:value="filters.status"
-          :options="statusOptions"
-          placeholder="Status"
-          clearable
-        />
-        <NSelect
-          v-model:value="filters.environment"
-          :options="environmentSelectOptions"
-          placeholder="Environment"
+          placeholder="Filter by name, description, owner team, or creator"
           clearable
         />
         <NSelect

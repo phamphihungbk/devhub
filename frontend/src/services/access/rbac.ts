@@ -86,7 +86,12 @@ export function resolveProfilePermissions(profile?: UserProfile | null): string[
     return explicitPermissions
   }
 
-  return getPermissionsForRole(profile?.role)
+  const roles = normalizeStringList(profile?.roles)
+  if (profile?.role) {
+    roles.unshift(profile.role)
+  }
+
+  return [...new Set(roles.flatMap(role => getPermissionsForRole(role)))]
 }
 
 export function hasRole(profile: UserProfile | null | undefined, roles: string[] = []): boolean {
@@ -94,7 +99,12 @@ export function hasRole(profile: UserProfile | null | undefined, roles: string[]
     return true
   }
 
-  return Boolean(profile?.role && roles.includes(profile.role))
+  const profileRoles = normalizeStringList(profile?.roles)
+  if (profile?.role) {
+    profileRoles.unshift(profile.role)
+  }
+
+  return profileRoles.some(role => roles.includes(role))
 }
 
 export function hasPermissions(profile: UserProfile | null | undefined, permissions: string[] = []): boolean {

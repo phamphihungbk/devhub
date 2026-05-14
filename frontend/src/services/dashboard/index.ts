@@ -9,6 +9,10 @@ import type { PluginRecord, Project, UserRecord } from '@/api'
 import {useDashboardData} from './data'
 import { ApiError } from '@/api/request'
 
+function userRoles(user: UserRecord) {
+  return user.roles?.length ? user.roles : user.role ? [user.role] : []
+}
+
 export function useDashboardService() {
   const message = useMessage()
   const authStore = useAuthStore()
@@ -46,7 +50,7 @@ export function useDashboardService() {
       const [projectData, pluginData, userData] = await Promise.all([
         fetchProjects(),
         fetchPlugins(),
-        fetchUsers(),
+        fetchUsers({ team_id: authStore.profile?.team_id || undefined }),
       ])
       projects.value = projectData
       plugins.value = pluginData
@@ -70,5 +74,6 @@ export function useDashboardService() {
     projects,
     stats,
     teamMembers,
+    userRoles,
   }
 }

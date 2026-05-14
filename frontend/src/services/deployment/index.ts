@@ -4,10 +4,10 @@ import { NButton, NTag, useMessage } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
 
 import { permission } from '@/services/access/rbac'
-import { createDeployment, fetchDeploymentById, fetchPlugins, fetchProjects, fetchProjectServices, fetchServiceDeployments } from '@/api'
+import { createDeployment, fetchDeploymentById, fetchPlugins, fetchProjectById, fetchProjects, fetchProjectServices, fetchServiceDeployments, fetchServiceReleases } from '@/api'
 import { getEnvironmentTagColor } from '@/theme/environment'
 import { useAuthStore } from '@/stores/modules/auth'
-import type { CreateDeploymentPayload, Deployment, PluginRecord, Project, Service } from '@/api'
+import type { CreateDeploymentPayload, Deployment, PluginRecord, Project, ProjectEnvironment, Release, Service } from '@/api'
 import { ApiError } from '@/api/request'
 
 export type DeploymentRow = Deployment & {
@@ -18,7 +18,12 @@ export type DeploymentRow = Deployment & {
 
 type ServiceOptionRecord = Service & {
   project_name: string
-  environments: string[]
+  environments: ProjectEnvironment[]
+}
+
+function projectEnvironments(project: Project): ProjectEnvironment[] {
+  return (project.environments || [])
+    .filter((environment): environment is ProjectEnvironment => typeof environment !== 'string')
 }
 
 export function getDeploymentStatusTagColor(status?: string) {
@@ -48,6 +53,8 @@ export function useDeploymentListService() {
   const rows = ref<DeploymentRow[]>([])
   const services = ref<ServiceOptionRecord[]>([])
   const plugins = ref<PluginRecord[]>([])
+  const releases = ref<Release[]>([])
+  const deploymentReleases = ref<Release[]>([])
   const selectedDeployment = ref<DeploymentRow | null>(null)
   const deploymentModalOpen = ref(false)
   const logModalOpen = ref(false)
@@ -59,8 +66,8 @@ export function useDeploymentListService() {
   const deploymentForm = reactive<CreateDeploymentPayload & { service_id: string }>({
     service_id: '',
     plugin_id: '',
-    environment: 'dev',
-    version: '',
+    environment_id: '',
+    release_id: '',
   })
 
   const canCreateDeployment = computed(() =>
@@ -68,7 +75,7 @@ export function useDeploymentListService() {
   )
 
   const environmentOptions = computed(() =>
-    [...new Set(rows.value.map(row => row.environment).filter(Boolean))]
+    [...new Set(rows.value.map(row => deploymentEnvironmentName(row)).filter(Boolean))]
       .map(value => ({ label: value, value })),
   )
 
@@ -94,13 +101,38 @@ export function useDeploymentListService() {
       .map(plugin => ({ label: plugin.name, value: plugin.id })),
   )
 
-  const deploymentEnvironmentOptions = computed(() => {
-    const values = selectedService.value?.environments?.length
-      ? selectedService.value.environments
-      : ['dev', 'staging', 'prod']
+  const deploymentEnvironmentOptions = computed(() =>
+    (selectedService.value?.environments || []).map(environment => ({
+      label: environment.name,
+      value: environment.id,
+    })),
+  )
 
-    return values.map(value => ({ label: value, value }))
+  const releaseOptions = computed(() =>
+    deploymentReleases.value
+      .filter(release => release.status === 'completed' || !release.status)
+      .map(release => ({
+        label: `${release.tag}${release.name ? ` · ${release.name}` : ''}`,
+        value: release.id,
+      })),
+  )
+
+  const environmentNameById = computed(() => {
+    const entries = services.value.flatMap(service =>
+      service.environments.map(environment => [environment.id, environment.name] as const),
+    )
+    return new Map(entries)
   })
+
+  const releaseTagById = computed(() =>
+    new Map(releases.value.map(release => [release.id, release.tag])),
+  )
+
+  const deploymentEnvironmentName = (row: Deployment) =>
+    row.environment || (row.environment_id ? environmentNameById.value.get(row.environment_id) : '') || 'Unknown'
+
+  const deploymentVersion = (row: Deployment) =>
+    row.version || (row.release_id ? releaseTagById.value.get(row.release_id) : '') || 'Unknown'
 
   const filteredRows = computed(() => {
     const keyword = filters.keyword.trim().toLowerCase()
@@ -109,13 +141,13 @@ export function useDeploymentListService() {
       const matchesKeyword = !keyword || [
         row.project_name,
         row.service_name,
-        row.environment,
-        row.version,
+        deploymentEnvironmentName(row),
+        deploymentVersion(row),
         row.status,
         row.commit_sha,
         row.external_ref,
       ].some(value => value?.toLowerCase().includes(keyword))
-      const matchesEnvironment = !filters.environment || row.environment === filters.environment
+      const matchesEnvironment = !filters.environment || deploymentEnvironmentName(row) === filters.environment
       const matchesStatus = !filters.status || row.status === filters.status
 
       return matchesKeyword && matchesEnvironment && matchesStatus
@@ -170,17 +202,26 @@ export function useDeploymentListService() {
   const resetDeploymentForm = () => {
     deploymentForm.service_id = serviceOptions.value[0]?.value || ''
     deploymentForm.plugin_id = deployerOptions.value[0]?.value || ''
-    deploymentForm.environment = deploymentEnvironmentOptions.value[0]?.value || 'dev'
-    deploymentForm.version = ''
+    deploymentForm.environment_id = deploymentEnvironmentOptions.value[0]?.value || ''
+    deploymentForm.release_id = releaseOptions.value[0]?.value || ''
   }
 
-  const openDeploymentModal = () => {
+  const openDeploymentModal = async() => {
     resetDeploymentForm()
     deploymentModalOpen.value = true
+    await loadSelectedServiceReleases()
   }
 
-  const handleDeploymentServiceChange = () => {
-    deploymentForm.environment = deploymentEnvironmentOptions.value[0]?.value || 'dev'
+  const loadSelectedServiceReleases = async() => {
+    deploymentReleases.value = deploymentForm.service_id
+      ? await fetchServiceReleases(deploymentForm.service_id)
+      : []
+    deploymentForm.release_id = releaseOptions.value[0]?.value || ''
+  }
+
+  const handleDeploymentServiceChange = async() => {
+    deploymentForm.environment_id = deploymentEnvironmentOptions.value[0]?.value || ''
+    await loadSelectedServiceReleases()
   }
 
   const columns: DataTableColumns<DeploymentRow> = [
@@ -194,12 +235,12 @@ export function useDeploymentListService() {
           NTag,
           {
             bordered: false,
-            color: getEnvironmentTagColor(row.environment),
+            color: getEnvironmentTagColor(deploymentEnvironmentName(row)),
           },
-          { default: () => row.environment },
+          { default: () => deploymentEnvironmentName(row) },
         ),
     },
-    { title: 'Version', key: 'version' },
+    { title: 'Version', key: 'version', render: row => deploymentVersion(row) },
     {
       title: 'Status',
       key: 'status',
@@ -253,22 +294,30 @@ export function useDeploymentListService() {
   const loadDeployments = async() => {
     loading.value = true
     try {
+      releases.value = []
       const [projects, pluginRows] = await Promise.all([
         fetchProjects(),
         fetchPlugins(),
       ])
       const deploymentGroups = await Promise.all(
         projects.map(async (project: Project) => {
-          const projectServices = await fetchProjectServices(project.id)
+          const [projectDetail, projectServices] = await Promise.all([
+            fetchProjectById(project.id),
+            fetchProjectServices(project.id),
+          ])
           const serviceRows = projectServices.map(service => ({
             ...service,
             project_name: project.name,
-            environments: project.environments,
+            environments: projectEnvironments(projectDetail),
           }))
 
           const deploymentRows = await Promise.all(
             projectServices.map(async (service: Service) => {
-              const deployments = await fetchServiceDeployments(service.id, { limit: 50, sortBy: 'date', sortOrder: 'desc' })
+              const [deployments, serviceReleases] = await Promise.all([
+                fetchServiceDeployments(service.id, { limit: 50, sortBy: 'date', sortOrder: 'desc' }),
+                fetchServiceReleases(service.id),
+              ])
+              releases.value.push(...serviceReleases)
 
               return deployments.map((deployment: Deployment) => ({
                 ...deployment,
@@ -297,7 +346,7 @@ export function useDeploymentListService() {
   }
 
   const submitDeployment = async() => {
-    if (!deploymentForm.service_id || !deploymentForm.plugin_id || !deploymentForm.environment || !deploymentForm.version.trim()) {
+    if (!deploymentForm.service_id || !deploymentForm.plugin_id || !deploymentForm.environment_id) {
       message.warning('Complete the deployment form before submitting.')
       return
     }
@@ -306,8 +355,8 @@ export function useDeploymentListService() {
     try {
       await createDeployment(deploymentForm.service_id, {
         plugin_id: deploymentForm.plugin_id,
-        environment: deploymentForm.environment,
-        version: deploymentForm.version.trim(),
+        environment_id: deploymentForm.environment_id,
+        release_id: deploymentForm.release_id || undefined,
       })
       message.success('Deployment created successfully.')
       deploymentModalOpen.value = false
@@ -335,6 +384,8 @@ export function useDeploymentListService() {
     filteredRows,
     filters,
     formatRunnerText,
+    deploymentEnvironmentName,
+    deploymentVersion,
     getDeploymentStatusTagColor,
     handleDeploymentServiceChange,
     loadDeployments,
@@ -349,6 +400,7 @@ export function useDeploymentListService() {
     selectedDeployment,
     serviceOptions,
     statusOptions,
+    releaseOptions,
     submitDeployment,
   }
 }

@@ -6,16 +6,8 @@ import type { DataTableColumns } from 'naive-ui'
 import { permission } from '@/services/access/rbac'
 import { fetchProjects, fetchTeams } from '@/api'
 import { useAuthStore } from '@/stores/modules/auth'
-import { environmentOptions, getEnvironmentTagColor } from '@/theme/environment'
 import type { Project, TeamRecord } from '@/api'
 import { ApiError } from '@/api/request'
-
-const statusOptions = [
-  { label: 'Draft', value: 'draft' },
-  { label: 'Active', value: 'active' },
-  { label: 'Archived', value: 'archived' },
-  { label: 'Deprecated', value: 'deprecated' },
-]
 
 export function useProjectListService() {
   const message = useMessage()
@@ -26,24 +18,26 @@ export function useProjectListService() {
   const teams = ref<TeamRecord[]>([])
   const filters = reactive({
     keyword: '',
-    status: null as string | null,
-    environment: null as string | null,
     ownerTeam: null as string | null,
   })
-
-  const environmentSelectOptions = environmentOptions.map(option => ({ ...option }))
 
   const teamNameById = computed(() =>
     new Map(teams.value.map(team => [team.id, team.name])),
   )
 
-  const getOwnerTeamName = (teamId?: string) => {
-    if (!teamId) return ''
-    return teamNameById.value.get(teamId) || teamId
+  const getOwnerTeamName = (project: Project) => {
+    const teamId = project.owner_team_id || project.team_id
+    if (!teamId) return project.owner_team_name || project.owner_team || ''
+    return project.owner_team_name || project.owner_team || teamNameById.value.get(teamId) || teamId
+  }
+
+  const shortId = (value?: string) => {
+    if (!value) return 'Not set'
+    return `${value.slice(0, 8)}...${value.slice(-4)}`
   }
 
   const ownerTeamOptions = computed(() =>
-    [...new Set(rows.value.map(row => getOwnerTeamName(row.team_id)))]
+    [...new Set(rows.value.map(row => getOwnerTeamName(row)))]
       .filter(Boolean)
       .map(value => ({ label: value, value })),
   )
@@ -59,15 +53,14 @@ export function useProjectListService() {
       const matchesKeyword = !keyword || [
         row.name,
         row.description,
-        getOwnerTeamName(row.team_id),
-        row.status,
+        getOwnerTeamName(row),
+        row.created_by_name,
+        row.created_by,
       ].some(value => value?.toLowerCase().includes(keyword))
 
-      const matchesStatus = !filters.status || row.status === filters.status
-      const matchesEnvironment = !filters.environment || row.environments.includes(filters.environment)
-      const matchesOwnerTeam = !filters.ownerTeam || getOwnerTeamName(row.team_id) === filters.ownerTeam
+      const matchesOwnerTeam = !filters.ownerTeam || getOwnerTeamName(row) === filters.ownerTeam
 
-      return matchesKeyword && matchesStatus && matchesEnvironment && matchesOwnerTeam
+      return matchesKeyword && matchesOwnerTeam
     })
   })
 
@@ -81,43 +74,25 @@ export function useProjectListService() {
 
   const resetFilters = () => {
     filters.keyword = ''
-    filters.status = null
-    filters.environment = null
     filters.ownerTeam = null
   }
 
   const columns: DataTableColumns<Project> = [
     { title: 'Name', key: 'name' },
+    { title: 'Owner Team', key: 'owner_team', render: row => getOwnerTeamName(row) || 'Not set' },
     {
-      title: 'Status',
-      key: 'status',
+      title: 'Created By',
+      key: 'created_by',
       render: row =>
         h(
           NTag,
           {
             bordered: false,
-            color: { color: '#dbeafe', textColor: '#1d4ed8' },
+            color: { color: '#f1f5f9', textColor: '#475569' },
           },
-          { default: () => row.status || 'Unknown' },
+          { default: () => row.created_by_name || shortId(row.created_by) },
         ),
     },
-    {
-      title: 'Environments',
-      key: 'environments',
-      render: row =>
-        h(
-          'div',
-          { class: 'flex flex-wrap gap-2' },
-          row.environments.map((value) =>
-            h(
-              NTag,
-              { bordered: false, color: getEnvironmentTagColor(value) },
-              { default: () => value },
-            ),
-          ),
-        ),
-    },
-    { title: 'Owner Team', key: 'owner_team', render: row => getOwnerTeamName(row.team_id) || 'Not set' },
     { title: 'Description', key: 'description' },
     {
       title: 'Actions',
@@ -159,7 +134,6 @@ export function useProjectListService() {
   return {
     canCreateProject,
     columns,
-    environmentSelectOptions,
     filteredRows,
     filters,
     loadProjects,
@@ -168,6 +142,5 @@ export function useProjectListService() {
     openProjectCreate,
     ownerTeamOptions,
     resetFilters,
-    statusOptions,
   }
 }

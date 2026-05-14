@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"devhub-backend/internal/domain/entity"
 	"devhub-backend/internal/util/httpresponse"
 
 	projectUsecase "devhub-backend/internal/usecase/project"
@@ -9,11 +10,18 @@ import (
 )
 
 type findOneProjectResponse struct {
-	ID            string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name          string `json:"name" example:"Project Name"`
-	Description   string `json:"description" example:"Project Description"`
-	OwnerTeamName string `json:"owner_team_name" example:"Team Dev"`
-	CreatedByName string `json:"created_by_name" example:"Hung"`
+	ID            string                       `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name          string                       `json:"name" example:"Project Name"`
+	Description   string                       `json:"description" example:"Project Description"`
+	OwnerTeamName string                       `json:"owner_team_name" example:"Team Dev"`
+	CreatedByName string                       `json:"created_by_name" example:"Hung"`
+	Environments  []projectEnvironmentResponse `json:"environments"`
+}
+
+type projectEnvironmentResponse struct {
+	ID   string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name string `json:"name" example:"dev"`
+	Tier string `json:"tier" example:"development"`
 }
 
 // @Summary		Find Project by ID
@@ -50,5 +58,23 @@ func (h *projectHandler) newFindOneProjectResponse(project *projectUsecase.Proje
 		Description:   project.Description,
 		OwnerTeamName: project.OwnerTeamName,
 		CreatedByName: project.CreatorName,
+		Environments:  h.newProjectEnvironmentResponses(project.Environments),
 	}
+}
+
+func (h *projectHandler) newProjectEnvironmentResponses(environments entity.Environments) []projectEnvironmentResponse {
+	if len(environments) == 0 {
+		return []projectEnvironmentResponse{}
+	}
+
+	response := make([]projectEnvironmentResponse, 0, len(environments))
+	for _, environment := range environments {
+		response = append(response, projectEnvironmentResponse{
+			ID:   environment.ID.String(),
+			Name: environment.Name,
+			Tier: environment.Tier.String(),
+		})
+	}
+
+	return response
 }

@@ -12,12 +12,11 @@ type ApprovalResource string
 const (
 	ApprovalResourceScaffoldRequest ApprovalResource = "scaffold_request"
 	ApprovalResourceDeployment      ApprovalResource = "deployment"
-	ApprovalResourceRelease         ApprovalResource = "release"
 )
 
 func (r ApprovalResource) IsValid() bool {
 	switch r {
-	case ApprovalResourceScaffoldRequest, ApprovalResourceDeployment, ApprovalResourceRelease:
+	case ApprovalResourceScaffoldRequest, ApprovalResourceDeployment:
 		return true
 	default:
 		return false

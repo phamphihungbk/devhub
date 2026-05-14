@@ -1,6 +1,6 @@
 import { apiBaseURL } from '../constants'
 import { api } from '../request'
-import type { Project, ProjectListQuery, ProjectPayload, UpdateProjectPayload } from './types'
+import type { Project, ProjectEnvironment, ProjectListQuery, ProjectPayload, UpdateProjectPayload } from './types'
 
 const baseURL = `${apiBaseURL.projects}/`
 
@@ -24,4 +24,4 @@ export function deleteProject(projectId: string) {
   return api.delete<null>(`${apiBaseURL.projects}/${projectId}`)
 }
 
-export type { Project, ProjectListQuery, ProjectPayload, UpdateProjectPayload } from './types'
+export type { Project, ProjectEnvironment, ProjectListQuery, ProjectPayload, UpdateProjectPayload } from './types'

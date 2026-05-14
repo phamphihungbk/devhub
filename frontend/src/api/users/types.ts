@@ -1,6 +1,7 @@
 export interface UserListQuery {
   startDate?: string
   endDate?: string
+  team_id?: string
   limit?: number
   offset?: number
   sortBy?: string
@@ -11,7 +12,8 @@ export interface UserRecord {
   id: string
   name: string
   email: string
-  role: string
+  role?: string
+  roles?: string[]
   team_id: string
 }
 

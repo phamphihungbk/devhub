@@ -22,6 +22,7 @@ type ProjectDetail struct {
 	Description   string
 	OwnerTeamName string
 	CreatorName   string
+	Environments  entity.Environments
 }
 
 func (u *projectUsecase) FindOneProject(ctx context.Context, input FindOneProjectInput) (projectDetail *ProjectDetail, err error) {
@@ -81,6 +82,11 @@ func (u *projectUsecase) enrichProjectDetail(ctx context.Context, project *entit
 	creator, err := u.userRepository.FindOne(ctx, project.CreatedBy)
 	if err == nil && creator != nil {
 		detail.CreatorName = creator.Name
+	}
+
+	environments, err := u.environmentRepository.FindAllByProjectID(ctx, project.ID)
+	if err == nil && environments != nil {
+		detail.Environments = misc.GetValue(environments)
 	}
 
 	return detail

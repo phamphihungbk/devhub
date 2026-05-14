@@ -3,12 +3,18 @@ import { NTag, useMessage } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
 
 import { fetchUsers } from '@/api'
+import { useAuthStore } from '@/stores/modules/auth'
 import { getRoleTagColor } from '@/theme/role'
 import type { UserRecord } from '@/api'
 import { ApiError } from '@/api/request'
 
+function userRoles(row: UserRecord) {
+  return row.roles?.length ? row.roles : row.role ? [row.role] : []
+}
+
 export function useTeamMemberService() {
   const message = useMessage()
+  const authStore = useAuthStore()
   const loading = ref(false)
   const rows = ref<UserRecord[]>([])
 
@@ -20,9 +26,15 @@ export function useTeamMemberService() {
       key: 'role',
       render: row =>
         h(
-          NTag,
-          { bordered: false, color: getRoleTagColor(row.role) },
-          { default: () => row.role },
+          'div',
+          { class: 'flex flex-wrap gap-2' },
+          userRoles(row).map(role =>
+            h(
+              NTag,
+              { bordered: false, color: getRoleTagColor(role) },
+              { default: () => role },
+            ),
+          ),
         ),
     },
   ]
@@ -30,7 +42,9 @@ export function useTeamMemberService() {
   const loadUsers = async() => {
     loading.value = true
     try {
-      rows.value = await fetchUsers()
+      rows.value = await fetchUsers({
+        team_id: authStore.profile?.team_id || undefined,
+      })
     } catch (error) {
       message.error(error instanceof ApiError ? error.message : 'Unable to load users.')
     } finally {
@@ -45,5 +59,6 @@ export function useTeamMemberService() {
     loadUsers,
     loading,
     rows,
+    userRoles,
   }
 }

@@ -30,10 +30,6 @@ var routeApprovalTargets = map[string]entity.ApprovalTarget{
 		Resource: entity.ApprovalResourceDeployment,
 		Action:   entity.ApprovalActionUpdate,
 	},
-	approvalRouteKey(http.MethodPost, "/services/:service/releases"): {
-		Resource: entity.ApprovalResourceRelease,
-		Action:   entity.ApprovalActionCreate,
-	},
 }
 
 func approvalRouteKey(method, route string) string {

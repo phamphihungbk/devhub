@@ -32,6 +32,7 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const collapsed = ref(false)
+const primaryRole = computed(() => authStore.profile?.role || authStore.profile?.roles?.[0] || '')
 
 const sidebarContentStyle = computed(() =>
   collapsed.value
@@ -79,7 +80,7 @@ const activeKey = computed(() => (route.meta.activeMenu as string) || (route.nam
 const userMenu = computed<MenuOption[]>(() => [
   {
     key: 'role',
-    label: authStore.profile?.role || 'Member',
+    label: primaryRole.value || 'Member',
     disabled: true,
     icon: () => h(NIcon, null, { default: () => h(UserAvatar) }),
   },
@@ -171,13 +172,13 @@ async function handleUserAction(key: string) {
               <div class="mt-1 flex items-center justify-end gap-2">
                 <p class="text-xs text-ink-500">{{ authStore.profile?.email || 'Signed session' }}</p>
                 <NTag
-                  v-if="authStore.profile?.role"
+                  v-if="primaryRole"
                   size="small"
                   round
                   :bordered="false"
-                  :color="getRoleTagColor(authStore.profile.role)"
+                  :color="getRoleTagColor(primaryRole)"
                 >
-                  {{ authStore.profile.role }}
+                  {{ primaryRole }}
                 </NTag>
               </div>
             </div>

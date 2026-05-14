@@ -12,7 +12,8 @@ export interface UserProfile {
   id: string
   name: string
   email: string
-  role: string
+  role?: string
+  roles?: string[]
   team_id: string
   permissions?: string[]
 }

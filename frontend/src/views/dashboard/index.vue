@@ -23,6 +23,7 @@ const {
   projects,
   stats,
   teamMembers,
+  userRoles,
 } = useDashboardService()
 </script>
 
@@ -83,13 +84,17 @@ const {
                 <p class="text-sm font-700 text-ink-900">{{ user.name }}</p>
                 <p class="mt-1 text-sm text-[var(--app-text-muted)]">{{ user.email }}</p>
               </div>
-              <NTag
-                round
-                :bordered="false"
-                :color="getRoleTagColor(user.role)"
-              >
-                {{ user.role }}
-              </NTag>
+              <div class="flex flex-wrap justify-end gap-2">
+                <NTag
+                  v-for="role in userRoles(user)"
+                  :key="role"
+                  round
+                  :bordered="false"
+                  :color="getRoleTagColor(role)"
+                >
+                  {{ role }}
+                </NTag>
+              </div>
             </div>
           </div>
         </div>

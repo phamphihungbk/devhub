@@ -15,6 +15,10 @@ import type {
 } from '@/api'
 import { ApiError } from '@/api/request'
 
+function environmentName(value: NonNullable<Project['environments']>[number]) {
+  return typeof value === 'string' ? value : value.name
+}
+
 interface UseCreateScaffoldRequestServiceInput {
   projects: Ref<Project[]>
   plugins: Ref<PluginRecord[]>
@@ -78,7 +82,10 @@ export function useCreateScaffoldRequestService(input: UseCreateScaffoldRequestS
     const values = selectedProject.value?.environments?.length
       ? selectedProject.value.environments
       : ['dev', 'staging', 'prod']
-    return values.map(value => ({ label: value, value }))
+    return values.map(value => {
+      const name = environmentName(value)
+      return { label: name, value: name }
+    })
   })
 
   const scaffolderOptions = computed(() =>
@@ -90,7 +97,9 @@ export function useCreateScaffoldRequestService(input: UseCreateScaffoldRequestS
   const resetForm = () => {
     form.project_id = projectOptions.value[0]?.value || ''
     form.plugin_id = scaffolderOptions.value[0]?.value || ''
-    form.environment = selectedProject.value?.environments?.[0] || 'dev'
+    form.environment = selectedProject.value?.environments?.[0]
+      ? environmentName(selectedProject.value.environments[0])
+      : 'dev'
     form.variables.service_name = ''
     form.variables.module_path = ''
     form.variables.port = 8080
@@ -106,7 +115,9 @@ export function useCreateScaffoldRequestService(input: UseCreateScaffoldRequestS
   }
 
   const handleProjectChange = () => {
-    form.environment = selectedProject.value?.environments?.[0] || 'dev'
+    form.environment = selectedProject.value?.environments?.[0]
+      ? environmentName(selectedProject.value.environments[0])
+      : 'dev'
     suggestion.value = null
   }
 
