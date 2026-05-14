@@ -17,20 +17,19 @@ type deploymentsTable struct {
 	postgres.Table
 
 	// Columns
-	ID           postgres.ColumnString
-	ServiceID    postgres.ColumnString
-	PluginID     postgres.ColumnString
-	Environment  postgres.ColumnString
-	Version      postgres.ColumnString
-	Status       postgres.ColumnString
-	ExternalRef  postgres.ColumnString
-	CommitSha    postgres.ColumnString
-	TriggeredBy  postgres.ColumnString
-	CreatedAt    postgres.ColumnTimestamp
-	UpdatedAt    postgres.ColumnTimestamp
-	FinishedAt   postgres.ColumnTimestamp
-	RunnerOutput postgres.ColumnString
-	RunnerError  postgres.ColumnString
+	ID            postgres.ColumnString
+	ServiceID     postgres.ColumnString
+	EnvironmentID postgres.ColumnString
+	ReleaseID     postgres.ColumnString
+	PluginID      postgres.ColumnString
+	Status        postgres.ColumnString
+	ExternalRef   postgres.ColumnString
+	CommitSha     postgres.ColumnString
+	TriggeredBy   postgres.ColumnString
+	CreatedAt     postgres.ColumnTimestamp
+	UpdatedAt     postgres.ColumnTimestamp
+	StartedAt     postgres.ColumnTimestamp
+	FinishedAt    postgres.ColumnTimestamp
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -72,43 +71,41 @@ func newDeploymentsTable(schemaName, tableName, alias string) *DeploymentsTable 
 
 func newDeploymentsTableImpl(schemaName, tableName, alias string) deploymentsTable {
 	var (
-		IDColumn           = postgres.StringColumn("id")
-		ServiceIDColumn    = postgres.StringColumn("service_id")
-		PluginIDColumn     = postgres.StringColumn("plugin_id")
-		EnvironmentColumn  = postgres.StringColumn("environment")
-		VersionColumn      = postgres.StringColumn("version")
-		StatusColumn       = postgres.StringColumn("status")
-		ExternalRefColumn  = postgres.StringColumn("external_ref")
-		CommitShaColumn    = postgres.StringColumn("commit_sha")
-		TriggeredByColumn  = postgres.StringColumn("triggered_by")
-		CreatedAtColumn    = postgres.TimestampColumn("created_at")
-		UpdatedAtColumn    = postgres.TimestampColumn("updated_at")
-		FinishedAtColumn   = postgres.TimestampColumn("finished_at")
-		RunnerOutputColumn = postgres.StringColumn("runner_output")
-		RunnerErrorColumn  = postgres.StringColumn("runner_error")
-		allColumns         = postgres.ColumnList{IDColumn, ServiceIDColumn, PluginIDColumn, EnvironmentColumn, VersionColumn, StatusColumn, ExternalRefColumn, CommitShaColumn, TriggeredByColumn, CreatedAtColumn, UpdatedAtColumn, FinishedAtColumn, RunnerOutputColumn, RunnerErrorColumn}
-		mutableColumns     = postgres.ColumnList{ServiceIDColumn, PluginIDColumn, EnvironmentColumn, VersionColumn, StatusColumn, ExternalRefColumn, CommitShaColumn, TriggeredByColumn, CreatedAtColumn, UpdatedAtColumn, FinishedAtColumn, RunnerOutputColumn, RunnerErrorColumn}
-		defaultColumns     = postgres.ColumnList{IDColumn, CreatedAtColumn, UpdatedAtColumn}
+		IDColumn            = postgres.StringColumn("id")
+		ServiceIDColumn     = postgres.StringColumn("service_id")
+		EnvironmentIDColumn = postgres.StringColumn("environment_id")
+		ReleaseIDColumn     = postgres.StringColumn("release_id")
+		PluginIDColumn      = postgres.StringColumn("plugin_id")
+		StatusColumn        = postgres.StringColumn("status")
+		ExternalRefColumn   = postgres.StringColumn("external_ref")
+		CommitShaColumn     = postgres.StringColumn("commit_sha")
+		TriggeredByColumn   = postgres.StringColumn("triggered_by")
+		CreatedAtColumn     = postgres.TimestampColumn("created_at")
+		UpdatedAtColumn     = postgres.TimestampColumn("updated_at")
+		StartedAtColumn     = postgres.TimestampColumn("started_at")
+		FinishedAtColumn    = postgres.TimestampColumn("finished_at")
+		allColumns          = postgres.ColumnList{IDColumn, ServiceIDColumn, EnvironmentIDColumn, ReleaseIDColumn, PluginIDColumn, StatusColumn, ExternalRefColumn, CommitShaColumn, TriggeredByColumn, CreatedAtColumn, UpdatedAtColumn, StartedAtColumn, FinishedAtColumn}
+		mutableColumns      = postgres.ColumnList{ServiceIDColumn, EnvironmentIDColumn, ReleaseIDColumn, PluginIDColumn, StatusColumn, ExternalRefColumn, CommitShaColumn, TriggeredByColumn, CreatedAtColumn, UpdatedAtColumn, StartedAtColumn, FinishedAtColumn}
+		defaultColumns      = postgres.ColumnList{IDColumn, CreatedAtColumn, UpdatedAtColumn}
 	)
 
 	return deploymentsTable{
 		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
-		ID:           IDColumn,
-		ServiceID:    ServiceIDColumn,
-		PluginID:     PluginIDColumn,
-		Environment:  EnvironmentColumn,
-		Version:      VersionColumn,
-		Status:       StatusColumn,
-		ExternalRef:  ExternalRefColumn,
-		CommitSha:    CommitShaColumn,
-		TriggeredBy:  TriggeredByColumn,
-		CreatedAt:    CreatedAtColumn,
-		UpdatedAt:    UpdatedAtColumn,
-		FinishedAt:   FinishedAtColumn,
-		RunnerOutput: RunnerOutputColumn,
-		RunnerError:  RunnerErrorColumn,
+		ID:            IDColumn,
+		ServiceID:     ServiceIDColumn,
+		EnvironmentID: EnvironmentIDColumn,
+		ReleaseID:     ReleaseIDColumn,
+		PluginID:      PluginIDColumn,
+		Status:        StatusColumn,
+		ExternalRef:   ExternalRefColumn,
+		CommitSha:     CommitShaColumn,
+		TriggeredBy:   TriggeredByColumn,
+		CreatedAt:     CreatedAtColumn,
+		UpdatedAt:     UpdatedAtColumn,
+		StartedAt:     StartedAtColumn,
+		FinishedAt:    FinishedAtColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

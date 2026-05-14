@@ -9,20 +9,15 @@ package model
 
 import (
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 	"time"
 )
 
 type Projects struct {
-	ID           uuid.UUID      `sql:"primary_key" db:"projects.id"`
-	Name         string         `db:"projects.name"`
-	Description  *string        `db:"projects.description"`
-	Environments pq.StringArray `db:"projects.environments"`
-	Status       string         `db:"projects.status"`
-	TeamID       uuid.UUID      `db:"projects.team_id"`
-	ScmProvider  string         `db:"projects.scm_provider"`
-	CreatedBy    uuid.UUID      `db:"projects.created_by"`
-	CreatedAt    time.Time      `db:"projects.created_at"`
-	UpdatedAt    time.Time      `db:"projects.updated_at"`
-	DeletedAt    *time.Time     `db:"projects.deleted_at"`
+	ID          uuid.UUID `sql:"primary_key" db:"projects.id"`
+	Name        string    `db:"projects.name"`
+	Description *string   `db:"projects.description"`
+	OwnerTeamID uuid.UUID `db:"projects.owner_team_id"`
+	CreatedBy   uuid.UUID `db:"projects.created_by"`
+	CreatedAt   time.Time `db:"projects.created_at"`
+	UpdatedAt   time.Time `db:"projects.updated_at"`
 }

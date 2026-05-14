@@ -9,26 +9,32 @@ import (
 
 type ProjectUsecase interface {
 	CreateProject(ctx context.Context, project CreateProjectInput) (*entity.Project, error)
-	FindOneProject(ctx context.Context, id FindOneProjectInput) (*entity.Project, error)
+	FindOneProject(ctx context.Context, id FindOneProjectInput) (*ProjectDetail, error)
 	FindAllProjects(ctx context.Context, input FindAllProjectsInput) (entity.Page[entity.Project], error)
 	UpdateProject(ctx context.Context, input UpdateProjectInput) (*entity.Project, error)
 	DeleteProject(ctx context.Context, id DeleteProjectInput) (*entity.Project, error)
 }
 
 type projectUsecase struct {
-	appConfig         config.AppConfig
-	projectRepository repository.ProjectRepository
-	userRepository    repository.UserRepository
+	appConfig             config.AppConfig
+	projectRepository     repository.ProjectRepository
+	environmentRepository repository.EnvironmentRepository
+	userRepository        repository.UserRepository
+	teamRepository        repository.TeamRepository
 }
 
 func NewProjectUsecase(
 	appConfig config.AppConfig,
 	projectRepository repository.ProjectRepository,
+	environmentRepository repository.EnvironmentRepository,
 	userRepository repository.UserRepository,
+	teamRepository repository.TeamRepository,
 ) ProjectUsecase {
 	return &projectUsecase{
-		appConfig:         appConfig,
-		projectRepository: projectRepository,
-		userRepository:    userRepository,
+		appConfig:             appConfig,
+		projectRepository:     projectRepository,
+		environmentRepository: environmentRepository,
+		userRepository:        userRepository,
+		teamRepository:        teamRepository,
 	}
 }

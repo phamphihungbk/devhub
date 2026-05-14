@@ -10,11 +10,11 @@ import (
 )
 
 type getMeResponse struct {
-	ID     string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name   string `json:"name" example:"User Name"`
-	Email  string `json:"email" example:"user@example.com"`
-	Role   string `json:"role" example:"admin"`
-	TeamID string `json:"team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ID     string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name   string   `json:"name" example:"User Name"`
+	Email  string   `json:"email" example:"user@example.com"`
+	Roles  []string `json:"roles" example:"platform_admin,developer"`
+	TeamID string   `json:"team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
 // @Summary		Return Authenticated User Info
@@ -28,7 +28,6 @@ type getMeResponse struct {
 // @Router			/auth/me [get]
 func (h *authHandler) GetMe(c *gin.Context) {
 	userID, exists := c.Get("user_id")
-
 	if !exists {
 		httpresponse.Error(c, errs.NewBadRequestError("unauthorized", nil))
 		return
@@ -55,7 +54,7 @@ func (h *authHandler) newGetMeResponse(user *entity.User) getMeResponse {
 		ID:     user.ID.String(),
 		Name:   user.Name,
 		Email:  user.Email,
-		Role:   user.Role.String(),
+		Roles:  user.Roles,
 		TeamID: user.TeamID.String(),
 	}
 }

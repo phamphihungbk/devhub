@@ -27,12 +27,12 @@ var releaseStatusStringMapper = map[ReleaseStatus]string{
 	ReleaseStatusFailed:    "failed",
 }
 
-func (s ReleaseStatus) String() string {
-	return releaseStatusStringMapper[s]
+func (r ReleaseStatus) String() string {
+	return releaseStatusStringMapper[r]
 }
 
-func (s ReleaseStatus) IsValid() bool {
-	switch s {
+func (r ReleaseStatus) IsValid() bool {
+	switch r {
 	case ReleaseStatusPending, ReleaseStatusRunning, ReleaseStatusCompleted, ReleaseStatusFailed:
 		return true
 	default:
@@ -41,7 +41,7 @@ func (s ReleaseStatus) IsValid() bool {
 }
 
 // Parse parses a string into a ReleaseStatus. It returns an error if the string is not a valid ReleaseStatus.
-func (s ReleaseStatus) Parse(status string) (ReleaseStatus, error) {
+func (r ReleaseStatus) Parse(status string) (ReleaseStatus, error) {
 	releaseStatus := ReleaseStatus(status)
 
 	if !releaseStatus.IsValid() {
@@ -53,14 +53,13 @@ func (s ReleaseStatus) Parse(status string) (ReleaseStatus, error) {
 type Release struct {
 	ID          uuid.UUID
 	ServiceID   uuid.UUID
-	PluginID    uuid.UUID
 	Tag         string
 	Target      string
 	Name        string
+	Status      ReleaseStatus
 	Notes       string
 	HTMLURL     string
 	ExternalRef string
-	Status      ReleaseStatus
 	TriggeredBy uuid.UUID
 	CreatedAt   time.Time
 }

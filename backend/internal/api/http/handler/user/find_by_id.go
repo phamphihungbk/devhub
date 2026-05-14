@@ -49,7 +49,6 @@ func (h *userHandler) newFindOneUserResponse(user *entity.User) findOneUserRespo
 		ID:     user.ID.String(),
 		Name:   user.Name,
 		Email:  user.Email,
-		Role:   user.Role.String(),
 		TeamID: user.TeamID.String(),
 	}
 }

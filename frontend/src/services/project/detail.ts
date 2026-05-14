@@ -8,10 +8,9 @@ import {
   fetchProjectServices,
   fetchServiceDeployments,
   fetchServiceReleases,
-  fetchTeams,
 } from '@/api'
 import { getEnvironmentTagColor } from '@/theme/environment'
-import type { Deployment, Project, Release, Service, TeamRecord } from '@/api'
+import type { Deployment, Project, Release, Service } from '@/api'
 import { ApiError } from '@/api/request'
 
 type ServiceReleaseRow = Release & { service_name: string }
@@ -25,7 +24,6 @@ export function useProjectDetailService() {
   const projectId = computed(() => route.params.projectId as string)
   const loading = ref(false)
   const project = ref<Project | null>(null)
-  const teams = ref<TeamRecord[]>([])
   const services = ref<Service[]>([])
   const releases = ref<ServiceReleaseRow[]>([])
   const deployments = ref<ServiceDeploymentRow[]>([])
@@ -46,20 +44,8 @@ export function useProjectDetailService() {
     deployments.value.filter(item => item.status === 'failed').length,
   )
 
-  const teamNameById = computed(() =>
-    new Map(teams.value.map(team => [team.id, team.name])),
-  )
-
-  const teamOwnerContactById = computed(() =>
-    new Map(teams.value.map(team => [team.id, team.owner_contact])),
-  )
-
   const ownerTeamName = computed(() =>
-    project.value?.team_id ? (teamNameById.value.get(project.value.team_id) || project.value.team_id) : 'Not set',
-  )
-
-  const ownerContact = computed(() =>
-    project.value?.team_id ? (teamOwnerContactById.value.get(project.value.team_id) || 'Not set') : 'Not set',
+    project.value?.owner_team_name || project.value?.owner_team || project.value?.owner_team_id || project.value?.team_id || 'Not set',
   )
 
   const openProjects = () => {
@@ -125,9 +111,9 @@ export function useProjectDetailService() {
           NTag,
           {
             bordered: false,
-            color: getEnvironmentTagColor(row.environment),
+            color: getEnvironmentTagColor(row.environment || 'unknown'),
           },
-          { default: () => row.environment },
+          { default: () => row.environment || 'Unknown' },
         ),
     },
     { title: 'Version', key: 'version' },
@@ -156,8 +142,6 @@ export function useProjectDetailService() {
         fetchProjectById(projectId.value),
         fetchProjectServices(projectId.value),
       ])
-      teams.value = await fetchTeams()
-
       project.value = projectData
       services.value = serviceData
 
@@ -191,12 +175,10 @@ export function useProjectDetailService() {
     deployments,
     failedDeployments,
     failedReleases,
-    getEnvironmentTagColor,
     loadProjectDetails,
     loading,
     openProjects,
     openService,
-    ownerContact,
     ownerTeamName,
     project,
     releaseColumns,

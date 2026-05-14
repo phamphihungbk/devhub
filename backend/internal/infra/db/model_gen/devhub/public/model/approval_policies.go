@@ -15,10 +15,8 @@ import (
 type ApprovalPolicies struct {
 	ID                uuid.UUID  `sql:"primary_key" db:"approval_policies.id"`
 	Resource          string     `db:"approval_policies.resource"`
-	Action            string     `db:"approval_policies.action"`
-	ProjectID         *uuid.UUID `db:"approval_policies.project_id"`
 	ServiceID         *uuid.UUID `db:"approval_policies.service_id"`
-	Environment       *string    `db:"approval_policies.environment"`
+	EnvironmentID     uuid.UUID  `db:"approval_policies.environment_id"`
 	RequiredApprovals int32      `db:"approval_policies.required_approvals"`
 	Enabled           bool       `db:"approval_policies.enabled"`
 	CreatedAt         time.Time  `db:"approval_policies.created_at"`

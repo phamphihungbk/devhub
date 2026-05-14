@@ -51,6 +51,7 @@ const {
           v-model:value="filters.status"
           class="mt-3"
           :options="statusOptions"
+          clearable
           @update:value="loadApprovals"
         />
       </NCard>

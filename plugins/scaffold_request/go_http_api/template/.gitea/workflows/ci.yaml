@@ -1,0 +1,81 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  docker:
+    runs-on: linux
+    defaults:
+      run:
+        shell: sh
+
+    env:
+      IMAGE_NAME: [[ SERVICE_NAME ]]
+      REGISTRY: [[ CI_REGISTRY_HOST ]]
+      SERVER_URL: [[ CI_SERVER_URL ]]
+      DEVHUB_WEBHOOK_URL: ${{ secrets.DEVHUB_WEBHOOK_URL }}
+      DEVHUB_WEBHOOK_TOKEN: ${{ secrets.DEVHUB_WEBHOOK_TOKEN }}
+
+    steps:
+      - name: Install git
+        run: apk add --no-cache git
+
+      - name: Checkout code
+        run: |
+          git clone "$SERVER_URL/${{ github.repository }}.git" .
+          git checkout "${{ github.sha }}" 
+
+      - name: Extract tag
+        run: echo "IMAGE_TAG=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+
+      - name: Build Docker image
+        run: docker build -t "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG" .
+
+      - name: Push Docker image
+        run: docker push "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
+
+      - name: Notify DevHub release webhook
+        run: |
+          if [ -z "$DEVHUB_WEBHOOK_URL" ]; then
+            echo "DEVHUB_WEBHOOK_URL secret is required"
+            exit 1
+          fi
+          if [ -z "$DEVHUB_WEBHOOK_TOKEN" ]; then
+            echo "DEVHUB_WEBHOOK_TOKEN secret is required"
+            exit 1
+          fi
+
+          apk add --no-cache curl jq
+
+          RELEASE_NOTES="$(git tag -l --format='%(contents)' "$IMAGE_TAG")"
+          if [ -z "$RELEASE_NOTES" ]; then
+            RELEASE_NOTES="Built by CI from ${{ github.sha }}"
+          fi
+
+          jq -n \
+            --arg repo_url "[[ SCM_REPO_URL ]]" \
+            --arg repo_owner "${{ github.repository_owner }}" \
+            --arg repo_name "${{ github.event.repository.name }}" \
+            --arg tag "$IMAGE_TAG" \
+            --arg target "${{ github.sha }}" \
+            --arg image "$REGISTRY/$IMAGE_NAME:$IMAGE_TAG" \
+            --arg html_url "${{ github.server_url }}/${{ github.repository }}/releases/tag/$IMAGE_TAG" \
+            --arg notes "$RELEASE_NOTES" \
+            '{
+              repo_url: $repo_url,
+              repo_owner: $repo_owner,
+              repo_name: $repo_name,
+              tag: $tag,
+              target: $target,
+              image: $image,
+              html_url: $html_url,
+              notes: $notes
+            }' > release-payload.json
+
+          curl -fsS -X POST "$DEVHUB_WEBHOOK_URL/webhooks/ci/releases" \
+            -H "Content-Type: application/json" \
+            -H "X-Devhub-Webhook-Token: $DEVHUB_WEBHOOK_TOKEN" \
+            --data @release-payload.json

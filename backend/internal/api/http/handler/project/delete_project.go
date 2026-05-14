@@ -19,6 +19,7 @@ import (
 // @Failure		500	{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
 // @Router			/projects/{project} [delete]
 func (h *projectHandler) DeleteProject(c *gin.Context) {
+	// TODO: maybe need to remove
 	projectID := c.Param("project")
 
 	_, err := h.projectUsecase.DeleteProject(c.Request.Context(), projectUsecase.DeleteProjectInput{

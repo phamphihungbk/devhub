@@ -8,29 +8,28 @@ import (
 	"github.com/google/uuid"
 )
 
-type ScaffoldRequestVariables struct {
-	ServiceName   string `json:"service_name"`
-	ModulePath    string `json:"module_path"`
-	Port          int    `json:"port"`
-	Database      string `json:"database"`
-	EnableLogging bool   `json:"enable_logging"`
-}
+var (
+	ErrInvalidScaffoldRequestVariables = fmt.Errorf("invalid scaffold request variables")
+	ErrInvalidScaffoldRequestStatus    = fmt.Errorf("invalid scaffold request status")
+)
 
-// Parse parses a string into a ProjectEnvironment. It returns an error if the string is not a valid ProjectEnvironment.
+type ScaffoldRequestVariables map[string]interface{}
+
+// Parse parses a string into a ScaffoldRequestVariables. It returns an error if the string is not a valid ScaffoldRequestVariables.
 func (s ScaffoldRequestVariables) Parse(variables string) (ScaffoldRequestVariables, error) {
 
 	var scaffoldRequestVariables ScaffoldRequestVariables
 	err := json.Unmarshal([]byte(variables), &scaffoldRequestVariables)
 
 	if err != nil {
-		return ScaffoldRequestVariables{}, fmt.Errorf("%w: %s", ErrInvalidProjectEnvironment, scaffoldRequestVariables)
+		return ScaffoldRequestVariables{}, fmt.Errorf("%w: %s", ErrInvalidScaffoldRequestVariables, variables)
 	}
 
 	return scaffoldRequestVariables, nil
 }
 
-func (s ScaffoldRequestVariables) String() string {
-	bytes, err := json.Marshal(s)
+func (e ScaffoldRequestVariables) String() string {
+	bytes, err := json.Marshal(e)
 
 	if err != nil {
 		return ""
@@ -47,7 +46,7 @@ const (
 	ScaffoldRequestRunning   ScaffoldRequestStatus = "running"
 	ScaffoldRequestCompleted ScaffoldRequestStatus = "completed"
 	ScaffoldRequestFailed    ScaffoldRequestStatus = "failed"
-	ScaffoldRequestRejected  ScaffoldRequestStatus = "rejected"
+	// ScaffoldRequestRejected  ScaffoldRequestStatus = "rejected"
 )
 
 var scaffoldRequestStatusStringMapper = map[ScaffoldRequestStatus]string{
@@ -56,7 +55,7 @@ var scaffoldRequestStatusStringMapper = map[ScaffoldRequestStatus]string{
 	ScaffoldRequestRunning:   "running",
 	ScaffoldRequestCompleted: "completed",
 	ScaffoldRequestFailed:    "failed",
-	ScaffoldRequestRejected:  "rejected",
+	// ScaffoldRequestRejected:  "rejected",
 }
 
 func (s ScaffoldRequestStatus) String() string {
@@ -65,7 +64,7 @@ func (s ScaffoldRequestStatus) String() string {
 
 func (s ScaffoldRequestStatus) IsValid() bool {
 	switch s {
-	case ScaffoldRequestPending, ScaffoldRequestApproved, ScaffoldRequestRunning, ScaffoldRequestCompleted, ScaffoldRequestFailed, ScaffoldRequestRejected:
+	case ScaffoldRequestPending, ScaffoldRequestApproved, ScaffoldRequestRunning, ScaffoldRequestCompleted, ScaffoldRequestFailed:
 		return true
 	default:
 		return false
@@ -77,22 +76,21 @@ func (s ScaffoldRequestStatus) Parse(status string) (ScaffoldRequestStatus, erro
 	scaffoldRequestStatus := ScaffoldRequestStatus(status)
 
 	if !scaffoldRequestStatus.IsValid() {
-		return "", fmt.Errorf("invalid scaffold request status: %s", status)
+		return "", fmt.Errorf("%w: %s", ErrInvalidScaffoldRequestStatus, scaffoldRequestStatus)
 	}
 	return scaffoldRequestStatus, nil
 }
 
 type ScaffoldRequest struct {
 	ID            uuid.UUID
-	PluginID      uuid.UUID
 	ProjectID     uuid.UUID
+	PluginID      uuid.UUID
 	RequestedBy   uuid.UUID
-	Status        ScaffoldRequestStatus
-	Environment   ProjectEnvironment
-	Variables     ScaffoldRequestVariables
 	ApprovedBy    *uuid.UUID
+	Status        ScaffoldRequestStatus
+	Variables     ScaffoldRequestVariables
 	ResultRepoURL string
-	ApprovedAt    *time.Time
+	ApprovedAt    time.Time
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }

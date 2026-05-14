@@ -73,7 +73,7 @@ Service state is consumed by the frontend service details page and by service-sc
 
 - `GET /projects/:project/scaffold-requests`
 - `POST /projects/:project/scaffold-requests`
-- `GET /scaffold-requests/:scaffoldRequest`
+- `GET /projects/:project/scaffold-requests/:scaffoldRequest`
 - `DELETE /scaffold-requests/:scaffoldRequest`
 
 Important request shape:

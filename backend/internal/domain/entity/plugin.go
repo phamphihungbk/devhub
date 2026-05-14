@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -8,25 +9,14 @@ import (
 )
 
 var (
-	ErrInvalidPluginType    = fmt.Errorf("invalid plugin type")
-	ErrInvalidPluginScope   = fmt.Errorf("invalid plugin scope")
-	ErrInvalidPluginRuntime = fmt.Errorf("invalid plugin runtime")
-)
-
-type PluginType string
-type PluginScope string
-type PluginRuntime string
-
-const (
-	PluginScaffolder PluginType = "scaffolder"
-	PluginDeployer   PluginType = "deployer"
-	PluginReleaser   PluginType = "releaser"
+	ErrInvalidPluginType         = fmt.Errorf("invalid plugin type")
+	ErrInvalidPluginRuntime      = fmt.Errorf("invalid plugin runtime")
+	ErrInvalidPluginConfigSchema = fmt.Errorf("invalid plugin config schema")
 )
 
 const (
-	PluginScopeGlobal      PluginScope = "global"
-	PluginScopeProject     PluginScope = "project"
-	PluginScopeEnvironment PluginScope = "environment"
+	PluginScaffoldRequest PluginType = "scaffold_request"
+	PluginDeployment      PluginType = "deployment"
 )
 
 const (
@@ -35,16 +25,60 @@ const (
 	PluginRuntimeNode   PluginRuntime = "node"
 )
 
-var pluginTypeStringMapper = map[PluginType]string{
-	PluginScaffolder: "scaffolder",
-	PluginDeployer:   "deployer",
-	PluginReleaser:   "releaser",
+type PluginType string
+
+type PluginRuntime string
+
+type PluginSchemaProperty struct {
+	Type                 string                          `json:"type" yaml:"type"` // string, number, boolean, object
+	Description          string                          `json:"description,omitempty" yaml:"description,omitempty"`
+	Default              interface{}                     `json:"default,omitempty" yaml:"default,omitempty"`
+	Enum                 []string                        `json:"enum,omitempty" yaml:"enum,omitempty"` // allowed values
+	Properties           map[string]PluginSchemaProperty `json:"properties,omitempty" yaml:"properties,omitempty"`
+	Required             []string                        `json:"required,omitempty" yaml:"required,omitempty"`
+	AdditionalProperties *bool                           `json:"additional_properties,omitempty" yaml:"additional_properties,omitempty"`
+	MinLength            *int                            `json:"min_length,omitempty" yaml:"min_length,omitempty"`
+	Minimum              *float64                        `json:"minimum,omitempty" yaml:"minimum,omitempty"`
+	Maximum              *float64                        `json:"maximum,omitempty" yaml:"maximum,omitempty"`
+	Pattern              string                          `json:"pattern,omitempty" yaml:"pattern,omitempty"`
 }
 
-var pluginScopeStringMapper = map[PluginScope]string{
-	PluginScopeGlobal:      "global",
-	PluginScopeProject:     "project",
-	PluginScopeEnvironment: "environment",
+type PluginConfigSchema struct {
+	Type                 string                          `json:"type" yaml:"type"` // usually "object"
+	Required             []string                        `json:"required,omitempty" yaml:"required,omitempty"`
+	Properties           map[string]PluginSchemaProperty `json:"properties" yaml:"properties"`
+	AdditionalProperties *bool                           `json:"additional_properties,omitempty" yaml:"additional_properties,omitempty"`
+}
+
+func (p PluginConfigSchema) Parse(input string) (PluginConfigSchema, error) {
+
+	var configSchema PluginConfigSchema
+	err := json.Unmarshal([]byte(input), &configSchema)
+
+	if err != nil {
+		return PluginConfigSchema{}, fmt.Errorf("%w: %s", ErrInvalidPluginConfigSchema, configSchema)
+	}
+
+	return configSchema, nil
+}
+
+func (p PluginConfigSchema) String() string {
+	bytes, err := json.Marshal(p)
+
+	if err != nil {
+		return ""
+	}
+
+	return string(bytes)
+}
+
+func (p PluginConfigSchema) IsZero() bool {
+	return p.Type == "" && len(p.Required) == 0 && len(p.Properties) == 0
+}
+
+var pluginTypeStringMapper = map[PluginType]string{
+	PluginScaffoldRequest: "scaffold_request",
+	PluginDeployment:      "deployment",
 }
 
 var pluginRuntimeStringMapper = map[PluginRuntime]string{
@@ -53,13 +87,13 @@ var pluginRuntimeStringMapper = map[PluginRuntime]string{
 	PluginRuntimeNode:   "node",
 }
 
-func (s PluginType) String() string {
-	return pluginTypeStringMapper[s]
+func (pt PluginType) String() string {
+	return pluginTypeStringMapper[pt]
 }
 
-func (s PluginType) IsValid() bool {
-	switch s {
-	case PluginScaffolder, PluginDeployer, PluginReleaser:
+func (pt PluginType) IsValid() bool {
+	switch pt {
+	case PluginScaffoldRequest, PluginDeployment:
 		return true
 	default:
 		return false
@@ -67,37 +101,14 @@ func (s PluginType) IsValid() bool {
 }
 
 // Parse parses a string into a PluginType. It returns an error if the string is not a valid PluginType.
-func (s PluginType) Parse(role string) (PluginType, error) {
-	pluginType := PluginType(role)
+func (pt PluginType) Parse(input string) (PluginType, error) {
+	pluginType := PluginType(input)
 
 	if !pluginType.IsValid() {
-		return "", fmt.Errorf("%w: %s", ErrInvalidPluginType, role)
+		return "", fmt.Errorf("%w: %s", ErrInvalidPluginType, pluginType)
 	}
 
 	return pluginType, nil
-}
-
-func (s PluginScope) String() string {
-	return pluginScopeStringMapper[s]
-}
-
-func (s PluginScope) IsValid() bool {
-	switch s {
-	case PluginScopeGlobal, PluginScopeProject, PluginScopeEnvironment:
-		return true
-	default:
-		return false
-	}
-}
-
-func (s PluginScope) Parse(scope string) (PluginScope, error) {
-	pluginScope := PluginScope(scope)
-
-	if !pluginScope.IsValid() {
-		return "", fmt.Errorf("%w: %s", ErrInvalidPluginScope, scope)
-	}
-
-	return pluginScope, nil
 }
 
 func (s PluginRuntime) String() string {
@@ -124,16 +135,16 @@ func (s PluginRuntime) Parse(runtime string) (PluginRuntime, error) {
 }
 
 type Plugin struct {
-	ID          uuid.UUID
-	Name        string
-	Version     string
-	Type        PluginType
-	Runtime     PluginRuntime
-	Entrypoint  string
-	Enabled     bool
-	Scope       PluginScope
-	Description string
-	InstalledAt time.Time
+	ID           uuid.UUID
+	Name         string
+	Version      string
+	Type         PluginType
+	Runtime      PluginRuntime
+	Entrypoint   string
+	ConfigSchema PluginConfigSchema
+	Description  string
+	Enabled      bool
+	CreatedAt    time.Time
 }
 
 type Plugins []Plugin

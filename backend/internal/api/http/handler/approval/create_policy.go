@@ -14,21 +14,17 @@ import (
 
 type createApprovalPolicyRequest struct {
 	Resource          string  `json:"resource" binding:"required"`
-	Action            string  `json:"action" binding:"required"`
-	ProjectID         *string `json:"project_id"`
 	ServiceID         *string `json:"service_id"`
-	Environment       *string `json:"environment"`
+	EnvironmentID     string  `json:"environment_id" binding:"required"`
 	RequiredApprovals int     `json:"required_approvals" binding:"required"`
-	Enabled           *bool   `json:"enabled"`
+	Enabled           bool    `json:"enabled" binding:"required"`
 }
 
 type createApprovalPolicyResponse struct {
 	ID                string `json:"id"`
 	Resource          string `json:"resource"`
-	Action            string `json:"action"`
-	ProjectID         string `json:"project_id,omitempty"`
 	ServiceID         string `json:"service_id,omitempty"`
-	Environment       string `json:"environment,omitempty"`
+	EnvironmentID     string `json:"environment_id"`
 	RequiredApprovals int    `json:"required_approvals"`
 	Enabled           bool   `json:"enabled"`
 }
@@ -53,10 +49,8 @@ func (h *approvalHandler) CreateApprovalPolicy(c *gin.Context) {
 
 	policy, err := h.approvalUsecase.CreateApprovalPolicy(c.Request.Context(), approvalUsecase.CreateApprovalPolicyInput{
 		Resource:          input.Resource,
-		Action:            input.Action,
-		ProjectID:         input.ProjectID,
 		ServiceID:         input.ServiceID,
-		Environment:       input.Environment,
+		EnvironmentID:     input.EnvironmentID,
 		RequiredApprovals: input.RequiredApprovals,
 		Enabled:           input.Enabled,
 	})
@@ -76,18 +70,9 @@ func (h *approvalHandler) newCreateApprovalPolicyResponse(policy *entity.Approva
 	response := createApprovalPolicyResponse{
 		ID:                policy.ID.String(),
 		Resource:          policy.Resource,
-		Action:            policy.Action,
+		EnvironmentID:     policy.EnvironmentID.String(),
 		RequiredApprovals: policy.RequiredApprovals,
 		Enabled:           policy.Enabled,
-	}
-	if policy.ProjectID != nil {
-		response.ProjectID = policy.ProjectID.String()
-	}
-	if policy.ServiceID != nil {
-		response.ServiceID = policy.ServiceID.String()
-	}
-	if policy.Environment != nil {
-		response.Environment = *policy.Environment
 	}
 
 	return response

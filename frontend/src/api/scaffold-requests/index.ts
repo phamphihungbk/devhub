@@ -14,8 +14,8 @@ export function fetchProjectScaffoldRequests(projectId: string, query?: Scaffold
   return api.get<ScaffoldRequestRecord[]>(`${apiBaseURL.projects}/${projectId}/scaffold-requests`, query)
 }
 
-export function fetchScaffoldRequestById(scaffoldRequestId: string) {
-  return api.get<ScaffoldRequestRecord>(`${baseURL}/${scaffoldRequestId}`)
+export function fetchScaffoldRequestById(projectId: string, scaffoldRequestId: string) {
+  return api.get<ScaffoldRequestRecord>(`${apiBaseURL.projects}/${projectId}/scaffold-requests/${scaffoldRequestId}`)
 }
 
 export function createScaffoldRequest(projectId: string, payload: CreateScaffoldRequestPayload) {

@@ -19,7 +19,6 @@ type releasesTable struct {
 	// Columns
 	ID          postgres.ColumnString
 	ServiceID   postgres.ColumnString
-	PluginID    postgres.ColumnString
 	Tag         postgres.ColumnString
 	Target      postgres.ColumnString
 	Name        postgres.ColumnString
@@ -72,7 +71,6 @@ func newReleasesTableImpl(schemaName, tableName, alias string) releasesTable {
 	var (
 		IDColumn          = postgres.StringColumn("id")
 		ServiceIDColumn   = postgres.StringColumn("service_id")
-		PluginIDColumn    = postgres.StringColumn("plugin_id")
 		TagColumn         = postgres.StringColumn("tag")
 		TargetColumn      = postgres.StringColumn("target")
 		NameColumn        = postgres.StringColumn("name")
@@ -82,8 +80,8 @@ func newReleasesTableImpl(schemaName, tableName, alias string) releasesTable {
 		ExternalRefColumn = postgres.StringColumn("external_ref")
 		TriggeredByColumn = postgres.StringColumn("triggered_by")
 		CreatedAtColumn   = postgres.TimestampColumn("created_at")
-		allColumns        = postgres.ColumnList{IDColumn, ServiceIDColumn, PluginIDColumn, TagColumn, TargetColumn, NameColumn, StatusColumn, NotesColumn, HTMLURLColumn, ExternalRefColumn, TriggeredByColumn, CreatedAtColumn}
-		mutableColumns    = postgres.ColumnList{ServiceIDColumn, PluginIDColumn, TagColumn, TargetColumn, NameColumn, StatusColumn, NotesColumn, HTMLURLColumn, ExternalRefColumn, TriggeredByColumn, CreatedAtColumn}
+		allColumns        = postgres.ColumnList{IDColumn, ServiceIDColumn, TagColumn, TargetColumn, NameColumn, StatusColumn, NotesColumn, HTMLURLColumn, ExternalRefColumn, TriggeredByColumn, CreatedAtColumn}
+		mutableColumns    = postgres.ColumnList{ServiceIDColumn, TagColumn, TargetColumn, NameColumn, StatusColumn, NotesColumn, HTMLURLColumn, ExternalRefColumn, TriggeredByColumn, CreatedAtColumn}
 		defaultColumns    = postgres.ColumnList{IDColumn, NotesColumn, CreatedAtColumn}
 	)
 
@@ -93,7 +91,6 @@ func newReleasesTableImpl(schemaName, tableName, alias string) releasesTable {
 		//Columns
 		ID:          IDColumn,
 		ServiceID:   ServiceIDColumn,
-		PluginID:    PluginIDColumn,
 		Tag:         TagColumn,
 		Target:      TargetColumn,
 		Name:        NameColumn,

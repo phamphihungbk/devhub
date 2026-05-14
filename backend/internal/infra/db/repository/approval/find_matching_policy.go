@@ -24,25 +24,16 @@ func (r *approvalRepositoryImpl) FindMatchingApprovalPolicy(ctx context.Context,
 	).FROM(approvalPoliciesTable).
 		WHERE(
 			approvalPoliciesTable.Resource.EQ(postgres.String(input.Resource)).
-				AND(approvalPoliciesTable.Action.EQ(postgres.String(input.Action))).
 				AND(approvalPoliciesTable.Enabled.EQ(postgres.Bool(true))).
-				AND(
-					approvalPoliciesTable.ProjectID.IS_NULL().
-						OR(approvalPoliciesTable.ProjectID.EQ(postgres.UUID(misc.GetValue(input.ProjectID)))),
-				).
 				AND(
 					approvalPoliciesTable.ServiceID.IS_NULL().
 						OR(approvalPoliciesTable.ServiceID.EQ(postgres.UUID(misc.GetValue(input.ServiceID)))),
 				).
-				AND(
-					approvalPoliciesTable.Environment.IS_NULL().
-						OR(approvalPoliciesTable.Environment.EQ(postgres.String(misc.GetValue(input.Environment)))),
-				),
+				AND(approvalPoliciesTable.EnvironmentID.EQ(postgres.UUID(input.EnvironmentID))),
 		).
 		ORDER_BY(
 			postgres.Raw("CASE WHEN service_id IS NULL THEN 0 ELSE 1 END DESC"),
-			postgres.Raw("CASE WHEN project_id IS NULL THEN 0 ELSE 1 END DESC"),
-			postgres.Raw("CASE WHEN environment IS NULL THEN 0 ELSE 1 END DESC"),
+			postgres.Raw("CASE WHEN environment_id IS NULL THEN 0 ELSE 1 END DESC"),
 			approvalPoliciesTable.UpdatedAt.DESC(),
 			approvalPoliciesTable.CreatedAt.DESC(),
 		).

@@ -100,13 +100,69 @@ func (u *approvalUsecase) CreateApprovalDecision(ctx context.Context, input Crea
 	if decisionType == entity.ApprovalDecisionApprove && updatedRequest.Status == entity.ApprovalRequestStatusApproved && updatedRequest.Resource == "scaffold_request" {
 		now := misc.GetValue(resolvedAt)
 		scaffoldStatus := entity.ScaffoldRequestApproved
-		if _, err := u.scaffoldRequestRepository.UpdateOne(ctx, repository.UpdateScaffoldRequestInput{
+		updatedScaffoldRequest, err := u.scaffoldRequestRepository.UpdateOne(ctx, repository.UpdateScaffoldRequestInput{
 			ID:         updatedRequest.ResourceID,
 			Status:     &scaffoldStatus,
 			ApprovedBy: &decidedBy,
 			ApprovedAt: &now,
-		}); err != nil {
+		})
+		if err != nil {
 			return nil, misc.WrapError(err, errs.NewInternalServerError("failed to update scaffold request after approval", nil))
+		}
+		if _, err := u.jobRepository.CreateOne(ctx, &entity.Job{
+			Type:         entity.JobTypeScaffold,
+			Status:       entity.JobStatusQueued,
+			ResourceType: entity.JobResourceTypeScaffoldRequest,
+			ResourceID:   updatedScaffoldRequest.ID,
+			PluginID:     updatedScaffoldRequest.PluginID,
+			Payload: entity.JobPayload{
+				Action:    entity.JobTypeScaffold.String(),
+				Variables: updatedScaffoldRequest.Variables,
+			},
+			CreatedBy: updatedRequest.RequestedBy,
+		}); err != nil {
+			return nil, misc.WrapError(err, errs.NewInternalServerError("failed to create scaffold job after approval", nil))
+		}
+	}
+	if decisionType == entity.ApprovalDecisionApprove && updatedRequest.Status == entity.ApprovalRequestStatusApproved && updatedRequest.Resource == "deployment" {
+		deployment, err := u.deploymentRepository.FindOne(ctx, updatedRequest.ResourceID)
+		if err != nil {
+			return nil, misc.WrapError(err, errs.NewInternalServerError("failed to find deployment after approval", nil))
+		}
+		release, err := u.releaseRepository.FindOne(ctx, deployment.ReleaseID)
+		if err != nil {
+			return nil, misc.WrapError(err, errs.NewInternalServerError("failed to find deployment release after approval", nil))
+		}
+		service, err := u.serviceRepository.FindOne(ctx, deployment.ServiceID)
+		if err != nil {
+			return nil, misc.WrapError(err, errs.NewInternalServerError("failed to find deployment service after approval", nil))
+		}
+		environment, err := u.environmentRepository.FindOne(ctx, deployment.EnvironmentID)
+		if err != nil {
+			return nil, misc.WrapError(err, errs.NewInternalServerError("failed to find deployment environment after approval", nil))
+		}
+		if _, err := u.jobRepository.CreateOne(ctx, &entity.Job{
+			Type:         entity.JobTypeDeployment,
+			Status:       entity.JobStatusQueued,
+			ResourceType: entity.JobResourceTypeDeployment,
+			ResourceID:   deployment.ID,
+			PluginID:     deployment.PluginID,
+			Payload: entity.JobPayload{
+				Action: entity.JobTypeDeployment.String(),
+				Variables: map[string]interface{}{
+					"deployment_id": deployment.ID.String(),
+					"project_id":    service.ProjectID.String(),
+					"service_id":    service.ID.String(),
+					"plugin_id":     deployment.PluginID.String(),
+					"service":       service.Name,
+					"environment":   environment.Name,
+					"version":       release.Tag,
+					"repo_url":      service.RepoURL,
+				},
+			},
+			CreatedBy: updatedRequest.RequestedBy,
+		}); err != nil {
+			return nil, misc.WrapError(err, errs.NewInternalServerError("failed to create deployment job after approval", nil))
 		}
 	}
 

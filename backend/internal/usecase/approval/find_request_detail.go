@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"slices"
 	"strings"
 	"time"
@@ -64,7 +63,7 @@ func (u *approvalUsecase) FindApprovalRequestDetail(ctx context.Context, input F
 		return nil, err
 	}
 
-	resourceName, scope := u.describeApprovalTarget(ctx, request)
+	resourceName := entity.ApprovalResource(request.Resource).String()
 	actorNames := u.loadApprovalActorNames(ctx, request, decisions)
 	requestedByName := actorNames[request.RequestedBy]
 
@@ -72,7 +71,6 @@ func (u *approvalUsecase) FindApprovalRequestDetail(ctx context.Context, input F
 		ApprovalRequest: request,
 		ResourceName:    resourceName,
 		RequestedByName: requestedByName,
-		Scope:           scope,
 		ActorNames:      actorNames,
 		Decisions:       decisions,
 		AuditEvents:     newApprovalAuditEvents(request, decisions, actorNames),
@@ -109,13 +107,13 @@ func newApprovalAuditEvents(request *entity.ApprovalRequest, decisions []entity.
 		})
 	}
 
-	if request.ResolvedAt != nil {
+	if request.Status != entity.ApprovalRequestStatusPending && !request.ResolvedAt.IsZero() {
 		events = append(events, ApprovalAuditEvent{
 			Type:      "resolved",
 			ActorID:   request.RequestedBy,
 			ActorName: actorNames[request.RequestedBy],
 			Summary:   "Approval request resolved as " + request.Status.String(),
-			CreatedAt: *request.ResolvedAt,
+			CreatedAt: request.ResolvedAt,
 		})
 	}
 
@@ -158,93 +156,15 @@ func (u *approvalUsecase) loadApprovalActorNames(ctx context.Context, request *e
 	return actorNames
 }
 
-func (u *approvalUsecase) describeApprovalTarget(ctx context.Context, request *entity.ApprovalRequest) (string, string) {
-	if request == nil {
-		return "", "Global"
+func (u *approvalUsecase) environmentName(ctx context.Context, id uuid.UUID) string {
+	if id == uuid.Nil {
+		return ""
 	}
 
-	resourceName := request.ResourceID.String()
-	scope := u.formatApprovalScope(ctx, request.ProjectID, request.ServiceID, request.Environment)
-
-	switch entity.ApprovalResource(request.Resource) {
-	case entity.ApprovalResourceScaffoldRequest:
-		scaffoldRequest, err := u.scaffoldRequestRepository.FindOne(ctx, request.ResourceID)
-		if err == nil && scaffoldRequest != nil {
-			if strings.TrimSpace(scaffoldRequest.Variables.ServiceName) != "" {
-				resourceName = scaffoldRequest.Variables.ServiceName
-			}
-			if scope == "Global" {
-				env := scaffoldRequest.Environment.String()
-				scope = u.formatApprovalScope(ctx, &scaffoldRequest.ProjectID, nil, &env)
-			}
-		}
-	case entity.ApprovalResourceDeployment:
-		deployment, err := u.deploymentRepository.FindOne(ctx, request.ResourceID)
-		if err == nil && deployment != nil {
-			serviceName := deployment.ServiceID.String()
-			if service, err := u.serviceRepository.FindOne(ctx, deployment.ServiceID); err == nil && service != nil {
-				serviceName = service.Name
-			}
-			resourceName = fmt.Sprintf("%s %s to %s", serviceName, deployment.Version, deployment.Environment.String())
-			if scope == "Global" {
-				env := deployment.Environment.String()
-				scope = u.formatApprovalScope(ctx, nil, &deployment.ServiceID, &env)
-			}
-		}
-	case entity.ApprovalResourceRelease:
-		release, err := u.releaseRepository.FindOne(ctx, request.ResourceID)
-		if err == nil && release != nil {
-			serviceName := release.ServiceID.String()
-			if service, err := u.serviceRepository.FindOne(ctx, release.ServiceID); err == nil && service != nil {
-				serviceName = service.Name
-			}
-			name := release.Tag
-			if strings.TrimSpace(release.Name) != "" {
-				name = release.Name
-			}
-			resourceName = fmt.Sprintf("%s %s", serviceName, name)
-			if scope == "Global" {
-				scope = u.formatApprovalScope(ctx, nil, &release.ServiceID, nil)
-			}
-		}
+	environment, err := u.environmentRepository.FindOne(ctx, id)
+	if err != nil || environment == nil || strings.TrimSpace(environment.Name) == "" {
+		return id.String()
 	}
 
-	return resourceName, scope
-}
-
-func (u *approvalUsecase) formatApprovalScope(ctx context.Context, projectID *uuid.UUID, serviceID *uuid.UUID, environment *string) string {
-	parts := make([]string, 0, 3)
-
-	if projectID != nil {
-		projectName := projectID.String()
-		if project, err := u.projectRepository.FindOne(ctx, *projectID); err == nil && project != nil {
-			projectName = project.Name
-		}
-		parts = append(parts, projectName)
-	}
-
-	if serviceID != nil {
-		serviceName := serviceID.String()
-		if service, err := u.serviceRepository.FindOne(ctx, *serviceID); err == nil && service != nil {
-			serviceName = service.Name
-			if projectID == nil {
-				projectName := service.ProjectID.String()
-				if project, err := u.projectRepository.FindOne(ctx, service.ProjectID); err == nil && project != nil {
-					projectName = project.Name
-				}
-				parts = append(parts, projectName)
-			}
-		}
-		parts = append(parts, serviceName)
-	}
-
-	if environment != nil && strings.TrimSpace(*environment) != "" {
-		parts = append(parts, strings.TrimSpace(*environment))
-	}
-
-	if len(parts) == 0 {
-		return "Global"
-	}
-
-	return strings.Join(parts, " / ")
+	return environment.Name
 }

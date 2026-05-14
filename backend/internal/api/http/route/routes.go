@@ -79,6 +79,7 @@ func (r *router) RegisterRoutes(router *gin.Engine) {
 	r.applyProjectRoutes(router)
 	r.applyScaffoldRequestRoutes(router)
 	r.applyDeploymentRoutes(router)
+	r.applyReleaseRoutes(router)
 	r.applyPluginRoutes(router)
 }
 
@@ -201,10 +202,18 @@ func (r *router) applyProjectRoutes(router *gin.Engine) {
 			r.DeploymentHandler.CreateDeployment,
 		)
 		serviceRoute.GET("/:service/releases", r.ReleaseHandler.FindAllReleases)
-		serviceProtectedRoute.POST("/:service/releases",
-			r.Middleware.RequirePermissions(entity.PermissionReleaseWrite),
-			r.ReleaseHandler.CreateRelease,
-		)
+	}
+}
+
+func (r *router) applyReleaseRoutes(router *gin.Engine) {
+	releaseRoute := router.Group("/releases")
+	{
+		releaseRoute.POST("/", r.ReleaseHandler.CreateRelease)
+	}
+
+	webhookRoute := router.Group("/webhooks/ci")
+	{
+		webhookRoute.POST("/releases", r.ReleaseHandler.CreateReleaseFromCI)
 	}
 }
 
@@ -227,7 +236,7 @@ func (r *router) applyScaffoldRequestRoutes(router *gin.Engine) {
 			r.ScaffoldRequestHandler.SuggestScaffoldRequest,
 		)
 
-		scaffoldRequestRoute.GET("/:scaffold-request", r.ScaffoldRequestHandler.FindScaffoldRequestByID)
+		projectRoute.GET("/scaffold-requests/:scaffold-request", r.ScaffoldRequestHandler.FindScaffoldRequestByID)
 		scaffoldRequestProtectedRoute.DELETE("/:scaffold-request",
 			r.Middleware.RequirePermissions(entity.PermissionScaffoldRequestWrite),
 			r.ScaffoldRequestHandler.DeleteScaffoldRequest,
@@ -260,22 +269,14 @@ func (r *router) applyPluginRoutes(router *gin.Engine) {
 	pluginProtectedRoute.Use(r.Middleware.Auth(r.tokenCfg.Secret))
 	{
 		pluginRoute.GET("/", r.PluginHandler.FindAllPlugins)
-		pluginProtectedRoute.POST("/",
-			r.Middleware.RequirePermissions(entity.PermissionPluginWrite),
-			r.PluginHandler.CreatePlugin,
-		)
+		pluginRoute.GET("/:plugin", r.PluginHandler.FindPluginByID)
 		pluginProtectedRoute.POST("/sync",
 			r.Middleware.RequirePermissions(entity.PermissionPluginWrite),
 			r.PluginHandler.SyncPlugins,
 		)
-		pluginRoute.GET("/:plugin", r.PluginHandler.FindPluginByID)
-		pluginProtectedRoute.DELETE("/:plugin",
+		pluginProtectedRoute.PATCH("/:plugin/disable",
 			r.Middleware.RequirePermissions(entity.PermissionPluginWrite),
-			r.PluginHandler.DeletePlugin,
-		)
-		pluginProtectedRoute.PATCH("/:plugin",
-			r.Middleware.RequirePermissions(entity.PermissionPluginWrite),
-			r.PluginHandler.UpdatePlugin,
+			r.PluginHandler.DisablePlugin,
 		)
 	}
 }

@@ -15,26 +15,30 @@ func (c *Plugin) ToEntity() *entity.Plugin {
 	if err != nil {
 		return nil
 	}
-	pluginScope, err := new(entity.PluginScope).Parse(c.Scope)
-	if err != nil {
-		return nil
-	}
 	pluginRuntime, err := new(entity.PluginRuntime).Parse(c.Runtime)
 	if err != nil {
 		return nil
 	}
 
+	var configSchema entity.PluginConfigSchema
+	if c.ConfigSchema != nil {
+		configSchema, err = new(entity.PluginConfigSchema).Parse(*c.ConfigSchema)
+		if err != nil {
+			return nil
+		}
+	}
+
 	return &entity.Plugin{
-		ID:          c.ID,
-		Name:        c.Name,
-		Version:     c.Version,
-		Type:        pluginType,
-		Runtime:     pluginRuntime,
-		Entrypoint:  c.Entrypoint,
-		Enabled:     c.Enabled,
-		Scope:       pluginScope,
-		Description: misc.GetValue(c.Description),
-		InstalledAt: c.InstalledAt,
+		ID:           c.ID,
+		Name:         c.Name,
+		Version:      c.Version,
+		Type:         pluginType,
+		Runtime:      pluginRuntime,
+		Entrypoint:   c.Entrypoint,
+		ConfigSchema: configSchema,
+		Description:  misc.GetValue(c.Description),
+		Enabled:      c.Enabled,
+		CreatedAt:    c.CreatedAt,
 	}
 }
 

@@ -104,7 +104,7 @@ func (u *authUsecase) IssueAccessToken(ctx context.Context, user *entity.User) (
 	now := time.Now()
 	claims := (entity.AccessToken{
 		UserID:    user.ID,
-		Role:      user.Role,
+		Roles:     user.Roles,
 		IssuedAt:  now,
 		Issuer:    u.tokenConfig.Issuer,
 		ExpiresAt: now.Add(time.Duration(u.tokenConfig.Duration) * time.Second),

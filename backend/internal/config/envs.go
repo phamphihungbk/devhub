@@ -18,6 +18,7 @@ const (
 	AdminAPISecret      = "ADMIN_API_SECRET" // #nosec G101
 	AppTimezoneKey      = "APP_TIMEZONE"
 	SeatLockTTLKey      = "SEAT_LOCK_TTL"
+	WebhookTokenKey     = "WEBHOOK_TOKEN" // #nosec G101
 )
 
 // Database configuration environment variable keys
@@ -77,6 +78,7 @@ var configDefaults = map[string]any{
 	AppTimezoneKey:      "Asia/Hanoi",
 	ServiceErrPrefixKey: "TR",
 	SeatLockTTLKey:      "300s",
+	WebhookTokenKey:     "",
 
 	// Database configuration
 	DatabaseURLKey:             "postgres://devhub:devhubpass@devhub-db:5432/devhub?sslmode=disable",

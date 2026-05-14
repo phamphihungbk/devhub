@@ -14,19 +14,20 @@ var (
 type DeploymentStatus string
 
 const (
-	DeploymentStatusPending    DeploymentStatus = "pending"
-	DeploymentStatusRunning    DeploymentStatus = "running"
-	DeploymentStatusCompleted  DeploymentStatus = "completed"
-	DeploymentStatusFailed     DeploymentStatus = "failed"
-	DeploymentStatusRolledBack DeploymentStatus = "rolled_back"
+	DeploymentStatusPending   DeploymentStatus = "pending"
+	DeploymentStatusRunning   DeploymentStatus = "running"
+	DeploymentStatusCompleted DeploymentStatus = "completed"
+	DeploymentStatusFailed    DeploymentStatus = "failed"
+	// TODO: do we need this status, also update validation from usecase
+	// DeploymentStatusRolledBack DeploymentStatus = "rolled_back"
 )
 
 var deploymentStatusStringMapper = map[DeploymentStatus]string{
-	DeploymentStatusPending:    "pending",
-	DeploymentStatusRunning:    "running",
-	DeploymentStatusCompleted:  "completed",
-	DeploymentStatusFailed:     "failed",
-	DeploymentStatusRolledBack: "rolled_back",
+	DeploymentStatusPending:   "pending",
+	DeploymentStatusRunning:   "running",
+	DeploymentStatusCompleted: "completed",
+	DeploymentStatusFailed:    "failed",
+	// DeploymentStatusRolledBack: "rolled_back",
 }
 
 func (s DeploymentStatus) String() string {
@@ -35,7 +36,7 @@ func (s DeploymentStatus) String() string {
 
 func (s DeploymentStatus) IsValid() bool {
 	switch s {
-	case DeploymentStatusPending, DeploymentStatusRunning, DeploymentStatusCompleted, DeploymentStatusFailed, DeploymentStatusRolledBack:
+	case DeploymentStatusPending, DeploymentStatusRunning, DeploymentStatusCompleted, DeploymentStatusFailed:
 		return true
 	default:
 		return false
@@ -53,20 +54,20 @@ func (s DeploymentStatus) Parse(status string) (DeploymentStatus, error) {
 }
 
 type Deployment struct {
-	ID           uuid.UUID
-	ServiceID    uuid.UUID
-	PluginID     uuid.UUID
-	Environment  ProjectEnvironment
-	Version      string
-	Status       DeploymentStatus
-	ExternalRef  string
-	CommitSHA    string
-	RunnerOutput string
-	RunnerError  string
-	TriggeredBy  uuid.UUID
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	FinishedAt   *time.Time
+	ID            uuid.UUID
+	ServiceID     uuid.UUID
+	EnvironmentID uuid.UUID
+	ReleaseID     uuid.UUID
+	PluginID      uuid.UUID
+	Version       string
+	Status        DeploymentStatus
+	ExternalRef   string
+	CommitSHA     string
+	TriggeredBy   uuid.UUID
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	StartedAt     time.Time
+	FinishedAt    time.Time
 }
 
 type Deployments []Deployment

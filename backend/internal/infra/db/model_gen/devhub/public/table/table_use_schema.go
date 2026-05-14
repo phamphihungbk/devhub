@@ -14,6 +14,8 @@ func UseSchema(schema string) {
 	ApprovalPolicies = ApprovalPolicies.FromSchema(schema)
 	ApprovalRequests = ApprovalRequests.FromSchema(schema)
 	Deployments = Deployments.FromSchema(schema)
+	Environments = Environments.FromSchema(schema)
+	Jobs = Jobs.FromSchema(schema)
 	Permissions = Permissions.FromSchema(schema)
 	Plugins = Plugins.FromSchema(schema)
 	Projects = Projects.FromSchema(schema)
@@ -25,5 +27,6 @@ func UseSchema(schema string) {
 	SchemaMigrations = SchemaMigrations.FromSchema(schema)
 	Services = Services.FromSchema(schema)
 	Teams = Teams.FromSchema(schema)
+	UserRoles = UserRoles.FromSchema(schema)
 	Users = Users.FromSchema(schema)
 }

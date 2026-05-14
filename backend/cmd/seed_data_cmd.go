@@ -60,76 +60,53 @@ type seedUser struct {
 }
 
 var seedRoles = []seedRole{
-	{Name: "platform_admin", Description: "Full platform administration access"},
-	{Name: "org_admin", Description: "Organization-wide administration access"},
-	{Name: "team_lead", Description: "Team-level control plane management"},
-	{Name: "developer", Description: "Developer access for scaffold, release, and deploy actions"},
-	{Name: "viewer", Description: "Read-only access"},
+	{Name: entity.RolePlatformAdmin.String(), Description: "Full platform administration access"},
+	{Name: entity.RoleOrgAdmin.String(), Description: "Organization-wide administration access"},
+	{Name: entity.RoleTeamLead.String(), Description: "Team-level control plane management"},
+	{Name: entity.RoleDeveloper.String(), Description: "Developer access for scaffold, release, and deploy actions"},
+	{Name: entity.RoleViewer.String(), Description: "Read-only access"},
 }
 
 var seedPermissions = []seedPermission{
-	{Name: "user.read", Description: "Read user records"},
-	{Name: "user.write", Description: "Create, update, and delete users"},
-	{Name: "project.write", Description: "Create, update, and delete projects"},
-	{Name: "scaffold_request.write", Description: "Create and delete scaffold requests"},
-	{Name: "release.write", Description: "Create releases"},
-	{Name: "deployment.write", Description: "Create, update, and delete deployments"},
-	{Name: "plugin.write", Description: "Create, update, and delete plugins"},
+	{Name: entity.PermissionUserRead.String(), Description: "Read user records"},
+	{Name: entity.PermissionUserWrite.String(), Description: "Create, update, and delete users"},
+	{Name: entity.PermissionProjectWrite.String(), Description: "Create, update, and delete projects"},
+	{Name: entity.PermissionScaffoldRequestWrite.String(), Description: "Create and delete scaffold requests"},
+	{Name: entity.PermissionReleaseWrite.String(), Description: "Create releases"},
+	{Name: entity.PermissionDeploymentWrite.String(), Description: "Create, update, and delete deployments"},
+	{Name: entity.PermissionPluginWrite.String(), Description: "Create, update, and delete plugins"},
 }
 
 var seedRolePermissions = map[string][]string{
-	"platform_admin": {
-		"user.read",
-		"user.write",
-		"project.write",
-		"scaffold_request.write",
-		"release.write",
-		"deployment.write",
-		"plugin.write",
+	entity.RolePlatformAdmin.String(): {
+		entity.PermissionUserRead.String(),
+		entity.PermissionUserWrite.String(),
+		entity.PermissionProjectWrite.String(),
+		entity.PermissionScaffoldRequestWrite.String(),
+		entity.PermissionReleaseWrite.String(),
+		entity.PermissionDeploymentWrite.String(),
+		entity.PermissionPluginWrite.String(),
 	},
-	"org_admin": {
-		"user.read",
-		"user.write",
-		"project.write",
-		"scaffold_request.write",
-		"release.write",
-		"deployment.write",
+	entity.RoleOrgAdmin.String(): {
+		entity.PermissionUserRead.String(),
+		entity.PermissionUserWrite.String(),
+		entity.PermissionProjectWrite.String(),
+		entity.PermissionScaffoldRequestWrite.String(),
+		entity.PermissionReleaseWrite.String(),
+		entity.PermissionDeploymentWrite.String(),
 	},
-	"team_lead": {
-		"project.write",
-		"scaffold_request.write",
-		"release.write",
-		"deployment.write",
+	entity.RoleTeamLead.String(): {
+		entity.PermissionProjectWrite.String(),
+		entity.PermissionScaffoldRequestWrite.String(),
+		entity.PermissionReleaseWrite.String(),
+		entity.PermissionDeploymentWrite.String(),
 	},
-	"developer": {
-		"scaffold_request.write",
-		"release.write",
-		"deployment.write",
+	entity.RoleDeveloper.String(): {
+		entity.PermissionScaffoldRequestWrite.String(),
+		entity.PermissionReleaseWrite.String(),
+		entity.PermissionDeploymentWrite.String(),
 	},
-	"viewer": {},
-}
-
-var seedApprovalPolicies = []seedApprovalPolicy{
-	{
-		Resource:          entity.ApprovalResourceScaffoldRequest.String(),
-		Action:            entity.ApprovalActionCreate.String(),
-		RequiredApprovals: 1,
-		Enabled:           true,
-	},
-	{
-		Resource:          entity.ApprovalResourceRelease.String(),
-		Action:            entity.ApprovalActionCreate.String(),
-		Environment:       stringPtr("prod"),
-		RequiredApprovals: 1,
-		Enabled:           true,
-	},
-	{
-		Resource:          entity.ApprovalResourceDeployment.String(),
-		Action:            entity.ApprovalActionCreate.String(),
-		Environment:       stringPtr("prod"),
-		RequiredApprovals: 1,
-		Enabled:           true,
-	},
+	entity.RoleViewer.String(): {},
 }
 
 var seedTeams = []seedTeam{
@@ -181,10 +158,6 @@ var seedUsers = []seedUser{
 	},
 }
 
-func stringPtr(value string) *string {
-	return &value
-}
-
 func runSeedCmd(cmd *cobra.Command, args []string) error {
 	cfg := config.MustConfigure()
 	dbConn := infraDB.MustConnect(cfg)
@@ -211,28 +184,6 @@ func runSeedCmd(cmd *cobra.Command, args []string) error {
 				updated_at = now()
 		`, team.Name, team.OwnerContact); err != nil {
 			return fmt.Errorf("seed team %q: %w", team.Name, err)
-		}
-	}
-
-	for _, user := range seedUsers {
-		passwordHash, err := misc.HashPassword(user.Password)
-		if err != nil {
-			return fmt.Errorf("hash password for %q: %w", user.Email, err)
-		}
-
-		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO users (name, email, password_hash, role, team_id)
-			SELECT $1, $2, $3, $4, t.id
-			FROM teams t
-			WHERE t.name = $5
-			ON CONFLICT (email) DO UPDATE
-			SET name = EXCLUDED.name,
-				password_hash = EXCLUDED.password_hash,
-				role = EXCLUDED.role,
-				team_id = EXCLUDED.team_id,
-				updated_at = now()
-		`, user.Name, user.Email, passwordHash, user.Role, user.TeamName); err != nil {
-			return fmt.Errorf("seed user %q: %w", user.Email, err)
 		}
 	}
 
@@ -271,43 +222,44 @@ func runSeedCmd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	for _, policy := range seedApprovalPolicies {
-		if _, err := tx.ExecContext(ctx, `
-			UPDATE approval_policies
-			SET required_approvals = $4::int,
-				enabled = $5::boolean,
-				updated_at = now()
-			WHERE resource = $1::varchar
-				AND action = $2::varchar
-				AND project_id IS NULL
-				AND service_id IS NULL
-				AND environment IS NOT DISTINCT FROM $3::varchar
-		`, policy.Resource, policy.Action, policy.Environment, policy.RequiredApprovals, policy.Enabled); err != nil {
-			return fmt.Errorf("update approval policy %q/%q: %w", policy.Resource, policy.Action, err)
+	for _, user := range seedUsers {
+		passwordHash, err := misc.HashPassword(user.Password)
+		if err != nil {
+			return fmt.Errorf("hash password for %q: %w", user.Email, err)
 		}
 
 		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO approval_policies (
-				resource,
-				action,
-				project_id,
-				service_id,
-				environment,
-				required_approvals,
-				enabled
-			)
-			SELECT $1::varchar, $2::varchar, NULL, NULL, $3::varchar, $4::int, $5::boolean
-			WHERE NOT EXISTS (
-				SELECT 1
-				FROM approval_policies
-				WHERE resource = $1::varchar
-					AND action = $2::varchar
-					AND project_id IS NULL
-					AND service_id IS NULL
-					AND environment IS NOT DISTINCT FROM $3::varchar
-			)
-		`, policy.Resource, policy.Action, policy.Environment, policy.RequiredApprovals, policy.Enabled); err != nil {
-			return fmt.Errorf("seed approval policy %q/%q: %w", policy.Resource, policy.Action, err)
+			INSERT INTO users (name, email, password_hash, team_id)
+			SELECT $1, $2, $3, t.id
+			FROM teams t
+			WHERE t.name = $4
+			ON CONFLICT (email) DO UPDATE
+			SET name = EXCLUDED.name,
+				password_hash = EXCLUDED.password_hash,
+				team_id = EXCLUDED.team_id,
+				updated_at = now()
+		`, user.Name, user.Email, passwordHash, user.TeamName); err != nil {
+			return fmt.Errorf("seed user %q: %w", user.Email, err)
+		}
+
+		if _, err := tx.ExecContext(ctx, `
+			DELETE FROM user_roles ur
+			USING users u
+			WHERE ur.user_id = u.id
+				AND u.email = $1
+		`, user.Email); err != nil {
+			return fmt.Errorf("clear user roles for %q: %w", user.Email, err)
+		}
+
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO user_roles (user_id, role_id)
+			SELECT u.id, r.id
+			FROM users u
+			JOIN roles r ON r.name = $2
+			WHERE u.email = $1
+			ON CONFLICT (user_id, role_id) DO NOTHING
+		`, user.Email, user.Role); err != nil {
+			return fmt.Errorf("seed user role %q -> %q: %w", user.Email, user.Role, err)
 		}
 	}
 
@@ -316,6 +268,6 @@ func runSeedCmd(cmd *cobra.Command, args []string) error {
 	}
 	tx = nil
 
-	fmt.Fprintln(cmd.OutOrStdout(), "seed complete")
+	fmt.Fprintln(cmd.OutOrStdout(), "Seed complete.")
 	return nil
 }

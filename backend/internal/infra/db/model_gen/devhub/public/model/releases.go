@@ -15,7 +15,6 @@ import (
 type Releases struct {
 	ID          uuid.UUID `sql:"primary_key" db:"releases.id"`
 	ServiceID   uuid.UUID `db:"releases.service_id"`
-	PluginID    uuid.UUID `db:"releases.plugin_id"`
 	Tag         string    `db:"releases.tag"`
 	Target      string    `db:"releases.target"`
 	Name        string    `db:"releases.name"`

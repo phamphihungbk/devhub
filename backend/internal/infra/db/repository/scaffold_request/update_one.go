@@ -24,10 +24,6 @@ func (r *scaffoldRequestRepositoryImpl) UpdateOne(ctx context.Context, input rep
 	updateModel := model.ScaffoldRequests{}
 	columns := make(postgres.ColumnList, 0)
 
-	if input.PluginID != nil {
-		updateModel.PluginID = *input.PluginID
-		columns = append(columns, scaffoldRequestsTable.PluginID)
-	}
 	if input.ProjectID != nil {
 		updateModel.ProjectID = *input.ProjectID
 		columns = append(columns, scaffoldRequestsTable.ProjectID)
@@ -40,10 +36,7 @@ func (r *scaffoldRequestRepositoryImpl) UpdateOne(ctx context.Context, input rep
 		updateModel.Status = input.Status.String()
 		columns = append(columns, scaffoldRequestsTable.Status)
 	}
-	if input.Environment != nil {
-		updateModel.Environment = input.Environment.String()
-		columns = append(columns, scaffoldRequestsTable.Environment)
-	}
+
 	if input.Variables != nil {
 		updateModel.Variables = input.Variables.String()
 		columns = append(columns, scaffoldRequestsTable.Variables)

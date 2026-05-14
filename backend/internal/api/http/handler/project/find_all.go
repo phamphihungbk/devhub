@@ -12,23 +12,22 @@ import (
 )
 
 type FindAllProjectsQuery struct {
-	StartDate *time.Time `form:"startDate" time_format:"2006-01-02"`
-	EndDate   *time.Time `form:"endDate" time_format:"2006-01-02"`
-	Limit     *int64     `form:"limit"`
-	Offset    *int64     `form:"offset"`
-	SortBy    *string    `form:"sortBy"`
-	SortOrder *string    `form:"sortOrder"`
+	StartDate   *time.Time `form:"startDate" time_format:"2006-01-02"`
+	EndDate     *time.Time `form:"endDate" time_format:"2006-01-02"`
+	OwnerTeamID *string    `form:"owner_team_id"`
+	CreatedBy   *string    `form:"created_by"`
+	Limit       *int64     `form:"limit"`
+	Offset      *int64     `form:"offset"`
+	SortBy      *string    `form:"sortBy"`
+	SortOrder   *string    `form:"sortOrder"`
 }
 
 type findAllProjectsResponse struct {
-	ID           string   `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name         string   `json:"name" example:"Project Name"`
-	Description  string   `json:"description" example:"Project Description"`
-	Environments []string `json:"environments" example:"[development, production]"`
-	Status       string   `json:"status" example:"active"`
-	TeamID       string   `json:"team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	ScmProvider  string   `json:"scm_provider" example:"gitea"`
-	CreatedBy    string   `json:"created_by" example:"Hung Pham"`
+	ID          string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name        string `json:"name" example:"Project Name"`
+	Description string `json:"description" example:"Project Description"`
+	OwnerTeamID string `json:"owner_team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	CreatedBy   string `json:"created_by" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
 // @Summary		List Projects
@@ -78,12 +77,14 @@ func (h *projectHandler) FindAllProjects(c *gin.Context) {
 	}
 
 	projects, err := h.projectUsecase.FindAllProjects(c.Request.Context(), projectUsecase.FindAllProjectsInput{
-		StartDate: query.StartDate,
-		EndDate:   query.EndDate,
-		Limit:     limit,
-		Offset:    offset,
-		SortBy:    sortBy,
-		SortOrder: sortOrder,
+		StartDate:   query.StartDate,
+		EndDate:     query.EndDate,
+		OwnerTeamID: query.OwnerTeamID,
+		CreatedBy:   query.CreatedBy,
+		Limit:       limit,
+		Offset:      offset,
+		SortBy:      sortBy,
+		SortOrder:   sortOrder,
 	})
 	if err != nil {
 		httpresponse.Error(c, err)
@@ -100,22 +101,14 @@ func (h *projectHandler) newFindAllProjectsResponse(projects entity.Projects) []
 
 	response := make([]findAllProjectsResponse, 0, len(projects))
 	for _, project := range projects {
-		envs := make([]string, 0, len(project.Environments))
-
-		for _, env := range project.Environments {
-			envs = append(envs, env.String())
-		}
-
 		response = append(response, findAllProjectsResponse{
-			ID:           project.ID.String(),
-			Name:         project.Name,
-			Description:  project.Description,
-			Environments: envs,
-			Status:       project.Status.String(),
-			TeamID:       project.TeamID.String(),
-			ScmProvider:  project.ScmProvider,
-			CreatedBy:    project.CreatedByName,
+			ID:          project.ID.String(),
+			Name:        project.Name,
+			Description: project.Description,
+			OwnerTeamID: project.OwnerTeamID.String(),
+			CreatedBy:   project.CreatedBy.String(),
 		})
 	}
+
 	return response
 }

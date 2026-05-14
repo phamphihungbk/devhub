@@ -12,27 +12,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type scaffoldVariablesRequest struct {
-	ServiceName   string `json:"service_name" binding:"required"`
-	ModulePath    string `json:"module_path" binding:"required"`
-	Port          int    `json:"port" binding:"required"`
-	Database      string `json:"database" binding:"required"`
-	EnableLogging bool   `json:"enable_logging" binding:"required"`
-}
-
 type createScaffoldRequest struct {
-	PluginID    string                   `json:"plugin_id" binding:"required"`
-	Environment string                   `json:"environment" binding:"required"`
-	Variables   scaffoldVariablesRequest `json:"variables" binding:"required"`
+	PluginID      string                 `json:"plugin_id" binding:"required"`
+	EnvironmentID string                 `json:"environment_id" binding:"required"`
+	Variables     map[string]interface{} `json:"variables" binding:"required"`
 }
 
 type createScaffoldRequestResponse struct {
 	ID          string                          `json:"id" example:"ad5b0c1f-762a-4ab3-a3e9-50a9057c49f3"`
-	PluginID    string                          `json:"plugin_id" example:"72bd5b8f-54b3-442a-b54f-685643f6d46e"`
 	RequestedBy string                          `json:"requested_by" example:"8bb6438e-b4a7-4945-9969-f446f7c26ca5"`
 	Status      string                          `json:"status" example:"pending"`
 	ProjectID   string                          `json:"project_id" example:"1a221b2c-abb7-44c0-8a96-8e92638b2422"`
-	Environment string                          `json:"environment" example:"dev"`
 	Variables   entity.ScaffoldRequestVariables `json:"variables" example:"{\"service_name\":\"payment-service\",\"port\":8080,\"database\":\"postgres\",\"enable_logging\":true}"`
 }
 
@@ -63,16 +53,15 @@ func (h *scaffoldRequestHandler) CreateScaffoldRequest(c *gin.Context) {
 		return
 	}
 
-	approvalResource, approvalAction := approvaltarget.StringsFromContext(c)
+	approvalResource, _ := approvaltarget.StringsFromContext(c)
 
 	usecaseInput := scaffoldRequestUsecase.CreateScaffoldRequestInput{
 		PluginID:         input.PluginID,
+		EnvironmentID:    input.EnvironmentID,
 		ProjectID:        projectID,
 		RequestedBy:      userID.(string),
-		Environment:      input.Environment,
-		Variables:        scaffoldRequestUsecase.ScaffoldRequestVariables(input.Variables),
+		Variables:        input.Variables,
 		ApprovalResource: approvalResource,
-		ApprovalAction:   approvalAction,
 	}
 
 	createdScaffoldRequest, err := h.scaffoldRequestUsecase.CreateScaffoldRequest(c.Request.Context(), usecaseInput)
@@ -92,11 +81,9 @@ func (h *scaffoldRequestHandler) newCreateScaffoldRequestResponse(scaffoldReques
 
 	return createScaffoldRequestResponse{
 		ID:          scaffoldRequest.ID.String(),
-		PluginID:    scaffoldRequest.PluginID.String(),
 		RequestedBy: scaffoldRequest.RequestedBy.String(),
 		Status:      scaffoldRequest.Status.String(),
 		ProjectID:   scaffoldRequest.ProjectID.String(),
-		Environment: scaffoldRequest.Environment.String(),
 		Variables:   scaffoldRequest.Variables,
 	}
 }

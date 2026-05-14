@@ -14,13 +14,12 @@ import (
 
 type ScaffoldRequests struct {
 	ID            uuid.UUID  `sql:"primary_key" db:"scaffold_requests.id"`
-	PluginID      uuid.UUID  `db:"scaffold_requests.plugin_id"`
 	ProjectID     uuid.UUID  `db:"scaffold_requests.project_id"`
+	PluginID      uuid.UUID  `db:"scaffold_requests.plugin_id"`
 	RequestedBy   uuid.UUID  `db:"scaffold_requests.requested_by"`
-	Status        string     `db:"scaffold_requests.status"`
-	Environment   string     `db:"scaffold_requests.environment"`
-	Variables     string     `db:"scaffold_requests.variables"`
 	ApprovedBy    *uuid.UUID `db:"scaffold_requests.approved_by"`
+	Status        string     `db:"scaffold_requests.status"`
+	Variables     string     `db:"scaffold_requests.variables"`
 	ResultRepoURL *string    `db:"scaffold_requests.result_repo_url"`
 	ApprovedAt    *time.Time `db:"scaffold_requests.approved_at"`
 	CreatedAt     time.Time  `db:"scaffold_requests.created_at"`

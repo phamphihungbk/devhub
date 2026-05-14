@@ -13,6 +13,8 @@ const {
   deploymentForm,
   deploymentModalOpen,
   deploymentSubmitting,
+  deploymentEnvironmentName,
+  deploymentVersion,
   environmentOptions,
   failedCount,
   filteredRows,
@@ -32,6 +34,7 @@ const {
   selectedDeployment,
   serviceOptions,
   statusOptions,
+  releaseOptions,
   submitDeployment,
 } = useDeploymentListService()
 </script>
@@ -136,14 +139,19 @@ const {
 
           <NFormItem label="Environment">
             <NSelect
-              v-model:value="deploymentForm.environment"
+              v-model:value="deploymentForm.environment_id"
               :options="deploymentEnvironmentOptions"
               placeholder="Select environment"
             />
           </NFormItem>
 
-          <NFormItem label="Version">
-            <NInput v-model:value="deploymentForm.version" placeholder="v1.0.0" />
+          <NFormItem label="Release">
+            <NSelect
+              v-model:value="deploymentForm.release_id"
+              :options="releaseOptions"
+              placeholder="Latest completed release"
+              clearable
+            />
           </NFormItem>
         </div>
       </NForm>
@@ -176,11 +184,11 @@ const {
           </div>
           <div>
             <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Environment</p>
-            <p class="mt-1 font-semibold text-[var(--app-text)]">{{ selectedDeployment?.environment || 'Unknown' }}</p>
+            <p class="mt-1 font-semibold text-[var(--app-text)]">{{ selectedDeployment ? deploymentEnvironmentName(selectedDeployment) : 'Unknown' }}</p>
           </div>
           <div>
             <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Version</p>
-            <p class="mt-1 font-semibold text-[var(--app-text)]">{{ selectedDeployment?.version || 'Unknown' }}</p>
+            <p class="mt-1 font-semibold text-[var(--app-text)]">{{ selectedDeployment ? deploymentVersion(selectedDeployment) : 'Unknown' }}</p>
           </div>
           <div>
             <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Status</p>

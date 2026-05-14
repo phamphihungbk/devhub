@@ -16,7 +16,7 @@ import (
 const RunnerName = "scaffold"
 
 type ScaffoldJob struct {
-	entity.ScaffoldRequest
+	entity.Job
 }
 
 func (j ScaffoldJob) GetID() uuid.UUID {
@@ -42,13 +42,12 @@ func NewScaffoldPollingRunner(
 	observer core.Observability,
 	cfg *config.Config,
 	pluginRepository repository.PluginRepository,
-	projectRepository repository.ProjectRepository,
-	teamRepository repository.TeamRepository,
+	jobRepository repository.JobRepository,
 	scaffoldRequestRepository repository.ScaffoldRequestRepository,
 	serviceRepository repository.ServiceRepository,
 	pollDelay time.Duration,
 ) (core.Runner, error) {
-	executor := NewPythonScaffoldExecutor(cfg, pluginRepository, projectRepository, teamRepository)
+	executor := NewPythonScaffoldExecutor(cfg, pluginRepository)
 
 	// Compose the generic polling runner from queue, state, executor, and observability adapters.
 	return core.NewPollingRunner[ScaffoldJob, ScaffoldExecutionResult](
@@ -56,8 +55,8 @@ func NewScaffoldPollingRunner(
 			Name:      RunnerName,
 			PollDelay: pollDelay,
 		},
-		NewScaffoldQueueSourceAdapter(scaffoldRequestRepository),
-		NewScaffoldStatePersistence(scaffoldRequestRepository, serviceRepository),
+		NewScaffoldQueueSourceAdapter(jobRepository),
+		NewScaffoldStatePersistence(jobRepository, scaffoldRequestRepository, serviceRepository),
 		NewScaffoldExecutorAdapter(executor),
 		observer,
 	)

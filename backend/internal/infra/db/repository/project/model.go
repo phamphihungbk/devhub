@@ -11,28 +11,14 @@ type Project struct {
 }
 
 func (c *Project) ToEntity() *entity.Project {
-	envs, err := new(entity.ProjectEnvironment).ParseList(c.Environments)
-
-	if err != nil {
-		return nil
-	}
-	status, err := new(entity.ProjectStatus).Parse(c.Status)
-	if err != nil {
-		return nil
-	}
-
 	return &entity.Project{
-		ID:           c.ID,
-		Name:         c.Name,
-		Description:  misc.GetValue(c.Description),
-		Environments: envs,
-		Status:       status,
-		TeamID:       c.TeamID,
-		ScmProvider:  c.ScmProvider,
-		CreatedBy:    c.CreatedBy,
-		CreatedAt:    c.CreatedAt,
-		UpdatedAt:    c.UpdatedAt,
-		DeletedAt:    misc.DerefTime(c.DeletedAt),
+		ID:          c.ID,
+		Name:        c.Name,
+		Description: misc.GetValue(c.Description),
+		OwnerTeamID: c.OwnerTeamID,
+		CreatedBy:   c.CreatedBy,
+		CreatedAt:   c.CreatedAt,
+		UpdatedAt:   c.UpdatedAt,
 	}
 }
 

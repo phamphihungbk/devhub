@@ -32,7 +32,6 @@ type UpdateScaffoldRequestInput struct {
 	ProjectID     *uuid.UUID
 	RequestedBy   *uuid.UUID
 	Status        *entity.ScaffoldRequestStatus
-	Environment   *entity.ProjectEnvironment
 	Variables     *entity.ScaffoldRequestVariables
 	ApprovedBy    *uuid.UUID
 	ResultRepoURL *string

@@ -21,8 +21,8 @@ func (r *userRepositoryImpl) FindOneByEmail(ctx context.Context, email string) (
 	stmt := postgres.SELECT(
 		usersTable.AllColumns,
 	).
-		FROM(table.Users).
-		WHERE(table.Users.Email.EQ(postgres.String(email)))
+		FROM(usersTable).
+		WHERE(usersTable.Email.EQ(postgres.String(email)))
 
 	query, args := stmt.Sql()
 

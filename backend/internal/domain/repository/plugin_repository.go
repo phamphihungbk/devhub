@@ -27,13 +27,13 @@ type FindAllPluginsFilter struct {
 }
 
 type UpdatePluginInput struct {
-	ID          uuid.UUID
-	Name        *string
-	Description *string
-	Type        *entity.PluginType
-	Version     *string
-	Runtime     *entity.PluginRuntime
-	Entrypoint  *string
-	Scope       *entity.PluginScope
-	Enabled     *bool
+	ID           uuid.UUID
+	Name         *string
+	Description  *string
+	Type         *entity.PluginType
+	Version      *string
+	Runtime      *entity.PluginRuntime
+	Entrypoint   *string
+	ConfigSchema *entity.PluginConfigSchema
+	Enabled      *bool
 }

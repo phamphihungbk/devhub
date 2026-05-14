@@ -13,7 +13,8 @@ import (
 )
 
 type FindOneScaffoldRequestInput struct {
-	ID string `json:"id" validate:"required,uuid4"`
+	ID        string `json:"id" validate:"required,uuid4"`
+	ProjectID string `json:"project_id" validate:"required,uuid4"`
 }
 
 func (u *scaffoldRequestUsecase) FindOneScaffoldRequest(ctx context.Context, input FindOneScaffoldRequestInput) (scaffoldRequest *entity.ScaffoldRequest, err error) {
@@ -41,6 +42,12 @@ func (u *scaffoldRequestUsecase) FindOneScaffoldRequest(ctx context.Context, inp
 		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid scaffold request ID", nil))
 	}
 
+	projectID, err := uuid.Parse(input.ProjectID)
+
+	if err != nil {
+		return nil, misc.WrapError(err, errs.NewBadRequestError("invalid project ID", nil))
+	}
+
 	scaffoldRequest, err = u.scaffoldRequestRepository.FindOne(ctx, scaffoldRequestID)
 
 	if err != nil {
@@ -48,6 +55,9 @@ func (u *scaffoldRequestUsecase) FindOneScaffoldRequest(ctx context.Context, inp
 			return nil, misc.WrapError(err, errs.NewInternalServerError("failed to find scaffold request by ID", nil))
 		}
 		return nil, err // Return the NotFoundError directly
+	}
+	if scaffoldRequest.ProjectID != projectID {
+		return nil, errs.NewNotFoundError("scaffold request not found", nil)
 	}
 
 	return scaffoldRequest, nil

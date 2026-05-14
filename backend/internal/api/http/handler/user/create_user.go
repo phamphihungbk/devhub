@@ -15,16 +15,15 @@ type createUserRequest struct {
 	Name     *string `json:"name" example:"User Name"`
 	Email    string  `json:"email" example:"user@example.com" binding:"required"`
 	Password string  `json:"password" example:"password123" binding:"required"`
-	Role     string  `json:"role" example:"developer" binding:"required"`
-	TeamID   string  `json:"team_id" example:"123e4567-e89b-12d3-a456-426614174000" binding:"required"`
+	Role     *string `json:"role" example:"developer" binding:"required"`
 }
 
 type createUserResponse struct {
-	ID     string `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
-	Name   string `json:"name" example:"User Name"`
-	Email  string `json:"email" example:"user@example.com"`
-	Role   string `json:"role" example:"platform_admin"`
-	TeamID string `json:"team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	ID     string  `json:"id" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Name   string  `json:"name" example:"User Name"`
+	Email  string  `json:"email" example:"user@example.com"`
+	Role   *string `json:"role" example:"platform_admin"`
+	TeamID string  `json:"team_id" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
 // @Summary		Create User
@@ -36,7 +35,7 @@ type createUserResponse struct {
 // @Success		201		{object}	httpresponse.SuccessResponse{data=createUserResponse,metadata=nil}	"User created"
 // @Failure		400		{object}	httpresponse.ErrorResponse{data=nil}									"Bad request"
 // @Failure		500		{object}	httpresponse.ErrorResponse{data=nil}									"Internal server error"
-// @Router			/users [post]
+// @Router			/teams/{team}/users [post]
 func (h *userHandler) CreateUser(c *gin.Context) {
 	var input createUserRequest
 
@@ -46,12 +45,12 @@ func (h *userHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
+	// TODO: assign role later, and need to fix create user
 	createdUser, err := h.userUsecase.CreateUser(c.Request.Context(), userUsecase.CreateUserInput{
 		Name:     input.Name,
 		Email:    input.Email,
-		Role:     input.Role,
 		Password: input.Password,
-		TeamID:   input.TeamID,
+		TeamID:   c.Param("team"),
 	})
 
 	if err != nil {
@@ -71,7 +70,6 @@ func (h *userHandler) newCreateUserResponse(user *entity.User) createUserRespons
 		ID:     user.ID.String(),
 		Name:   user.Name,
 		Email:  user.Email,
-		Role:   user.Role.String(),
 		TeamID: user.TeamID.String(),
 	}
 }

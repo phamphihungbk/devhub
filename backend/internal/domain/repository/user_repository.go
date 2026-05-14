@@ -16,11 +16,13 @@ type UserRepository interface {
 	UpdateOne(ctx context.Context, input UpdateUserInput) (*entity.User, error)
 	DeleteOne(ctx context.Context, id uuid.UUID) (*entity.User, error)
 	FindOneByEmail(ctx context.Context, email string) (*entity.User, error)
+	HasPermissions(ctx context.Context, userID uuid.UUID, permissions []entity.PermissionName) (bool, error)
 }
 
 type FindAllUsersFilter struct {
 	StartDate *time.Time
 	EndDate   *time.Time
+	TeamID    *uuid.UUID
 	Limit     *int64
 	Offset    *int64
 	SortBy    *string
@@ -30,6 +32,5 @@ type FindAllUsersFilter struct {
 type UpdateUserInput struct {
 	ID     uuid.UUID
 	Name   *string
-	Role   *entity.UserRole
 	TeamID *uuid.UUID
 }

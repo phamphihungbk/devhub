@@ -26,7 +26,6 @@ const statusOptions = [
   { label: 'Pending', value: 'pending' },
   { label: 'Approved', value: 'approved' },
   { label: 'Rejected', value: 'rejected' },
-  { label: 'Canceled', value: 'canceled' },
 ]
 
 const getApprovalStatusTagColor = (status: string) => {

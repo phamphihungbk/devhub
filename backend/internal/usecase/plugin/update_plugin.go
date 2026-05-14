@@ -14,15 +14,15 @@ import (
 )
 
 type UpdatePluginInput struct {
-	ID          string  `json:"id" validate:"required,uuid"`
-	Name        *string `json:"name" validate:"omitempty,min=2,max=100"`
-	Type        *string `json:"type" validate:"omitempty,oneof=scaffolder deployer releaser runner"`
-	Version     *string `json:"version" validate:"omitempty"`
-	Runtime     *string `json:"runtime" validate:"omitempty,oneof=python go node"`
-	Description *string `json:"description" validate:"omitempty"`
-	Entrypoint  *string `json:"entrypoint" validate:"omitempty,min=1,max=500"`
-	Scope       *string `json:"scope" validate:"omitempty,oneof=global project environment"`
-	Enabled     *bool   `json:"enabled"`
+	ID           string                     `json:"id" validate:"required,uuid"`
+	Name         *string                    `json:"name" validate:"omitempty,min=2,max=100"`
+	Type         *string                    `json:"type" validate:"omitempty,oneof=scaffolder deployer releaser runner"`
+	Version      *string                    `json:"version" validate:"omitempty"`
+	Runtime      *string                    `json:"runtime" validate:"omitempty,oneof=python go node"`
+	Description  *string                    `json:"description" validate:"omitempty"`
+	Entrypoint   *string                    `json:"entrypoint" validate:"omitempty,min=1,max=500"`
+	Enabled      *bool                      `json:"enabled"`
+	ConfigSchema *entity.PluginConfigSchema `json:"config_schema"`
 }
 
 func (u *pluginUsecase) UpdatePlugin(ctx context.Context, input UpdatePluginInput) (plugin *entity.Plugin, err error) {
@@ -44,33 +44,16 @@ func (u *pluginUsecase) UpdatePlugin(ctx context.Context, input UpdatePluginInpu
 		return nil, misc.WrapError(err, errs.NewBadRequestError("the request is invalid", map[string]string{"details": err.Error()}))
 	}
 
-	var pluginScope *entity.PluginScope
-	if input.Scope != nil {
-		parsedScope, err := new(entity.PluginScope).Parse(*input.Scope)
-		if err != nil {
-			return nil, misc.WrapError(err, errs.NewBadRequestError("invalid plugin scope", nil))
-		}
-		pluginScope = &parsedScope
-	}
-	var pluginRuntime *entity.PluginRuntime
-	if input.Runtime != nil {
-		parsedRuntime, err := new(entity.PluginRuntime).Parse(*input.Runtime)
-		if err != nil {
-			return nil, misc.WrapError(err, errs.NewBadRequestError("invalid plugin runtime", nil))
-		}
-		pluginRuntime = &parsedRuntime
-	}
-
 	updated, err := u.pluginRepository.UpdateOne(ctx, repository.UpdatePluginInput{
-		ID:          uuid.MustParse(input.ID),
-		Name:        input.Name,
-		Type:        (*entity.PluginType)(input.Type),
-		Version:     input.Version,
-		Runtime:     pluginRuntime,
-		Description: input.Description,
-		Entrypoint:  input.Entrypoint,
-		Scope:       pluginScope,
-		Enabled:     input.Enabled,
+		ID:           uuid.MustParse(input.ID),
+		Name:         input.Name,
+		Type:         (*entity.PluginType)(input.Type),
+		Version:      input.Version,
+		Runtime:      (*entity.PluginRuntime)(input.Runtime),
+		Description:  input.Description,
+		Entrypoint:   input.Entrypoint,
+		Enabled:      input.Enabled,
+		ConfigSchema: input.ConfigSchema,
 	})
 
 	if err != nil {

@@ -11,7 +11,6 @@ import (
 	infraLogger "devhub-backend/internal/infra/logger"
 	core "devhub-backend/internal/infra/worker/core"
 	deployment "devhub-backend/internal/infra/worker/deployment"
-	"devhub-backend/internal/infra/worker/release"
 	scaffold "devhub-backend/internal/infra/worker/scaffold"
 )
 
@@ -20,7 +19,6 @@ const (
 	defaultPollDelay = core.DefaultPollDelay
 	RunnerScaffold   = "scaffold"
 	RunnerDeployment = "deployment"
-	RunnerRelease    = "release"
 )
 
 type Dependencies struct {
@@ -29,6 +27,7 @@ type Dependencies struct {
 	pluginRepository          repository.PluginRepository
 	projectRepository         repository.ProjectRepository
 	teamRepository            repository.TeamRepository
+	jobRepository             repository.JobRepository
 	scaffoldRequestRepository repository.ScaffoldRequestRepository
 	deploymentRepository      repository.DeploymentRepository
 	releaseRepository         repository.ReleaseRepository
@@ -41,6 +40,7 @@ func NewDependencies(
 	pluginRepository repository.PluginRepository,
 	projectRepository repository.ProjectRepository,
 	teamRepository repository.TeamRepository,
+	jobRepository repository.JobRepository,
 	scaffoldRequestRepository repository.ScaffoldRequestRepository,
 	deploymentRepository repository.DeploymentRepository,
 	releaseRepository repository.ReleaseRepository,
@@ -52,6 +52,7 @@ func NewDependencies(
 		pluginRepository:          pluginRepository,
 		projectRepository:         projectRepository,
 		teamRepository:            teamRepository,
+		jobRepository:             jobRepository,
 		scaffoldRequestRepository: scaffoldRequestRepository,
 		deploymentRepository:      deploymentRepository,
 		releaseRepository:         releaseRepository,
@@ -95,7 +96,6 @@ func BuildRunnersWithConfig(deps *Dependencies, cfg BuildRunnersConfig) ([]Runne
 	factories := map[string]RunnerFactory{
 		RunnerScaffold:   buildScaffoldRunner,
 		RunnerDeployment: buildDeploymentRunner,
-		RunnerRelease:    buildReleaseRunner,
 	}
 
 	for _, kind := range workerTypes {
@@ -129,8 +129,7 @@ func buildScaffoldRunner(deps *Dependencies, observer Observability, cfg Factory
 		observer,
 		deps.cfg,
 		deps.pluginRepository,
-		deps.projectRepository,
-		deps.teamRepository,
+		deps.jobRepository,
 		deps.scaffoldRequestRepository,
 		deps.serviceRepository,
 		cfg.PollDelay,
@@ -147,20 +146,8 @@ func buildDeploymentRunner(deps *Dependencies, observer Observability, cfg Facto
 		deps.cfg,
 		deps.pluginRepository,
 		deps.serviceRepository,
+		deps.jobRepository,
 		deps.deploymentRepository,
-		cfg.PollDelay,
-	)
-}
-
-func buildReleaseRunner(deps *Dependencies, observer Observability, cfg FactoryConfig) (Runner, error) {
-	if deps == nil || deps.releaseRepository == nil {
-		return nil, fmt.Errorf("release repository is required")
-	}
-
-	return release.NewReleasePollingRunner(
-		observer,
-		deps.pluginRepository,
-		deps.serviceRepository,
 		deps.releaseRepository,
 		cfg.PollDelay,
 	)

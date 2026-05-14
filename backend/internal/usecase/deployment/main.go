@@ -16,22 +16,34 @@ type DeploymentUsecase interface {
 }
 
 type deploymentUsecase struct {
-	approvalRepository   repository.ApprovalRepository
-	appConfig            config.AppConfig
-	deploymentRepository repository.DeploymentRepository
-	pluginRepository     repository.PluginRepository
+	approvalRepository    repository.ApprovalRepository
+	appConfig             config.AppConfig
+	deploymentRepository  repository.DeploymentRepository
+	environmentRepository repository.EnvironmentRepository
+	jobRepository         repository.JobRepository
+	pluginRepository      repository.PluginRepository
+	releaseRepository     repository.ReleaseRepository
+	serviceRepository     repository.ServiceRepository
 }
 
 func NewDeploymentUsecase(
 	appConfig config.AppConfig,
 	approvalRepository repository.ApprovalRepository,
 	deploymentRepository repository.DeploymentRepository,
+	environmentRepository repository.EnvironmentRepository,
+	jobRepository repository.JobRepository,
 	pluginRepository repository.PluginRepository,
+	releaseRepository repository.ReleaseRepository,
+	serviceRepository repository.ServiceRepository,
 ) DeploymentUsecase {
 	return &deploymentUsecase{
-		approvalRepository:   approvalRepository,
-		appConfig:            appConfig,
-		deploymentRepository: deploymentRepository,
-		pluginRepository:     pluginRepository,
+		approvalRepository:    approvalRepository,
+		appConfig:             appConfig,
+		deploymentRepository:  deploymentRepository,
+		environmentRepository: environmentRepository,
+		jobRepository:         jobRepository,
+		pluginRepository:      pluginRepository,
+		releaseRepository:     releaseRepository,
+		serviceRepository:     serviceRepository,
 	}
 }

@@ -23,17 +23,9 @@ func (r *deploymentRepositoryImpl) UpdateOne(ctx context.Context, input reposito
 	columns := make(postgres.ColumnList, 0)
 
 	// build the update model
-	if input.Environment != nil {
-		updateModel.Environment = string(*input.Environment)
-		columns = append(columns, deploymentsTable.Environment)
-	}
 	if input.Status != nil {
 		updateModel.Status = string(*input.Status)
 		columns = append(columns, deploymentsTable.Status)
-	}
-	if input.Version != nil {
-		updateModel.Version = string(*input.Version)
-		columns = append(columns, deploymentsTable.Version)
 	}
 	if input.ExternalRef != nil {
 		updateModel.ExternalRef = input.ExternalRef
@@ -42,14 +34,6 @@ func (r *deploymentRepositoryImpl) UpdateOne(ctx context.Context, input reposito
 	if input.CommitSHA != nil {
 		updateModel.CommitSha = input.CommitSHA
 		columns = append(columns, deploymentsTable.CommitSha)
-	}
-	if input.RunnerOutput != nil {
-		updateModel.RunnerOutput = input.RunnerOutput
-		columns = append(columns, deploymentsTable.RunnerOutput)
-	}
-	if input.RunnerError != nil {
-		updateModel.RunnerError = input.RunnerError
-		columns = append(columns, deploymentsTable.RunnerError)
 	}
 	if input.FinishedAt != nil {
 		updateModel.FinishedAt = input.FinishedAt

@@ -14,13 +14,9 @@ import (
 )
 
 type UpdateProjectInput struct {
-	ID           string    `json:"id" validate:"required,uuid"`
-	Name         *string   `json:"name" validate:"min=0,max=100"`
-	Description  *string   `json:"description" validate:"min=0,max=100"`
-	Environments *[]string `json:"environments" validate:"dive,required"`
-	Status       *string   `json:"status" validate:"required,oneof=draft active archived deprecated"`
-	TeamID       *string   `json:"team_id" validate:"omitempty,uuid"`
-	ScmProvider  *string   `json:"scm_provider" validate:"required,min=1,max=32"`
+	ID          string  `json:"id" validate:"required,uuid"`
+	Name        *string `json:"name" validate:"required,min=2,max=100"`
+	Description *string `json:"description" validate:"omitempty,min=0,max=500"`
 }
 
 func (u *projectUsecase) UpdateProject(ctx context.Context, input UpdateProjectInput) (project *entity.Project, err error) {
@@ -42,31 +38,11 @@ func (u *projectUsecase) UpdateProject(ctx context.Context, input UpdateProjectI
 		return nil, misc.WrapError(err, errs.NewBadRequestError("the request is invalid", map[string]string{"details": err.Error()}))
 	}
 
-	var status *entity.ProjectStatus
-	var teamID *uuid.UUID
-	if input.Status != nil {
-		parsedStatus, parseErr := new(entity.ProjectStatus).Parse(*input.Status)
-		if parseErr != nil {
-			return nil, misc.WrapError(parseErr, errs.NewBadRequestError("invalid project status", map[string]string{"details": parseErr.Error()}))
-		}
-		status = &parsedStatus
-	}
-	if input.TeamID != nil {
-		parsedTeamID, parseErr := uuid.Parse(*input.TeamID)
-		if parseErr != nil {
-			return nil, misc.WrapError(parseErr, errs.NewBadRequestError("invalid team id", nil))
-		}
-		teamID = &parsedTeamID
-	}
-
+	// TODO: add on update environments
 	updated, err := u.projectRepository.UpdateOne(ctx, repository.UpdateProjectInput{
-		ID:           uuid.MustParse(input.ID),
-		Name:         input.Name,
-		Description:  input.Description,
-		Environments: input.Environments,
-		Status:       status,
-		TeamID:       teamID,
-		ScmProvider:  input.ScmProvider,
+		ID:          uuid.MustParse(input.ID),
+		Name:        input.Name,
+		Description: input.Description,
 	})
 
 	if err != nil {

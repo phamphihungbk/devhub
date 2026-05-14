@@ -19,10 +19,8 @@ type approvalPoliciesTable struct {
 	// Columns
 	ID                postgres.ColumnString
 	Resource          postgres.ColumnString
-	Action            postgres.ColumnString
-	ProjectID         postgres.ColumnString
 	ServiceID         postgres.ColumnString
-	Environment       postgres.ColumnString
+	EnvironmentID     postgres.ColumnString
 	RequiredApprovals postgres.ColumnInteger
 	Enabled           postgres.ColumnBool
 	CreatedAt         postgres.ColumnTimestamp
@@ -70,16 +68,14 @@ func newApprovalPoliciesTableImpl(schemaName, tableName, alias string) approvalP
 	var (
 		IDColumn                = postgres.StringColumn("id")
 		ResourceColumn          = postgres.StringColumn("resource")
-		ActionColumn            = postgres.StringColumn("action")
-		ProjectIDColumn         = postgres.StringColumn("project_id")
 		ServiceIDColumn         = postgres.StringColumn("service_id")
-		EnvironmentColumn       = postgres.StringColumn("environment")
+		EnvironmentIDColumn     = postgres.StringColumn("environment_id")
 		RequiredApprovalsColumn = postgres.IntegerColumn("required_approvals")
 		EnabledColumn           = postgres.BoolColumn("enabled")
 		CreatedAtColumn         = postgres.TimestampColumn("created_at")
 		UpdatedAtColumn         = postgres.TimestampColumn("updated_at")
-		allColumns              = postgres.ColumnList{IDColumn, ResourceColumn, ActionColumn, ProjectIDColumn, ServiceIDColumn, EnvironmentColumn, RequiredApprovalsColumn, EnabledColumn, CreatedAtColumn, UpdatedAtColumn}
-		mutableColumns          = postgres.ColumnList{ResourceColumn, ActionColumn, ProjectIDColumn, ServiceIDColumn, EnvironmentColumn, RequiredApprovalsColumn, EnabledColumn, CreatedAtColumn, UpdatedAtColumn}
+		allColumns              = postgres.ColumnList{IDColumn, ResourceColumn, ServiceIDColumn, EnvironmentIDColumn, RequiredApprovalsColumn, EnabledColumn, CreatedAtColumn, UpdatedAtColumn}
+		mutableColumns          = postgres.ColumnList{ResourceColumn, ServiceIDColumn, EnvironmentIDColumn, RequiredApprovalsColumn, EnabledColumn, CreatedAtColumn, UpdatedAtColumn}
 		defaultColumns          = postgres.ColumnList{IDColumn, RequiredApprovalsColumn, EnabledColumn, CreatedAtColumn, UpdatedAtColumn}
 	)
 
@@ -89,10 +85,8 @@ func newApprovalPoliciesTableImpl(schemaName, tableName, alias string) approvalP
 		//Columns
 		ID:                IDColumn,
 		Resource:          ResourceColumn,
-		Action:            ActionColumn,
-		ProjectID:         ProjectIDColumn,
 		ServiceID:         ServiceIDColumn,
-		Environment:       EnvironmentColumn,
+		EnvironmentID:     EnvironmentIDColumn,
 		RequiredApprovals: RequiredApprovalsColumn,
 		Enabled:           EnabledColumn,
 		CreatedAt:         CreatedAtColumn,

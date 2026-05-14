@@ -54,22 +54,16 @@ func (u *scaffoldRequestUsecase) SuggestScaffoldRequest(ctx context.Context, inp
 		return ScaffoldRequestSuggestion{}, misc.WrapError(err, errs.NewInternalServerError("failed to load project context", nil))
 	}
 
-	projectEnvironments := make([]string, 0, len(project.Environments))
-	for _, environment := range project.Environments {
-		projectEnvironments = append(projectEnvironments, environment.String())
-	}
-
 	plugin, plan, err := u.suggestScaffolderPlugin(ctx, input.Prompt+" "+project.Description)
 	if err != nil {
 		return ScaffoldRequestSuggestion{}, err
 	}
 
 	aiSuggestion, err := u.aiSuggestionGenerator.GenerateScaffoldSuggestion(ctx, ai.ScaffoldSuggestionInput{
-		Prompt:              input.Prompt,
-		Project:             *project,
-		ProjectEnvironments: projectEnvironments,
-		Plugin:              *plugin,
-		Plan:                *plan,
+		Prompt:  input.Prompt,
+		Project: *project,
+		Plugin:  *plugin,
+		Plan:    *plan,
 	})
 	if err != nil {
 		return ScaffoldRequestSuggestion{}, misc.WrapError(err, errs.NewInternalServerError("failed to generate scaffold suggestion", nil))
@@ -99,7 +93,7 @@ func (u *scaffoldRequestUsecase) suggestScaffolderPlugin(ctx context.Context, in
 	candidates := make([]ai.PluginCandidate, 0, len(*plugins))
 	for index := range *plugins {
 		plugin := (*plugins)[index]
-		if !plugin.Enabled || plugin.Type != entity.PluginScaffolder {
+		if !plugin.Enabled {
 			continue
 		}
 		enabledPlugins = append(enabledPlugins, plugin)

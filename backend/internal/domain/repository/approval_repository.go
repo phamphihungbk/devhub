@@ -29,11 +29,9 @@ type FindAllApprovalRequestsFilter struct {
 }
 
 type FindMatchingApprovalPolicyInput struct {
-	Resource    string
-	Action      string
-	ProjectID   *uuid.UUID
-	ServiceID   *uuid.UUID
-	Environment *string
+	Resource      string
+	EnvironmentID uuid.UUID
+	ServiceID     *uuid.UUID
 }
 
 type UpdateApprovalRequestInput struct {

@@ -2,9 +2,11 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"devhub-backend/internal/domain/entity"
@@ -24,18 +26,19 @@ type SyncRegistryOutput struct {
 }
 
 type pluginManifest struct {
-	Name        string `yaml:"name"`
-	Type        string `yaml:"type"`
-	Version     string `yaml:"version"`
-	Entrypoint  string `yaml:"entrypoint"`
-	Description string `yaml:"description"`
-	Scope       string `yaml:"scope"`
-	Enabled     *bool  `yaml:"enabled"`
-	Runtime     string `yaml:"runtime"`
+	Name         string                     `yaml:"name"`
+	Type         string                     `yaml:"type"`
+	Version      string                     `yaml:"version"`
+	Entrypoint   string                     `yaml:"entrypoint"`
+	Description  string                     `yaml:"description"`
+	Enabled      *bool                      `yaml:"enabled"`
+	Runtime      string                     `yaml:"runtime"`
+	ConfigSchema *entity.PluginConfigSchema `yaml:"config_schema"`
 }
 
 type discoveredPlugin struct {
 	entity.Plugin
+	hasConfigSchema bool
 }
 
 func (u *pluginUsecase) SyncRegistry(ctx context.Context, input SyncRegistryInput) (SyncRegistryOutput, error) {
@@ -118,21 +121,17 @@ func (u *pluginUsecase) readPluginManifest(manifestPath string) (discoveredPlugi
 		return discoveredPlugin{}, fmt.Errorf("manifest %s missing entrypoint", manifestPath)
 	}
 
-	scope := strings.TrimSpace(manifest.Scope)
-	if scope == "" {
-		scope = "global"
-	}
-	pluginScope, err := new(entity.PluginScope).Parse(scope)
-	if err != nil {
-		return discoveredPlugin{}, fmt.Errorf("manifest %s has invalid scope: %w", manifestPath, err)
-	}
-
 	enabled := true
 	if manifest.Enabled != nil {
 		enabled = *manifest.Enabled
 	}
 
-	return discoveredPlugin{
+	configSchema, hasConfigSchema, err := u.readPluginConfigSchema(manifestPath, manifest.ConfigSchema)
+	if err != nil {
+		return discoveredPlugin{}, err
+	}
+
+	plugin := discoveredPlugin{
 		Plugin: entity.Plugin{
 			Name:        strings.TrimSpace(manifest.Name),
 			Version:     strings.TrimSpace(manifest.Version),
@@ -140,13 +139,41 @@ func (u *pluginUsecase) readPluginManifest(manifestPath string) (discoveredPlugi
 			Runtime:     pluginRuntime,
 			Entrypoint:  entrypoint,
 			Enabled:     enabled,
-			Scope:       pluginScope,
 			Description: strings.TrimSpace(manifest.Description),
 		},
-	}, nil
+		hasConfigSchema: hasConfigSchema,
+	}
+	if hasConfigSchema {
+		plugin.ConfigSchema = configSchema
+	}
+
+	return plugin, nil
+}
+
+func (u *pluginUsecase) readPluginConfigSchema(manifestPath string, inline *entity.PluginConfigSchema) (entity.PluginConfigSchema, bool, error) {
+	if inline != nil {
+		return *inline, true, nil
+	}
+
+	schemaPath := filepath.Join(filepath.Dir(manifestPath), "schema.json")
+	raw, err := os.ReadFile(schemaPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return entity.PluginConfigSchema{}, false, nil
+		}
+		return entity.PluginConfigSchema{}, false, fmt.Errorf("read config schema %s: %w", schemaPath, err)
+	}
+
+	configSchema, err := new(entity.PluginConfigSchema).Parse(string(raw))
+	if err != nil {
+		return entity.PluginConfigSchema{}, false, fmt.Errorf("parse config schema %s: %w", schemaPath, err)
+	}
+
+	return configSchema, true, nil
 }
 
 func (u *pluginUsecase) parsePluginType(manifestPath string, rawType string) (entity.PluginType, error) {
+	fmt.Println(rawType, "hungdeptrai")
 	pluginType, err := new(entity.PluginType).Parse(strings.TrimSpace(rawType))
 	if err != nil {
 		return "", fmt.Errorf("manifest %s has invalid type: %w", manifestPath, err)
@@ -243,8 +270,9 @@ func (u *pluginUsecase) buildRepositoryUpdatePluginInput(existing *entity.Plugin
 	if existing.Entrypoint != plugin.Entrypoint {
 		input.Entrypoint = &plugin.Entrypoint
 	}
-	if existing.Scope != plugin.Scope {
-		input.Scope = &plugin.Scope
+	if plugin.hasConfigSchema && !reflect.DeepEqual(existing.ConfigSchema, plugin.ConfigSchema) {
+		configSchema := plugin.ConfigSchema
+		input.ConfigSchema = &configSchema
 	}
 	if existing.Enabled != plugin.Enabled {
 		enabled := plugin.Enabled
@@ -261,6 +289,6 @@ func hasPluginChanges(input repository.UpdatePluginInput) bool {
 		input.Version != nil ||
 		input.Runtime != nil ||
 		input.Entrypoint != nil ||
-		input.Scope != nil ||
+		input.ConfigSchema != nil ||
 		input.Enabled != nil
 }

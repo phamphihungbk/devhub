@@ -43,6 +43,7 @@ import type {
   Deployment,
   PluginRecord,
   Project,
+  ProjectEnvironment,
   Release,
   ScaffoldRequestSuggestion,
   Service,
@@ -75,8 +76,8 @@ const selectedDeployment = ref<Deployment | null>(null)
 
 const deploymentForm = reactive<CreateDeploymentPayload>({
   plugin_id: '',
-  environment: 'dev',
-  version: '',
+  environment_id: '',
+  release_id: '',
 })
 
 const scaffoldForm = reactive<CreateScaffoldRequestPayload>({
@@ -121,10 +122,29 @@ const scaffolderOptions = computed(() =>
     .map(plugin => ({ label: plugin.name, value: plugin.id })),
 )
 
-const environmentSelectOptions = computed(() => {
+function projectEnvironments(value?: Project | null): ProjectEnvironment[] {
+  return (value?.environments || [])
+    .filter((environment): environment is ProjectEnvironment => typeof environment !== 'string')
+}
+
+function environmentNameFromValue(value: NonNullable<Project['environments']>[number]) {
+  return typeof value === 'string' ? value : value.name
+}
+
+const scaffoldEnvironmentSelectOptions = computed(() => {
   const values = project.value?.environments?.length ? project.value.environments : ['dev', 'staging', 'prod']
-  return values.map(value => ({ label: value, value }))
+  return values.map(value => {
+    const name = environmentNameFromValue(value)
+    return { label: name, value: name }
+  })
 })
+
+const deploymentEnvironmentOptions = computed(() =>
+  projectEnvironments(project.value).map(environment => ({
+    label: environment.name,
+    value: environment.id,
+  })),
+)
 
 const canCreateDeployment = computed(() =>
   authStore.canAccess({ permissions: [permission.deploymentWrite] }),
@@ -138,21 +158,41 @@ const selectedRelease = computed(() =>
   releases.value.find(item => item.tag === selectedReleaseTag.value) || null,
 )
 
+const releaseTagById = computed(() =>
+  new Map(releases.value.map(release => [release.id, release.tag])),
+)
+
+const environmentNameById = computed(() =>
+  new Map(projectEnvironments(project.value).map(environment => [environment.id, environment.name])),
+)
+
+function deploymentEnvironmentName(row?: Deployment | null) {
+  if (!row) return 'Unknown'
+  return row.environment || (row.environment_id ? environmentNameById.value.get(row.environment_id) : '') || 'Unknown'
+}
+
+function deploymentVersion(row?: Deployment | null) {
+  if (!row) return 'Unknown'
+  return row.version || (row.release_id ? releaseTagById.value.get(row.release_id) : '') || 'Unknown'
+}
+
 const visibleDeployments = computed(() =>
   selectedReleaseTag.value
-    ? deployments.value.filter(item => item.version === selectedReleaseTag.value)
+    ? deployments.value.filter(item => deploymentVersion(item) === selectedReleaseTag.value)
     : deployments.value,
 )
 
 function resetDeploymentForm() {
   deploymentForm.plugin_id = deployerOptions.value[0]?.value || ''
-  deploymentForm.environment = project.value?.environments?.[0] || 'dev'
-  deploymentForm.version = selectedRelease.value?.tag || ''
+  deploymentForm.environment_id = deploymentEnvironmentOptions.value[0]?.value || ''
+  deploymentForm.release_id = selectedRelease.value?.id || ''
 }
 
 function resetScaffoldForm() {
   scaffoldForm.plugin_id = scaffolderOptions.value[0]?.value || ''
-  scaffoldForm.environment = project.value?.environments?.[0] || 'dev'
+  scaffoldForm.environment = project.value?.environments?.[0]
+    ? environmentNameFromValue(project.value.environments[0])
+    : 'dev'
   scaffoldForm.variables.service_name = normalizeServiceName(service.value?.name || project.value?.name || 'new-service')
   scaffoldForm.variables.module_path = inferModulePath(service.value?.repo_url || '')
   scaffoldForm.variables.port = suggestPort(scaffoldForm.variables.service_name)
@@ -316,7 +356,7 @@ const releaseColumns = computed(() => {
               event.stopPropagation()
               selectRelease(row)
               resetDeploymentForm()
-              deploymentForm.version = row.tag
+              deploymentForm.release_id = row.id
               deploymentModalOpen.value = true
             },
           },
@@ -337,12 +377,12 @@ const deploymentColumns = [
         NTag,
         {
           bordered: false,
-          color: getEnvironmentTagColor(row.environment),
+            color: getEnvironmentTagColor(deploymentEnvironmentName(row)),
         },
-        { default: () => row.environment },
+        { default: () => deploymentEnvironmentName(row) },
       ),
   },
-  { title: 'Version', key: 'version' },
+  { title: 'Version', key: 'version', render: (row: Deployment) => deploymentVersion(row) },
   {
     title: 'Status',
     key: 'status',
@@ -464,7 +504,7 @@ async function submitScaffoldRequest() {
 }
 
 async function submitDeployment() {
-  if (!deploymentForm.plugin_id || !deploymentForm.environment || !deploymentForm.version.trim()) {
+  if (!deploymentForm.plugin_id || !deploymentForm.environment_id) {
     message.warning('Complete the deployment form before submitting.')
     return
   }
@@ -474,13 +514,15 @@ async function submitDeployment() {
   try {
     await createDeployment(serviceId.value, {
       plugin_id: deploymentForm.plugin_id,
-      environment: deploymentForm.environment,
-      version: deploymentForm.version.trim(),
+      environment_id: deploymentForm.environment_id,
+      release_id: deploymentForm.release_id || undefined,
     })
     message.success('Deployment created successfully.')
     deploymentModalOpen.value = false
     await loadServiceDetails()
-    selectedReleaseTag.value = deploymentForm.version.trim()
+    selectedReleaseTag.value = deploymentForm.release_id
+      ? releaseTagById.value.get(deploymentForm.release_id) || null
+      : null
   } catch (error) {
     message.error(error instanceof ApiError ? error.message : 'Unable to create deployment.')
   } finally {
@@ -641,17 +683,18 @@ onMounted(loadServiceDetails)
 
           <NFormItem label="Environment">
             <NSelect
-              v-model:value="deploymentForm.environment"
-              :options="environmentSelectOptions"
+              v-model:value="deploymentForm.environment_id"
+              :options="deploymentEnvironmentOptions"
               placeholder="Select environment"
             />
           </NFormItem>
 
-          <NFormItem label="Version" class="md:col-span-2">
-            <NInput
-              v-model:value="deploymentForm.version"
-              placeholder="v1.0.0"
-              :readonly="Boolean(selectedRelease)"
+          <NFormItem label="Release" class="md:col-span-2">
+            <NSelect
+              v-model:value="deploymentForm.release_id"
+              :options="releases.map(release => ({ label: release.tag, value: release.id }))"
+              placeholder="Latest completed release"
+              clearable
             />
           </NFormItem>
         </div>
@@ -756,7 +799,7 @@ onMounted(loadServiceDetails)
           <NFormItem label="Environment">
             <NSelect
               v-model:value="scaffoldForm.environment"
-              :options="environmentSelectOptions"
+              :options="scaffoldEnvironmentSelectOptions"
               placeholder="Select environment"
             />
           </NFormItem>
@@ -809,11 +852,11 @@ onMounted(loadServiceDetails)
         <div class="grid gap-3 text-sm md:grid-cols-3">
           <div>
             <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Environment</p>
-            <p class="mt-1 font-semibold text-[var(--app-text)]">{{ selectedDeployment?.environment || 'Unknown' }}</p>
+            <p class="mt-1 font-semibold text-[var(--app-text)]">{{ deploymentEnvironmentName(selectedDeployment) }}</p>
           </div>
           <div>
             <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Version</p>
-            <p class="mt-1 font-semibold text-[var(--app-text)]">{{ selectedDeployment?.version || 'Unknown' }}</p>
+            <p class="mt-1 font-semibold text-[var(--app-text)]">{{ deploymentVersion(selectedDeployment) }}</p>
           </div>
           <div>
             <p class="text-xs uppercase tracking-[0.22em] text-[var(--app-accent)]">Status</p>

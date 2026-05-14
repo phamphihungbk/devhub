@@ -83,22 +83,18 @@ func (h *deploymentHandler) newUpdateDeploymentResponse(deployment *entity.Deplo
 	}
 
 	return updateDeploymentResponse{
-		ID:           deployment.ID.String(),
-		ServiceID:    deployment.ServiceID.String(),
-		PluginID:     deployment.PluginID.String(),
-		Environment:  deployment.Environment.String(),
-		Version:      deployment.Version,
-		Status:       deployment.Status.String(),
-		ExternalRef:  deployment.ExternalRef,
-		CommitSHA:    deployment.CommitSHA,
-		RunnerOutput: deployment.RunnerOutput,
-		RunnerError:  deployment.RunnerError,
-		FinishedAt: func() string {
-			if deployment.FinishedAt == nil {
-				return ""
-			}
-			return deployment.FinishedAt.Format("2006-01-02T15:04:05Z07:00")
-		}(),
+		ID:          deployment.ID.String(),
+		ServiceID:   deployment.ServiceID.String(),
+		Version:     deployment.Version,
+		Status:      deployment.Status.String(),
+		ExternalRef: deployment.ExternalRef,
+		CommitSHA:   deployment.CommitSHA,
+		// FinishedAt: func() string {
+		// 	if deployment.CreatedAt == nil {
+		// 		return ""
+		// 	}
+		// 	return deployment.CreatedAt.Format("2006-01-02T15:04:05Z07:00")
+		// }(),
 		TriggeredBy: deployment.TriggeredBy.String(),
 	}
 }

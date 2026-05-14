@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 from typing import Any
 
@@ -22,8 +23,8 @@ def read_payload(required_fields: list[str]) -> dict[str, Any]:
         envelope = json.loads(raw)
     except json.JSONDecodeError as exc:
         fail(f"invalid JSON input: {exc}")
-
-    payload = envelope.get("payload")
+    
+    payload = envelope.get("variables")
     if not isinstance(payload, dict):
         fail("payload is required and must be an object")
 
@@ -46,6 +47,13 @@ def read_optional_str(payload: dict[str, Any], key: str, default: str = "") -> s
     if value != "":
         return value
     return default
+
+
+def read_required_env(name: str) -> str:
+    value = os.getenv(name, "").strip()
+    if value == "":
+        raise ValueError(f"{name} is required")
+    return value
 
 
 def read_int(payload: dict[str, Any], key: str, default: int, min_value: int, max_value: int) -> int:

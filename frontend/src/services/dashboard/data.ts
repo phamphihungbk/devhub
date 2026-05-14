@@ -5,6 +5,10 @@ import { NTag } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
 import type { PluginRecord, Project } from '@/api'
 
+function environmentName(value: NonNullable<Project['environments']>[number]) {
+  return typeof value === 'string' ? value : value.name
+}
+
 const projectColumns: DataTableColumns<Project> = [
     {
       title: 'Project',
@@ -17,16 +21,16 @@ const projectColumns: DataTableColumns<Project> = [
         h(
           'div',
           { class: 'flex flex-wrap gap-2' },
-          row.environments.map((value) =>
+          (row.environments || []).map((value) =>
             h(
               NTag,
               {
                 bordered: false,
-                color: getEnvironmentTagColor(value),
+                color: getEnvironmentTagColor(environmentName(value)),
               },
-              { default: () => value },
+              { default: () => environmentName(value) },
             ),
-          ),
+          ).concat((row.environments || []).length === 0 ? [h('span', 'Not configured')] : []),
         ),
     },
     {

@@ -12,6 +12,7 @@ import (
 type ServiceRepository interface {
 	CreateOne(ctx context.Context, service *entity.Service) (*entity.Service, error)
 	FindOne(ctx context.Context, id uuid.UUID) (*entity.Service, error)
+	FindOneByRepoCoordinates(ctx context.Context, owner string, repoName string) (*entity.Service, error)
 	FindAll(ctx context.Context, filter FindAllServicesFilter) (*entity.Services, int64, error)
 	DeleteOne(ctx context.Context, id uuid.UUID) (*entity.Service, error)
 }

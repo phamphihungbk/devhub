@@ -35,13 +35,13 @@ func (g *LocalScaffoldSuggestionGenerator) GenerateScaffoldSuggestion(ctx contex
 	default:
 	}
 
-	serviceName := normalizeScaffoldSuggestionServiceName(firstNonEmpty(inferNameFromPrompt(input.Prompt), input.Project.Name, inferNameFromPrompt(input.Project.Description), "new-service"))
+	// serviceName := normalizeScaffoldSuggestionServiceName(firstNonEmpty(inferNameFromPrompt(input.Prompt), input.Project.Name, inferNameFromPrompt(input.Project.Description), "new-service"))
 	suggestedEnvironments := inferScaffoldSuggestionEnvironments(input.Prompt, input.ProjectEnvironments)
 	environment := pickScaffoldSuggestionEnvironment("", suggestedEnvironments)
-	modulePath := suggestScaffoldSuggestionModulePath(input.Plugin, input.Project.Name, serviceName)
-	database := suggestScaffoldSuggestionDatabase(input.Prompt, input.Project.Description, input.Plugin)
-	port := suggestScaffoldSuggestionPort(input.Prompt, serviceName)
-	enableLogging := suggestScaffoldSuggestionLogging(input.Prompt, input.Project.Description)
+	// modulePath := suggestScaffoldSuggestionModulePath(input.Plugin, input.Project.Name, serviceName)
+	// database := suggestScaffoldSuggestionDatabase(input.Prompt, input.Project.Description, input.Plugin)
+	// port := suggestScaffoldSuggestionPort(input.Prompt, serviceName)
+	// enableLogging := suggestScaffoldSuggestionLogging(input.Prompt, input.Project.Description)
 
 	rationale := []string{
 		"Prompt was analyzed by the local token ranking client.",
@@ -68,14 +68,8 @@ func (g *LocalScaffoldSuggestionGenerator) GenerateScaffoldSuggestion(ctx contex
 	return &ScaffoldSuggestion{
 		Source:      "local-token-ranker-v1",
 		Environment: environment,
-		Variables: entity.ScaffoldRequestVariables{
-			ServiceName:   serviceName,
-			ModulePath:    modulePath,
-			Port:          port,
-			Database:      database,
-			EnableLogging: enableLogging,
-		},
-		Rationale: rationale,
+		Variables:   entity.ScaffoldRequestVariables{},
+		Rationale:   rationale,
 	}, nil
 }
 
@@ -130,12 +124,12 @@ func pickScaffoldSuggestionEnvironment(selected string, environments []string) s
 			return environment
 		}
 	}
-	return entity.EnvDev.String()
+	return entity.EnvironmentTierDevelopment.String()
 }
 
 func inferScaffoldSuggestionEnvironments(prompt string, projectEnvironments []string) []string {
 	value := strings.ToLower(prompt)
-	known := []string{entity.EnvDev.String(), entity.EnvStaging.String(), entity.EnvProd.String()}
+	known := []string{entity.EnvironmentTierDevelopment.String(), entity.EnvironmentTierStaging.String(), entity.EnvironmentTierProduction.String()}
 	seen := map[string]struct{}{}
 	environments := make([]string, 0, len(known))
 
@@ -163,7 +157,7 @@ func inferScaffoldSuggestionEnvironments(prompt string, projectEnvironments []st
 	}
 
 	if len(environments) == 0 {
-		return []string{entity.EnvDev.String()}
+		return []string{entity.EnvironmentTierDevelopment.String()}
 	}
 
 	return environments
